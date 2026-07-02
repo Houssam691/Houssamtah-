@@ -1,0 +1,84 @@
+import { NextResponse } from "next/server";
+import { getSessionUser, createNotification } from "@/lib/auth";
+import { createReview, getSellerStats, getSellerReviews, getAllReviews } from "@/lib/reviews";
+import { getOrderById } from "@/lib/orders";
+
+export const runtime = "nodejs";
+
+export async function GET(req: Request) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const url = new URL(req.url);
+  const sellerId = url.searchParams.get("seller_id");
+  const admin = url.searchParams.get("admin");
+
+  const orderId = url.searchParams.get("order_id");
+
+  if (admin === "1" && user.role === "admin") {
+    const reviews = await getAllReviews({
+      seller_id: url.searchParams.get("seller_id") || undefined,
+      buyer_id: url.searchParams.get("buyer_id") || undefined,
+      from_date: url.searchParams.get("from_date") || undefined,
+      to_date: url.searchParams.get("to_date") || undefined,
+      order_id: orderId || undefined,
+    });
+    return NextResponse.json(reviews);
+  }
+
+  if (sellerId) {
+    const [stats, reviews] = await Promise.all([
+      getSellerStats(sellerId),
+      getSellerReviews(sellerId),
+    ]);
+    return NextResponse.json({ stats, reviews });
+  }
+
+  if (orderId) {
+    const { getAllReviews } = await import("@/lib/reviews");
+    const reviews = await getAllReviews({ order_id: orderId, buyer_id: user.id });
+    return NextResponse.json(reviews);
+  }
+
+  return NextResponse.json([]);
+}
+
+export async function POST(req: Request) {
+  const user = await getSessionUser();
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const body = await req.json();
+  const { order_id, rating, comment } = body;
+
+  if (!order_id || !rating || rating < 1 || rating > 5) {
+    return NextResponse.json({ error: "بيانات التقييم غير صحيحة" }, { status: 400 });
+  }
+
+  const order = await getOrderById(order_id);
+  if (!order) return NextResponse.json({ error: "الطلب غير موجود" }, { status: 404 });
+  if (order.buyer_id !== user.id) return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  if (order.status !== "delivered") return NextResponse.json({ error: "لا يمكن التقييم قبل اكتمال الطلب" }, { status: 400 });
+  if (!order.seller_id) return NextResponse.json({ error: "لا يوجد بائع لهذا الطلب" }, { status: 400 });
+
+  try {
+    const review = await createReview({
+      order_id,
+      buyer_id: user.id,
+      seller_id: order.seller_id,
+      rating,
+      comment,
+    });
+
+    await createNotification({
+      userId: order.seller_id,
+      orderId: order_id,
+      type: "new_review",
+      title: "تقييم جديد",
+      message: `قام ${user.first_name} بتقييم طلبك ${rating} نجوم`,
+    });
+
+    return NextResponse.json(review, { status: 201 });
+  } catch (e: any) {
+    return NextResponse.json({ error: e.message }, { status: 400 });
+  }
+}
