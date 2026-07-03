@@ -189,9 +189,24 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
 }
 
 export async function deleteProduct(id: string): Promise<boolean> {
-  const { execute } = await getDb();
-  const count = await execute("DELETE FROM products WHERE id = $1", [id]);
-  return count > 0;
+  const { execute, getPool } = await getDb();
+  const pool = getPool();
+  const client = await pool.connect();
+  try {
+    await client.query("BEGIN");
+    await client.query("DELETE FROM price_history WHERE product_id = $1", [id]);
+    await client.query("DELETE FROM order_chat_messages WHERE order_id IN (SELECT id FROM orders WHERE product_id = $1)", [id]);
+    await client.query("UPDATE orders SET product_id = NULL WHERE product_id = $1", [id]);
+    const result = await client.query("DELETE FROM products WHERE id = $1", [id]);
+    await client.query("COMMIT");
+    return (result.rowCount ?? 0) > 0;
+  } catch (e) {
+    await client.query("ROLLBACK");
+    console.error("[PRODUCTS] Failed to delete product", id, ":", e);
+    throw e;
+  } finally {
+    client.release();
+  }
 }
 
 export function generateId(prefix: string): string {

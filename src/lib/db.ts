@@ -216,6 +216,7 @@ async function initializeSchema(): Promise<void> {
     );
 
     CREATE INDEX IF NOT EXISTS idx_disputes_order_id ON disputes(order_id);
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_email_verification_user_id ON email_verification_tokens(user_id);
   `;
 
   const client = await getPool().connect();

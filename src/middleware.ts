@@ -8,6 +8,12 @@ function base64UrlEncode(data: string): string {
   return btoa(data).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 }
 
+function getCsp(request: NextRequest): string {
+  const hostname = request.nextUrl.hostname;
+  const imgSrc = `img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://${hostname}`;
+  return `default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; ${imgSrc}; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'`;
+}
+
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
   const sessionToken = req.cookies.get(SESSION_COOKIE)?.value;
@@ -26,7 +32,7 @@ export async function middleware(req: NextRequest) {
 
   if (pathname.startsWith("/admin/login") || pathname.startsWith("/api/admin/login")) {
     const response = NextResponse.next();
-    addSecurityHeaders(response);
+    addSecurityHeaders(response, req);
     return response;
   }
 
@@ -34,13 +40,13 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/admin/login";
     const response = NextResponse.redirect(url);
-    addSecurityHeaders(response);
+    addSecurityHeaders(response, req);
     return response;
   }
 
   if (pathname.startsWith("/register") || pathname.startsWith("/login") || pathname.startsWith("/api/auth")) {
     const response = NextResponse.next();
-    addSecurityHeaders(response);
+    addSecurityHeaders(response, req);
     return response;
   }
 
@@ -48,7 +54,7 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     const response = NextResponse.redirect(url);
-    addSecurityHeaders(response);
+    addSecurityHeaders(response, req);
     return response;
   }
 
@@ -56,16 +62,16 @@ export async function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
     const response = NextResponse.redirect(url);
-    addSecurityHeaders(response);
+    addSecurityHeaders(response, req);
     return response;
   }
 
   const response = NextResponse.next();
-  addSecurityHeaders(response);
+  addSecurityHeaders(response, req);
   return response;
 }
 
-function addSecurityHeaders(response: NextResponse) {
+function addSecurityHeaders(response: NextResponse, req: NextRequest) {
   response.headers.set("X-Content-Type-Options", "nosniff");
   response.headers.set("X-Frame-Options", "DENY");
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
@@ -73,10 +79,7 @@ function addSecurityHeaders(response: NextResponse) {
     "Permissions-Policy",
     "camera=(), microphone=(), geolocation=(), interest-cohort=()"
   );
-  response.headers.set(
-    "Content-Security-Policy",
-    "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://*.public.blob.vercel-storage.com; font-src 'self' data:; connect-src 'self'; frame-src 'none'; object-src 'none'"
-  );
+  response.headers.set("Content-Security-Policy", getCsp(req));
   response.headers.set(
     "Strict-Transport-Security",
     "max-age=63072000; includeSubDomains; preload"
