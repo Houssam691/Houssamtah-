@@ -6,9 +6,19 @@ export async function sendVerificationEmail(params: {
   token: string;
 }): Promise<boolean> {
   const apiKey = process.env.RESEND_API_KEY;
-  if (!apiKey) return false;
+  if (!apiKey) {
+    console.error("[EMAIL] RESEND_API_KEY is not set — cannot send verification email");
+    return false;
+  }
 
-  const verifyUrl = `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}/api/auth/verify-email?token=${params.token}`;
+  const fromEmail = process.env.RESEND_FROM_EMAIL;
+  if (!fromEmail) {
+    console.error("[EMAIL] RESEND_FROM_EMAIL is not set — cannot send verification email");
+    return false;
+  }
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+  const verifyUrl = `${baseUrl}/api/auth/verify-email?token=${params.token}`;
 
   const html = `
     <div dir="rtl" style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -33,15 +43,23 @@ export async function sendVerificationEmail(params: {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: process.env.RESEND_FROM_EMAIL || "BUPG <noreply@bupg.local>",
+        from: fromEmail,
         to: params.to,
         subject: "تأكيد البريد الإلكتروني - BUPG",
         html,
       }),
     });
 
+    if (!res.ok) {
+      const body = await res.text().catch(() => "no body");
+      console.error("[EMAIL] Resend API returned error", res.status, body);
+    } else {
+      console.log("[EMAIL] Verification email sent to", params.to);
+    }
+
     return res.ok;
-  } catch {
+  } catch (e) {
+    console.error("[EMAIL] Failed to send verification email:", e);
     return false;
   }
 }
