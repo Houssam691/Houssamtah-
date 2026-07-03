@@ -39,7 +39,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   let encryptedData: string;
   try {
     encryptedData = encryptDeliveryData(rawDeliveryData);
-  } catch {
+  } catch (e) {
+    console.error("[DELIVER] Encryption failed:", e);
     return NextResponse.json({ error: "Encryption failed" }, { status: 500 });
   }
 

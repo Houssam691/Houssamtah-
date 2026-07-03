@@ -18,6 +18,7 @@ export default function AdminSellersPage() {
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { loadSellers(); }, []);
 
@@ -30,13 +31,21 @@ export default function AdminSellersPage() {
   }
 
   async function handleAction(sellerId: string, action: string) {
+    setError(null);
+    if (action === "delete" && !confirm("هل أنت متأكد من حذف هذا الحساب نهائياً؟")) return;
+
     setActionLoading(sellerId);
-    await fetch("/api/admin/sellers", {
+    const res = await fetch("/api/admin/sellers", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ seller_id: sellerId, action }),
     });
     setActionLoading(null);
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({ error: "فشل العملية" }));
+      setError(data.error || `خطأ ${res.status}`);
+    }
     await loadSellers();
   }
 
@@ -48,6 +57,12 @@ export default function AdminSellersPage() {
         <h1 className="title">إدارة البائعين</h1>
         <p className="subtitle">مراجعة وموافقة على طلبات تسجيل البائعين.</p>
       </section>
+
+      {error && (
+        <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
+          {error}
+        </div>
+      )}
 
       <div className="mt-6 grid gap-4">
         {sellers.map((s) => (
@@ -64,22 +79,41 @@ export default function AdminSellersPage() {
                   }`}>
                     {s.seller_status === "approved" ? "مقبول" : s.seller_status === "rejected" ? "مرفوض" : "قيد المراجعة"}
                   </span>
-                  <a href={`/api/admin/id-document/${s.id}`} target="_blank" className="text-xs font-bold text-indigo-300 hover:text-indigo-200">
-                    عرض بطاقة الهوية
-                  </a>
+                  {s.id_file_path && (
+                    <a href={`/api/admin/id-document/${s.id}`} target="_blank" className="text-xs font-bold text-indigo-300 hover:text-indigo-200">
+                      عرض بطاقة الهوية
+                    </a>
+                  )}
                 </div>
               </div>
 
-              {s.seller_status === "pending" && (
-                <div className="flex shrink-0 gap-2">
-                  <button className="btn-primary" onClick={() => handleAction(s.id, "approve")} disabled={actionLoading === s.id}>
-                    موافقة
+              <div className="flex shrink-0 flex-wrap gap-2">
+                {s.seller_status === "pending" && (
+                  <>
+                    <button className="btn-primary" onClick={() => handleAction(s.id, "approve")} disabled={actionLoading === s.id}>
+                      موافقة
+                    </button>
+                    <button className="btn-secondary" onClick={() => handleAction(s.id, "reject")} disabled={actionLoading === s.id}>
+                      رفض
+                    </button>
+                  </>
+                )}
+                {s.seller_status === "rejected" && (
+                  <button className="btn-primary" onClick={() => handleAction(s.id, "restore")} disabled={actionLoading === s.id}>
+                    إعادة المراجعة
                   </button>
-                  <button className="btn-secondary" onClick={() => handleAction(s.id, "reject")} disabled={actionLoading === s.id}>
-                    رفض
-                  </button>
-                </div>
-              )}
+                )}
+                {s.seller_status === "approved" && (
+                  <span className="rounded-full bg-emerald-500/20 px-3 py-1 text-xs font-bold text-emerald-300">تم التحقق</span>
+                )}
+                <button
+                  className="rounded-full border border-rose-400/30 bg-rose-500/10 px-3 py-1 text-xs font-bold text-rose-300 hover:bg-rose-500/20"
+                  onClick={() => handleAction(s.id, "delete")}
+                  disabled={actionLoading === s.id}
+                >
+                  حذف الحساب
+                </button>
+              </div>
             </div>
           </div>
         ))}

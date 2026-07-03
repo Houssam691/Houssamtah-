@@ -108,9 +108,16 @@ export default function SellerProductsPage() {
     }
   }
 
-  async function removeProduct(id: string) {
+  async function removeProduct(id: string, title: string) {
+    if (!confirm(`هل أنت متأكد من حذف "${title}"؟`)) return;
+    setError(null);
     const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
-    if (res.ok) await loadProducts();
+    if (res.ok) {
+      await loadProducts();
+    } else {
+      const data = await res.json().catch(() => ({ error: "فشل الحذف" }));
+      setError(data.error || `خطأ ${res.status}`);
+    }
   }
 
   if (loading) return null;
@@ -270,7 +277,7 @@ export default function SellerProductsPage() {
                     </span>
                   </div>
                 </div>
-                <button className="btn-secondary shrink-0" onClick={() => removeProduct(p.id)}>
+                <button className="btn-secondary shrink-0" onClick={() => removeProduct(p.id, p.title)}>
                   حذف
                 </button>
               </div>

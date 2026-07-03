@@ -8,7 +8,7 @@ import { csrfGuard } from "@/lib/csrf";
 export const runtime = "nodejs";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-const MAX_SIZE = 10 * 1024 * 1024;
+const MAX_SIZE = 4 * 1024 * 1024;
 
 const EXT_MAP: Record<string, string> = {
   "image/jpeg": "jpg",
@@ -24,6 +24,10 @@ export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (user.seller_status === "approved") {
+    return NextResponse.json({ error: "Your identity has already been verified. Contact admin to upload a new ID." }, { status: 403 });
   }
 
   const rlKey = getRateLimitKey(req, `upload-id:${user.id}`);

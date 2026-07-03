@@ -69,16 +69,21 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
 
   const { id } = await ctx.params;
 
-  const products = await readAllProducts();
-  const product = products.find((p) => p.id === id);
-  if (!product) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  try {
+    const products = await readAllProducts();
+    const product = products.find((p) => p.id === id);
+    if (!product) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
 
-  if (user.role === "seller" && product.seller_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
+    if (user.role === "seller" && product.seller_id !== user.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
 
-  const deleted = await deleteProduct(id);
-  return NextResponse.json({ ok: deleted });
+    const deleted = await deleteProduct(id);
+    return NextResponse.json({ ok: deleted });
+  } catch (e) {
+    console.error("[PRODUCTS] Error deleting product:", e);
+    return NextResponse.json({ error: "Failed to delete product" }, { status: 500 });
+  }
 }
