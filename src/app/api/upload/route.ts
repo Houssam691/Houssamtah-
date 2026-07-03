@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
-import path from "path";
-import { promises as fs } from "fs";
 import { getSessionUser } from "@/lib/auth";
+import { put } from "@vercel/blob";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+const MAX_SIZE = 5 * 1024 * 1024;
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user || (user.role !== "admin" && user.role !== "seller")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json({ error: "Blob storage not configured" }, { status: 500 });
   }
 
   const formData = await req.formData();
@@ -18,26 +25,20 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Missing file" }, { status: 400 });
   }
 
-  if (!file.type.startsWith("image/")) {
-    return NextResponse.json({ error: "Only image files are allowed" }, { status: 400 });
+  if (!ALLOWED_TYPES.includes(file.type)) {
+    return NextResponse.json({ error: "Only JPEG, PNG, WebP, and GIF images are allowed" }, { status: 400 });
   }
 
-  if (file.size > 5 * 1024 * 1024) {
+  if (file.size > MAX_SIZE) {
     return NextResponse.json({ error: "File too large (max 5MB)" }, { status: 400 });
   }
 
-  const arrayBuffer = await file.arrayBuffer();
-  const buffer = Buffer.from(arrayBuffer);
+  const ext = file.name.split(".").pop() || "jpg";
+  const safeName = `product_${crypto.randomUUID()}.${ext}`;
 
-  const ext = path.extname(file.name) || ".jpg";
-  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-  const filename = `${Date.now()}_${safeName}`;
+  const blob = await put(safeName, file, {
+    access: "public",
+  });
 
-  const uploadsDir = path.join(process.cwd(), "public", "uploads");
-  await fs.mkdir(uploadsDir, { recursive: true });
-
-  const fullPath = path.join(uploadsDir, filename);
-  await fs.writeFile(fullPath, buffer);
-
-  return NextResponse.json({ url: `/uploads/${filename}` });
+  return NextResponse.json({ url: blob.url });
 }

@@ -1,14 +1,21 @@
 import { NextResponse } from "next/server";
-import path from "path";
-import { promises as fs } from "fs";
 import { getSessionUser } from "@/lib/auth";
+import { put } from "@vercel/blob";
+import crypto from "crypto";
 
 export const runtime = "nodejs";
+
+const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
+const MAX_SIZE = 10 * 1024 * 1024;
 
 export async function POST(req: Request) {
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    return NextResponse.json({ error: "Blob storage not configured" }, { status: 500 });
   }
 
   try {
@@ -19,23 +26,22 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Missing file" }, { status: 400 });
     }
 
-    if (file.size > 10 * 1024 * 1024) {
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      return NextResponse.json({ error: "Only JPEG, PNG, WebP, and PDF files are allowed" }, { status: 400 });
+    }
+
+    if (file.size > MAX_SIZE) {
       return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
     }
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
+    const ext = file.name.split(".").pop() || "jpg";
+    const safeName = `proof_${crypto.randomUUID()}.${ext}`;
 
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
-    const filename = `proof_${Date.now()}_${safeName}`;
+    const blob = await put(safeName, file, {
+      access: "public",
+    });
 
-    const uploadsDir = path.join(process.cwd(), "public", "uploads", "proofs");
-    await fs.mkdir(uploadsDir, { recursive: true });
-
-    const fullPath = path.join(uploadsDir, filename);
-    await fs.writeFile(fullPath, buffer);
-
-    return NextResponse.json({ url: `/uploads/proofs/${filename}` });
+    return NextResponse.json({ url: blob.url });
   } catch (e) {
     const msg = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: msg }, { status: 500 });
