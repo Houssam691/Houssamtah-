@@ -80,7 +80,7 @@ export async function POST(req: Request) {
 
     console.log("[UPLOAD-ID DIAG] Uploading to blob:", safeName);
     const blob = await put(safeName, buf, {
-      access: "private",
+      access: "public",
       contentType: realMime,
     });
     console.log("[UPLOAD-ID DIAG] Upload success, URL:", blob.url);
