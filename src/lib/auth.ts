@@ -17,6 +17,7 @@ export type User = {
   banned: number;
   seller_status: SellerStatus;
   id_file_path: string;
+  email_verified: number;
   payment_full_name: string;
   payment_surname: string;
   payment_dob: string;
@@ -88,7 +89,7 @@ export async function setSessionCookie(token: string): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: SESSION_DURATION_MS / 1000,
@@ -99,7 +100,7 @@ export async function clearSessionCookie(): Promise<void> {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, "", {
     httpOnly: true,
-    sameSite: "lax",
+    sameSite: "strict",
     secure: process.env.NODE_ENV === "production",
     path: "/",
     maxAge: 0,
@@ -111,16 +112,33 @@ export async function getSessionUser(): Promise<User | null> {
   const token = cookieStore.get(SESSION_COOKIE)?.value;
   if (!token) return null;
 
-  const { queryOne } = await getDb();
-  const session = await queryOne<{ user_id: string }>(
-    "SELECT user_id FROM sessions WHERE token = $1 AND expires_at > NOW()",
+  const { queryOne, execute } = await getDb();
+  const session = await queryOne<{ user_id: string; expires_at: string }>(
+    "SELECT user_id, expires_at FROM sessions WHERE token = $1 AND expires_at > NOW()",
     [token]
   );
 
   if (!session) return null;
 
+  const expiresAt = new Date(session.expires_at).getTime();
+  const oneDayMs = 24 * 60 * 60 * 1000;
+  if (expiresAt - Date.now() < oneDayMs) {
+    const newExpiresAt = new Date(Date.now() + SESSION_DURATION_MS).toISOString();
+    await execute("UPDATE sessions SET expires_at = $1 WHERE token = $2", [newExpiresAt, token]);
+    const cookieStore2 = await cookies();
+    cookieStore2.set(SESSION_COOKIE, token, {
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: SESSION_DURATION_MS / 1000,
+    });
+  }
+
   const user = await queryOne<User>("SELECT * FROM users WHERE id = $1", [session.user_id]);
-  return user || null;
+  if (!user || user.banned) return null;
+
+  return user;
 }
 
 export async function requireAuth(allowedRoles?: UserRole[]): Promise<User> {
@@ -239,4 +257,47 @@ export async function setSetting(key: string, value: string): Promise<void> {
     "INSERT INTO settings (key, value) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET value = EXCLUDED.value RETURNING key",
     [key, value]
   );
+}
+
+export async function revokeUserSessions(userId: string): Promise<void> {
+  const { execute } = await getDb();
+  await execute("DELETE FROM sessions WHERE user_id = $1", [userId]);
+}
+
+export function generateVerificationToken(): { raw: string; hash: string } {
+  const raw = crypto.randomBytes(32).toString("hex");
+  const hash = crypto.createHash("sha256").update(raw).digest("hex");
+  return { raw, hash };
+}
+
+export async function storeVerificationToken(userId: string, hash: string): Promise<void> {
+  const { queryOne } = await getDb();
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+  await queryOne(
+    "INSERT INTO email_verification_tokens (id, user_id, token_hash, expires_at) VALUES ($1, $2, $3, $4) RETURNING id",
+    [generateId("evt"), userId, hash, expiresAt]
+  );
+}
+
+export async function consumeVerificationToken(userId: string, rawToken: string): Promise<boolean> {
+  const { queryOne, execute } = await getDb();
+  const hash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const token = await queryOne<{ id: string }>(
+    "SELECT id FROM email_verification_tokens WHERE user_id = $1 AND token_hash = $2 AND expires_at > NOW()",
+    [userId, hash]
+  );
+  if (!token) return false;
+  await execute("DELETE FROM email_verification_tokens WHERE id = $1", [token.id]);
+  return true;
+}
+
+export async function invalidateOldVerificationTokens(userId: string): Promise<void> {
+  const { execute } = await getDb();
+  await execute("DELETE FROM email_verification_tokens WHERE user_id = $1", [userId]);
+}
+
+export function isAccountFullyActivated(user: User): boolean {
+  if (!user.email_verified) return false;
+  if (user.role === "seller" && user.seller_status !== "approved") return false;
+  return true;
 }

@@ -70,6 +70,7 @@ async function initializeSchema(): Promise<void> {
       banned SMALLINT NOT NULL DEFAULT 0,
       seller_status TEXT DEFAULT NULL CHECK(seller_status IN (NULL,'pending','approved','rejected')),
       id_file_path TEXT DEFAULT '',
+      email_verified SMALLINT NOT NULL DEFAULT 0,
       payment_full_name TEXT DEFAULT '',
       payment_surname TEXT DEFAULT '',
       payment_dob TEXT DEFAULT '',
@@ -206,6 +207,14 @@ async function initializeSchema(): Promise<void> {
     CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status);
     CREATE INDEX IF NOT EXISTS idx_products_status ON products(status);
     CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+    CREATE TABLE IF NOT EXISTS email_verification_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE INDEX IF NOT EXISTS idx_disputes_order_id ON disputes(order_id);
   `;
 
@@ -213,13 +222,21 @@ async function initializeSchema(): Promise<void> {
   try {
     await client.query(sql);
 
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email_verified') THEN
+          ALTER TABLE users ADD COLUMN email_verified SMALLINT NOT NULL DEFAULT 0;
+        END IF;
+      END $$;
+    `);
+
     const { rows } = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
-    if (rows.length === 0) {
+    if (rows.length === 0 && process.env.ADMIN_INIT_PASSWORD) {
       const bcrypt = require("bcryptjs");
-      const hash = bcrypt.hashSync("admin123", 10);
+      const hash = bcrypt.hashSync(process.env.ADMIN_INIT_PASSWORD, 10);
       await client.query(
         "INSERT INTO users (id, role, email, password_hash, first_name) VALUES ($1, 'admin', $2, $3, 'Admin') ON CONFLICT (id) DO NOTHING",
-        ["usr_admin", "admin@bupg.local", hash]
+        ["usr_admin", process.env.ADMIN_INIT_EMAIL || "admin@bupg.local", hash]
       );
     }
   } finally {
