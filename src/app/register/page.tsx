@@ -8,6 +8,7 @@ export default function RegisterPage() {
   const [step, setStep] = useState<"form" | "uploading">("form");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -76,11 +77,25 @@ export default function RegisterPage() {
       return;
     }
 
-    if (role === "seller") {
-      router.push("/seller/pending");
-    } else {
-      router.push("/");
-    }
+    setRegistered(true);
+  }
+
+  if (registered) {
+    return (
+      <div className="mx-auto max-w-lg">
+        <section className="glass rounded-3xl p-6 md:p-10">
+          <h1 className="title">تم إنشاء الحساب!</h1>
+          <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-100">
+            تم إرسال رابط تأكيد إلى <span dir="ltr">{email}</span>. يرجى التحقق من بريدك الإلكتروني (بما في ذلك مجلد البريد المزعج) والنقر على الرابط لتفعيل حسابك.
+          </div>
+          <div className="mt-6 text-center">
+            <a href="/login" className="btn-primary inline-block h-12 px-8 leading-[3rem]">
+              تسجيل الدخول
+            </a>
+          </div>
+        </section>
+      </div>
+    );
   }
 
   return (

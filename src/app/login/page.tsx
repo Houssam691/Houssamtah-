@@ -1,19 +1,38 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [verificationMsg, setVerificationMsg] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showVerifyPrompt, setShowVerifyPrompt] = useState(false);
+  const [resending, setResending] = useState(false);
+  const [resendMsg, setResendMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    const v = searchParams.get("verification");
+    if (v === "success") {
+      setVerificationMsg("تم تأكيد بريدك الإلكتروني بنجاح! يمكنك الآن تسجيل الدخول.");
+    } else if (v === "invalid") {
+      setVerificationMsg("رابط التأكيد غير صالح أو منتهي الصلاحية. يرجى طلب رابط جديد.");
+    } else if (v === "failed") {
+      setVerificationMsg("رابط التأكيد غير صالح.");
+    } else if (v === "error") {
+      setVerificationMsg("حدث خطأ أثناء تأكيد البريد. يرجى المحاولة مرة أخرى.");
+    }
+  }, [searchParams]);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError(null);
+    setShowVerifyPrompt(false);
 
     const res = await fetch("/api/auth/login", {
       method: "POST",
@@ -32,6 +51,11 @@ export default function LoginPage() {
     const data = await res.json();
     const role = data.user?.role;
 
+    if (data.requires_verification) {
+      setShowVerifyPrompt(true);
+      return;
+    }
+
     if (role === "admin") {
       router.push("/admin");
     } else if (role === "seller") {
@@ -41,11 +65,63 @@ export default function LoginPage() {
     }
   }
 
+  async function handleResend() {
+    setResending(true);
+    setResendMsg(null);
+
+    try {
+      const res = await fetch("/api/auth/send-verification", {
+        method: "POST",
+      });
+
+      if (res.ok) {
+        setResendMsg("تم إرسال رابط التأكيد إلى بريدك الإلكتروني.");
+      } else {
+        const data = await res.json().catch(() => ({ error: "" }));
+        setResendMsg(data.error || "فشل إرسال البريد. تحقق من إعدادات Resend.");
+      }
+    } catch {
+      setResendMsg("فشل إرسال البريد. تحقق من اتصالك.");
+    }
+
+    setResending(false);
+  }
+
   return (
     <div className="mx-auto max-w-lg">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">تسجيل دخول</h1>
         <p className="subtitle">أدخل بريدك الإلكتروني وكلمة المرور.</p>
+
+        {verificationMsg ? (
+          <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-3 text-sm font-bold text-emerald-100">
+            {verificationMsg}
+          </div>
+        ) : null}
+
+        {showVerifyPrompt ? (
+          <div className="mt-4 grid gap-4">
+            <div className="rounded-2xl border border-amber-400/30 bg-amber-500/10 px-4 py-3 text-sm font-bold text-amber-100">
+              يجب عليك تأكيد بريدك الإلكتروني قبل استخدام الحساب. يرجى التحقق من بريدك الوارد (بما في ذلك مجلد البريد المزعج).
+            </div>
+            {resendMsg ? (
+              <div className={`rounded-2xl border px-4 py-3 text-sm font-bold ${
+                resendMsg.includes("تم") || resendMsg.includes("أرسل")
+                  ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
+                  : "border-rose-400/30 bg-rose-500/10 text-rose-100"
+              }`}>
+                {resendMsg}
+              </div>
+            ) : null}
+            <button
+              className="btn-secondary h-12 w-full"
+              onClick={handleResend}
+              disabled={resending}
+            >
+              {resending ? "..." : "إعادة إرسال رابط التأكيد"}
+            </button>
+          </div>
+        ) : null}
 
         <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
           <label className="grid gap-2">
@@ -89,5 +165,13 @@ export default function LoginPage() {
         </form>
       </section>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="mx-auto max-w-lg"><section className="glass rounded-3xl p-6 md:p-10"><p className="text-center text-white/60">جاري التحميل...</p></section></div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -6,6 +6,7 @@ import crypto from "crypto";
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get("token");
   if (!token) {
+    console.warn("[VERIFY-EMAIL] No token provided in query params");
     return NextResponse.redirect(new URL("/login?verification=failed", req.url));
   }
 
@@ -18,6 +19,7 @@ export async function GET(req: NextRequest) {
     );
 
     if (!record) {
+      console.warn("[VERIFY-EMAIL] Invalid or expired token");
       return NextResponse.redirect(new URL("/login?verification=invalid", req.url));
     }
 
@@ -25,8 +27,10 @@ export async function GET(req: NextRequest) {
     await db.execute("DELETE FROM email_verification_tokens WHERE id = $1", [record.id]);
     await invalidateOldVerificationTokens(record.user_id);
 
+    console.log("[VERIFY-EMAIL] Email verified successfully for user", record.user_id);
     return NextResponse.redirect(new URL("/login?verification=success", req.url));
-  } catch {
+  } catch (e) {
+    console.error("[VERIFY-EMAIL] Error during verification:", e);
     return NextResponse.redirect(new URL("/login?verification=error", req.url));
   }
 }

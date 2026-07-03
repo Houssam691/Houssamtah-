@@ -29,7 +29,12 @@ export async function POST(req: Request) {
     const token = await createSession(user.id);
     const url = new URL(req.url);
     const safeUser = sanitizeUser(user);
-    const response = NextResponse.json({ user: safeUser, email_verified: !!user.email_verified });
+    const emailVerified = !!user.email_verified;
+    const response = NextResponse.json({
+      user: safeUser,
+      email_verified: emailVerified,
+      requires_verification: !emailVerified,
+    });
     response.cookies.set("session_token", token, {
       httpOnly: true,
       sameSite: "strict",

@@ -59,11 +59,15 @@ export async function POST(req: Request) {
     const { raw, hash } = generateVerificationToken();
     await invalidateOldVerificationTokens(user.id);
     await storeVerificationToken(user.id, hash);
-    await sendVerificationEmail({ to: user.email, firstName: user.first_name, token: raw });
+    const emailSent = await sendVerificationEmail({ to: user.email, firstName: user.first_name, token: raw });
+    if (!emailSent) {
+      console.error("[REGISTER] Failed to send verification email to", user.email, "- account created but email not sent. Check RESEND_API_KEY and RESEND_FROM_EMAIL in env.");
+    }
 
     const token = await createSession(user.id);
     const url = new URL(req.url);
-    const response = NextResponse.json({ user: sanitizeUser(user) }, { status: 201 });
+    const safeUser = sanitizeUser(user);
+    const response = NextResponse.json({ user: safeUser, email_verified: false, email_sent: emailSent }, { status: 201 });
     response.cookies.set("session_token", token, {
       httpOnly: true,
       sameSite: "strict",

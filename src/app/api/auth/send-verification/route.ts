@@ -27,10 +27,16 @@ export async function POST(req: Request) {
     const { raw, hash } = generateVerificationToken();
     await invalidateOldVerificationTokens(user.id);
     await storeVerificationToken(user.id, hash);
-    await sendVerificationEmail({ to: user.email, firstName: user.first_name, token: raw });
+    const emailSent = await sendVerificationEmail({ to: user.email, firstName: user.first_name, token: raw });
+
+    if (!emailSent) {
+      console.error("[SEND-VERIFICATION] Failed to send email to", user.email);
+      return NextResponse.json({ error: "Failed to send verification email. Check server logs." }, { status: 500 });
+    }
 
     return NextResponse.json({ ok: true });
-  } catch {
+  } catch (e) {
+    console.error("[SEND-VERIFICATION] Error:", e);
     return NextResponse.json({ error: "Failed to send verification email" }, { status: 500 });
   }
 }
