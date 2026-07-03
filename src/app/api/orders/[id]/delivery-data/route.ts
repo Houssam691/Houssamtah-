@@ -35,9 +35,8 @@ export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> 
   let decrypted: string;
   try {
     decrypted = decryptDeliveryData(order.delivery_data);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Decryption failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Failed to decrypt delivery data" }, { status: 500 });
   }
 
   await logAuditEvent({

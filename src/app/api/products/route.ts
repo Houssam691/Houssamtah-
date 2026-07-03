@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { readProducts, createProduct, type ProductCategory } from "@/lib/products";
 import { getSessionUser } from "@/lib/auth";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
@@ -15,6 +17,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user || (user.role !== "admin" && user.role !== "seller")) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -24,13 +29,26 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
+
+  if (typeof body.price !== "number" || body.price < 0 || !Number.isFinite(body.price)) {
+    return NextResponse.json({ error: "Invalid price" }, { status: 400 });
+  }
+
+  if (!body.title || typeof body.title !== "string" || !body.title.trim()) {
+    return NextResponse.json({ error: "Product title is required" }, { status: 400 });
+  }
+
+  if (!body.category || typeof body.category !== "string") {
+    return NextResponse.json({ error: "Product category is required" }, { status: 400 });
+  }
+
   const product = await createProduct({
     seller_id: user.role === "seller" ? user.id : (body.seller_id || undefined),
     product_type: body.product_type || "account",
     category: body.category || "pubg",
-    title: body.title || "منتج جديد",
-    description: body.description || "",
-    price: typeof body.price === "number" ? body.price : 0,
+    title: sanitizeText(body.title || "منتج جديد", MAX_LENGTHS.TITLE),
+    description: sanitizeText(body.description || "", MAX_LENGTHS.DESCRIPTION),
+    price: body.price,
     images: body.images || (body.image ? [body.image] : []),
     currency: body.currency || "DZD",
   });

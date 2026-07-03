@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionUser, createNotification } from "@/lib/auth";
 import { createReview, getSellerStats, getSellerReviews, getAllReviews } from "@/lib/reviews";
 import { getOrderById } from "@/lib/orders";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
@@ -44,6 +46,9 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -66,7 +71,7 @@ export async function POST(req: Request) {
       buyer_id: user.id,
       seller_id: order.seller_id,
       rating,
-      comment,
+      comment: sanitizeText(comment || "", MAX_LENGTHS.COMMENT),
     });
 
     await createNotification({
@@ -78,7 +83,7 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json(review, { status: 201 });
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Failed to create review" }, { status: 400 });
   }
 }

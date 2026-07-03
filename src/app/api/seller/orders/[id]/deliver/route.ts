@@ -3,12 +3,13 @@ import { getSessionUser, logAuditEvent, getSettings, createNotification } from "
 import { getOrderById, updateOrderStatus } from "@/lib/orders";
 import { encryptDeliveryData } from "@/lib/crypto";
 import { updateProduct } from "@/lib/products";
-import { getDb } from "@/lib/db";
-import crypto from "crypto";
+import { csrfGuard } from "@/lib/csrf";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
   const user = await getSessionUser();
   if (!user || user.role !== "seller" || user.seller_status !== "approved") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -38,9 +39,8 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   let encryptedData: string;
   try {
     encryptedData = encryptDeliveryData(rawDeliveryData);
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Encryption failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Encryption failed" }, { status: 500 });
   }
 
   const settings = await getSettings();
@@ -57,12 +57,6 @@ export async function POST(req: Request, ctx: { params: Promise<{ id: string }> 
   if (order.product_id) {
     await updateProduct(order.product_id, { status: "sold" });
   }
-
-  const db = await getDb();
-  await db.queryOne(
-    "INSERT INTO order_chat_messages (id, order_id, sender_id, text, created_at) VALUES ($1, $2, $3, $4, $5) RETURNING id",
-    [`msg-${crypto.randomUUID()}`, id, user.id, rawDeliveryData, now.toISOString()]
-  );
 
   await logAuditEvent({
     event_type: "order.delivered",

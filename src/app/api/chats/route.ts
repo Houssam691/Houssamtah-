@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { generateChatId, generateMessageId, readChatsResult, writeChats } from "@/lib/chats";
 import { readProducts } from "@/lib/products";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
@@ -21,6 +23,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const body = (await req.json().catch(() => null)) as null | {
     productId?: string;
     customerName?: string;
@@ -73,14 +78,14 @@ export async function POST(req: Request) {
     productId: body.productId,
     productTitle,
     product,
-    customerName: body.customerName,
+    customerName: sanitizeText(body.customerName, MAX_LENGTHS.FIRST_NAME),
     whatsapp: body.whatsapp,
     createdAt: now,
     messages: [
       {
         id: msgId,
         from: "customer",
-        text: body.text,
+        text: sanitizeText(body.text, MAX_LENGTHS.MESSAGE),
         createdAt: now,
       },
     ],

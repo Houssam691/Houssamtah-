@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { isAdminAuthenticated } from "@/lib/adminAuth";
 import { readChatsResult, writeChats } from "@/lib/chats";
+import { csrfGuard } from "@/lib/csrf";
 
 export const runtime = "nodejs";
 
-export async function DELETE(_req: Request, ctx: { params: Promise<{ id: string; messageId: string }> }) {
+export async function DELETE(req: Request, ctx: { params: Promise<{ id: string; messageId: string }> }) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
   if (!(await isAdminAuthenticated())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

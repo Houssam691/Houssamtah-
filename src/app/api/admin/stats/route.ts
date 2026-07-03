@@ -24,18 +24,24 @@ export async function GET(req: Request) {
   const totalCommissions = await db.queryOne<{ val: number }>("SELECT COALESCE(SUM(tax_amount),0) as val FROM orders WHERE status IN ('delivered','seller_paid')");
   const heldFunds = await db.queryOne<{ val: number }>("SELECT COALESCE(SUM(total_amount),0) as val FROM orders WHERE status = 'delivered'");
 
-  let dateFilter = "";
-  if (period === "today") dateFilter = "DATE(created_at) = CURRENT_DATE";
-  else if (period === "week") dateFilter = "created_at >= NOW() - INTERVAL '7 days'";
-  else if (period === "month") dateFilter = "created_at >= NOW() - INTERVAL '30 days'";
-  else if (period === "year") dateFilter = "created_at >= NOW() - INTERVAL '1 year'";
-  else if (period === "all") dateFilter = "1=1";
+  const allowedPeriods = ["today", "week", "month", "year", "all"] as const;
+  const safePeriod = allowedPeriods.includes(period as typeof allowedPeriods[number]) ? period : "today";
+
+  const periodFilters: Record<string, string> = {
+    today: "DATE(created_at) = CURRENT_DATE",
+    week: "created_at >= NOW() - INTERVAL '7 days'",
+    month: "created_at >= NOW() - INTERVAL '30 days'",
+    year: "created_at >= NOW() - INTERVAL '1 year'",
+    all: "1=1",
+  };
+
+  const dateFilter = periodFilters[safePeriod] || "1=1";
 
   const periodSales = await db.queryOne<{ val: number }>(
-    `SELECT COALESCE(SUM(product_price),0) as val FROM orders WHERE status IN ('delivered','seller_paid') AND ${dateFilter || "1=1"}`
+    `SELECT COALESCE(SUM(product_price),0) as val FROM orders WHERE status IN ('delivered','seller_paid') AND ${dateFilter}`
   );
   const periodOrders = await db.queryOne<{ val: number }>(
-    `SELECT COUNT(*)::int as val FROM orders WHERE ${dateFilter || "1=1"}`
+    `SELECT COUNT(*)::int as val FROM orders WHERE ${dateFilter}`
   );
 
   const dailySales = await db.query(`

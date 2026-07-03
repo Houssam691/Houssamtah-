@@ -64,11 +64,9 @@ export default function AdminSellersPage() {
                   }`}>
                     {s.seller_status === "approved" ? "مقبول" : s.seller_status === "rejected" ? "مرفوض" : "قيد المراجعة"}
                   </span>
-                  {s.id_file_path && (
-                    <a href={s.id_file_path} target="_blank" className="text-xs font-bold text-indigo-300 hover:text-indigo-200">
-                      عرض بطاقة الهوية
-                    </a>
-                  )}
+                  <a href={`/api/admin/id-document/${s.id}`} target="_blank" className="text-xs font-bold text-indigo-300 hover:text-indigo-200">
+                    عرض بطاقة الهوية
+                  </a>
                 </div>
               </div>
 

@@ -1,10 +1,13 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, logAuditEvent, createNotification } from "@/lib/auth";
 import { getOrderById, updateOrderStatus } from "@/lib/orders";
+import { csrfGuard } from "@/lib/csrf";
 
 export const runtime = "nodejs";
 
 export async function POST(req: Request, ctx: { params: Promise<{ id: string }> }) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
   const user = await getSessionUser();
   if (!user || user.role !== "seller" || user.seller_status !== "approved") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

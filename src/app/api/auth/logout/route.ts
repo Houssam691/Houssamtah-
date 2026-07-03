@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { getDb } from "@/lib/db";
+import { csrfGuard } from "@/lib/csrf";
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   try {
     const cookieStore = await cookies();
     const token = cookieStore.get("session_token")?.value;
@@ -16,7 +20,7 @@ export async function POST(req: Request) {
     const response = NextResponse.json({ ok: true });
     response.cookies.set("session_token", "", {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: url.protocol === "https:",
       path: "/",
       maxAge: 0,

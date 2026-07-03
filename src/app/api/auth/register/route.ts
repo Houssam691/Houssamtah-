@@ -1,8 +1,21 @@
 import { NextResponse } from "next/server";
-import { registerUser, createSession, sanitizeUser } from "@/lib/auth";
+import { registerUser, createSession, sanitizeUser, generateVerificationToken, storeVerificationToken, invalidateOldVerificationTokens } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { checkRateLimit, getRateLimitKey } from "@/lib/rateLimit";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
+import { sendVerificationEmail } from "@/lib/email";
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
+  const rlKey = getRateLimitKey(req, "register");
+  const rl = await checkRateLimit(rlKey, 5, 60000);
+  if (!rl.allowed) {
+    return NextResponse.json({ error: "Too many registration attempts. Try again later." }, { status: 429 });
+  }
+
   try {
     const body = await req.json();
     const { email, password, first_name, last_name, role, date_of_birth, id_file_path } = body;
@@ -15,8 +28,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
     }
 
-    if (password.length < 6) {
-      return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    }
+
+    if (password.length > MAX_LENGTHS.PASSWORD) {
+      return NextResponse.json({ error: "Password is too long" }, { status: 400 });
     }
 
     if (role === "seller" && !id_file_path) {
@@ -30,28 +47,32 @@ export async function POST(req: Request) {
     }
 
     const user = await registerUser({
-      email,
+      email: email.trim().toLowerCase(),
       password,
-      first_name,
-      last_name,
+      first_name: sanitizeText(first_name, MAX_LENGTHS.FIRST_NAME),
+      last_name: sanitizeText(last_name, MAX_LENGTHS.LAST_NAME),
       role,
-      date_of_birth,
+      date_of_birth: date_of_birth || "",
       id_file_path,
     });
+
+    const { raw, hash } = generateVerificationToken();
+    await invalidateOldVerificationTokens(user.id);
+    await storeVerificationToken(user.id, hash);
+    await sendVerificationEmail({ to: user.email, firstName: user.first_name, token: raw });
 
     const token = await createSession(user.id);
     const url = new URL(req.url);
     const response = NextResponse.json({ user: sanitizeUser(user) }, { status: 201 });
     response.cookies.set("session_token", token, {
       httpOnly: true,
-      sameSite: "lax",
+      sameSite: "strict",
       secure: url.protocol === "https:",
       path: "/",
       maxAge: 7 * 24 * 60 * 60,
     });
     return response;
-  } catch (e) {
-    const msg = e instanceof Error ? e.message : "Registration failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+  } catch {
+    return NextResponse.json({ error: "Registration failed" }, { status: 500 });
   }
 }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getSessionUser, logAuditEvent, generateId, createNotification } from "@/lib/auth";
 import { getDb } from "@/lib/db";
 import { getOrderById, updateOrderStatus } from "@/lib/orders";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
@@ -40,6 +42,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -78,7 +83,7 @@ export async function POST(req: Request) {
   await db.queryOne(`
     INSERT INTO disputes (id, order_id, buyer_id, seller_id, reason, evidence_files)
     VALUES ($1, $2, $3, $4, $5, $6) RETURNING id
-  `, [id, order_id, order.buyer_id, order.seller_id, reason, JSON.stringify([])]);
+  `, [id, order_id, order.buyer_id, order.seller_id, sanitizeText(reason, MAX_LENGTHS.REASON), JSON.stringify([])]);
 
   await updateOrderStatus(order_id, "disputed");
 

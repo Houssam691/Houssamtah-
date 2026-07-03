@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, createNotification as createNotif } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { csrfGuard } from "@/lib/csrf";
+import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
@@ -27,6 +29,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -35,19 +40,33 @@ export async function POST(req: Request) {
 
   if (!message) return NextResponse.json({ error: "Message is required" }, { status: 400 });
 
+  const cleanMessage = sanitizeText(message, MAX_LENGTHS.NOTIF_MESSAGE);
+  const cleanTitle = sanitizeText(title || "", MAX_LENGTHS.NOTIF_TITLE);
+
+  if (userId && userId !== user.id && user.role !== "admin") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   let targetUserId = userId || user.id;
   if (targetUserId === "__buyer__" && orderId) {
     const db = await getDb();
-    const order = await db.queryOne<{ buyer_id: string }>("SELECT buyer_id FROM orders WHERE id = $1", [orderId]);
+    const order = await db.queryOne<{ buyer_id: string }>(
+      "SELECT buyer_id FROM orders WHERE id = $1 AND (buyer_id = $2 OR seller_id = $2)",
+      [orderId, user.id]
+    );
     if (order) targetUserId = order.buyer_id;
+    else return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 
-  await createNotif({ userId: targetUserId, orderId: orderId || undefined, type: type || "info", title: title || "", message, icon: icon || "", link: link || "" });
+  await createNotif({ userId: targetUserId, orderId: orderId || undefined, type: type || "info", title: cleanTitle, message: cleanMessage, icon: icon || "", link: link || "" });
 
   return NextResponse.json({ ok: true });
 }
 
 export async function PATCH(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
@@ -65,6 +84,9 @@ export async function PATCH(req: Request) {
 }
 
 export async function DELETE(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 

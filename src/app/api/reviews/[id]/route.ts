@@ -21,8 +21,8 @@ export async function PATCH(req: Request, ctx: { params: Promise<{ id: string }>
   try {
     const review = await updateReview(id, user.id, body.rating, body.comment);
     return NextResponse.json(review);
-  } catch (e: any) {
-    return NextResponse.json({ error: e.message }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "Failed to update review" }, { status: 400 });
   }
 }
 

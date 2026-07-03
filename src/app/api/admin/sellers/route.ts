@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, logAuditEvent } from "@/lib/auth";
 import { getDb } from "@/lib/db";
+import { csrfGuard } from "@/lib/csrf";
 
 export const runtime = "nodejs";
 
@@ -12,7 +13,7 @@ export async function GET() {
 
   const db = await getDb();
   const sellers = await db.query(`
-    SELECT id, email, first_name, last_name, seller_status, id_file_path, created_at
+    SELECT id, email, first_name, last_name, seller_status, created_at
     FROM users WHERE role = 'seller' ORDER BY created_at DESC
   `);
 
@@ -20,6 +21,9 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
+  const csrfResponse = csrfGuard(req);
+  if (csrfResponse) return csrfResponse;
+
   const user = await getSessionUser();
   if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });

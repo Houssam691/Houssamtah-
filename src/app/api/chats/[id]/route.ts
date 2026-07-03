@@ -10,6 +10,10 @@ async function getChatId(ctx: { params: unknown }) {
 }
 
 export async function GET(_req: Request, ctx: { params: Promise<{ id: string }> }) {
+  if (!(await isAdminAuthenticated())) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const id = await getChatId(ctx);
   const result = await readChatsResult();
   if (!result.ok) {
