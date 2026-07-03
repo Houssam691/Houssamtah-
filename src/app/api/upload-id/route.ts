@@ -3,13 +3,22 @@ import { put } from "@vercel/blob";
 
 export const runtime = "nodejs";
 
-const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "application/pdf"];
-const MAX_SIZE = 10 * 1024 * 1024;
+const ALLOWED_TYPES = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+
+const MAX_SIZE = 10 * 1024 * 1024; // 10MB
 
 export async function POST(req: Request) {
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
     console.error("BLOB_READ_WRITE_TOKEN is not set");
-    return NextResponse.json({ error: "Blob storage not configured" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Blob storage not configured" },
+      { status: 500 }
+    );
   }
 
   try {
@@ -17,31 +26,54 @@ export async function POST(req: Request) {
     const file = formData.get("file");
 
     if (!(file instanceof File)) {
-      return NextResponse.json({ error: "Missing file" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Missing file" },
+        { status: 400 }
+      );
     }
 
     if (!ALLOWED_TYPES.includes(file.type)) {
-      return NextResponse.json({ error: "Only JPEG, PNG, WebP, and PDF files are allowed" }, { status: 400 });
+      return NextResponse.json(
+        {
+          error:
+            "Only JPEG, PNG, WebP, and PDF files are allowed",
+        },
+        { status: 400 }
+      );
     }
 
     if (file.size > MAX_SIZE) {
-      return NextResponse.json({ error: "File too large (max 10MB)" }, { status: 400 });
+      return NextResponse.json(
+        { error: "File too large (max 10MB)" },
+        { status: 400 }
+      );
     }
 
     const ext = file.name.split(".").pop() || "jpg";
-    const safeName = `id_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const buf = Buffer.from(await file.arrayBuffer());
+    const safeName = `id_${Date.now()}_${Math.random()
+      .toString(36)
+      .slice(2, 8)}.${ext}`;
 
-    const blob = await put(safeName, buf, {
-      access: "public",
+    const buffer = Buffer.from(await file.arrayBuffer());
+
+    const blob = await put(safeName, buffer, {
+      access: "private", // ✅ تم التعديل من public إلى private
       contentType: file.type,
     });
 
-    return NextResponse.json({ url: blob.url });
+    return NextResponse.json({
+      success: true,
+      url: blob.url,
+    });
   } catch (e) {
     console.error("Upload error:", e);
-    const msg = e instanceof Error ? e.message : "Upload failed";
-    return NextResponse.json({ error: msg }, { status: 500 });
+
+    return NextResponse.json(
+      {
+        error: e instanceof Error ? e.message : "Upload failed",
+      },
+      { status: 500 }
+    );
   }
 }
