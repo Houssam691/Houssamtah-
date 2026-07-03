@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser } from "@/lib/auth";
 import { put } from "@vercel/blob";
-import crypto from "crypto";
 
 export const runtime = "nodejs";
 
@@ -15,6 +14,7 @@ export async function POST(req: Request) {
   }
 
   if (!process.env.BLOB_READ_WRITE_TOKEN) {
+    console.error("BLOB_READ_WRITE_TOKEN is not set");
     return NextResponse.json({ error: "Blob storage not configured" }, { status: 500 });
   }
 
@@ -35,14 +35,18 @@ export async function POST(req: Request) {
     }
 
     const ext = file.name.split(".").pop() || "jpg";
-    const safeName = `proof_${crypto.randomUUID()}.${ext}`;
+    const safeName = `proof_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-    const blob = await put(safeName, file, {
+    const buf = Buffer.from(await file.arrayBuffer());
+
+    const blob = await put(safeName, buf, {
       access: "public",
+      contentType: file.type,
     });
 
     return NextResponse.json({ url: blob.url });
   } catch (e) {
+    console.error("Upload error:", e);
     const msg = e instanceof Error ? e.message : "Upload failed";
     return NextResponse.json({ error: msg }, { status: 500 });
   }
