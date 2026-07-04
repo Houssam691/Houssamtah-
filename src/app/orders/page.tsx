@@ -67,7 +67,7 @@ export default function OrdersPage() {
   }
 
   return (
-    <div>
+    <div className="page-transition">
       <section className="glass rounded-3xl p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <div>

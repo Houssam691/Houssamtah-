@@ -6,6 +6,7 @@ import { copyToClipboard } from "@/lib/clipboard";
 import { downloadCSV } from "@/lib/export";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
+import SensitiveToggle from "@/components/SensitiveToggle";
 
 type Order = {
   id: string;
@@ -307,7 +308,7 @@ export default function AdminOrdersPage() {
               <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
                 <div className="text-xs font-bold text-white/50">الكود السري</div>
                 <div className="mt-1 text-2xl font-black tracking-widest text-emerald-300" dir="ltr">
-                  {order.order_secret_code}
+                  <SensitiveToggle>{order.order_secret_code}</SensitiveToggle>
                 </div>
               </div>
             )}

@@ -36,7 +36,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg page-transition">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">تسجيل دخول الأدمن</h1>
         <p className="subtitle">أدخل البريد الإلكتروني وكلمة المرور للوصول إلى لوحة التحكم.</p>
@@ -66,7 +66,7 @@ export default function AdminLoginPage() {
 
           {error ? <div className="text-sm font-bold text-rose-300">{error}</div> : null}
 
-          <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
+          <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading}>
             {loading ? "جاري تسجيل الدخول..." : "دخول"}
           </button>
         </form>

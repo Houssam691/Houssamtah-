@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
+import SensitiveToggle from "@/components/SensitiveToggle";
 
 type UserDetail = {
   id: string;
@@ -77,7 +78,9 @@ export default function AdminUserDetailPage() {
             <div>
               <h1 className="title">{user.first_name} {user.last_name}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-sm text-white/60">{user.email}</span>
+                <span className="text-sm text-white/60">
+                  <SensitiveToggle>{user.email}</SensitiveToggle>
+                </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                   user.role === "admin" ? "bg-rose-500/20 text-rose-300" :
                   user.role === "seller" ? "bg-emerald-500/20 text-emerald-300" :

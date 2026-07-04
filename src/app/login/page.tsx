@@ -125,7 +125,7 @@ function LoginForm() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg page-transition">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">تسجيل دخول</h1>
         <p className="subtitle">أدخل بريدك الإلكتروني وكلمة المرور.</p>
@@ -151,7 +151,7 @@ function LoginForm() {
               </div>
             ) : null}
             <button
-              className="btn-secondary h-12 w-full"
+              className={`btn-secondary h-12 w-full ${resending ? "loading" : ""}`}
               onClick={handleResend}
               disabled={resending}
             >
@@ -184,7 +184,7 @@ function LoginForm() {
                 إذا كان البريد الإلكتروني مسجلاً، ستتلقى رابط إعادة التعيين.
               </div>
             ) : null}
-            <button className="btn-primary h-12 w-full" type="submit" disabled={forgotLoading}>
+            <button className={`btn-primary h-12 w-full ${forgotLoading ? "loading" : ""}`} type="submit" disabled={forgotLoading}>
               {forgotLoading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
             </button>
             <button
@@ -235,7 +235,7 @@ function LoginForm() {
               </div>
             ) : null}
 
-            <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
+            <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading}>
               {loading ? "جاري تسجيل الدخول..." : "دخول"}
             </button>
 

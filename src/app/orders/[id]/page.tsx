@@ -8,6 +8,7 @@ import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import OrderTrust from "@/components/OrderTrust";
 import DisputeClarity from "@/components/DisputeClarity";
+import SensitiveToggle from "@/components/SensitiveToggle";
 
 type Order = {
   id: string;
@@ -258,7 +259,7 @@ export default function OrderDetailPage() {
   const st = statusLabels[order.status] || { label: order.status, color: "text-white" };
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl page-transition">
       <section className="glass rounded-3xl p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <div>
@@ -311,7 +312,7 @@ export default function OrderDetailPage() {
             <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
               <div className="text-xs font-bold text-white/50">الكود السري (أرسله للبائع)</div>
               <div className="mt-1 text-2xl font-black tracking-widest text-emerald-300" dir="ltr">
-                {order.order_secret_code}
+                <SensitiveToggle>{order.order_secret_code}</SensitiveToggle>
               </div>
               <button className="btn-primary mt-3" onClick={copyCode}>
                 {copied ? "تم النسخ!" : "نسخ الكود"}

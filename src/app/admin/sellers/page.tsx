@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import { downloadCSV } from "@/lib/export";
+import SensitiveToggle from "@/components/SensitiveToggle";
 
 type Seller = {
   id: string;
@@ -155,7 +156,7 @@ export default function AdminVerificationCenter() {
                         {status === "approved" ? "✅ مقبول" : status === "rejected" ? "❌ مرفوض" : "⏳ بانتظار المراجعة"}
                       </span>
                     </div>
-                    <div className="mt-1 text-sm text-white/60">{seller.email}</div>
+                    <div className="mt-1 text-sm text-white/60"><SensitiveToggle>{seller.email}</SensitiveToggle></div>
                     <div className="mt-1 text-xs text-white/40">
                       تاريخ التسجيل: {new Date(seller.created_at).toLocaleString("ar-DZ")}
                     </div>
