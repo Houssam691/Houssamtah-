@@ -103,6 +103,19 @@ async function initializeSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
 
+    CREATE TABLE IF NOT EXISTS reports (
+      id TEXT PRIMARY KEY,
+      reporter_id TEXT NOT NULL REFERENCES users(id),
+      reported_user_id TEXT REFERENCES users(id),
+      report_type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      evidence TEXT DEFAULT '',
+      status TEXT NOT NULL DEFAULT 'open' CHECK(status IN ('open','resolved','dismissed')),
+      resolution_note TEXT DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
     CREATE TABLE IF NOT EXISTS products (
       id TEXT PRIMARY KEY,
       seller_id TEXT REFERENCES users(id),
@@ -236,6 +249,14 @@ async function initializeSchema(): Promise<void> {
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email_verified') THEN
           ALTER TABLE users ADD COLUMN email_verified SMALLINT NOT NULL DEFAULT 0;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='attributes') THEN
+          ALTER TABLE products ADD COLUMN attributes JSONB DEFAULT '{}'::jsonb;
         END IF;
       END $$;
     `);

@@ -16,6 +16,7 @@ export type Product = {
   images?: string[];
   currency?: string;
   status?: "active" | "inactive" | "sold";
+  attributes?: Record<string, unknown>;
   created_at?: string;
 };
 
@@ -35,6 +36,17 @@ function rowToProduct(row: Record<string, unknown>): Product {
     }
   })();
 
+  const attributes = (() => {
+    try {
+      const raw = row.attributes;
+      if (typeof raw === "string") return JSON.parse(raw);
+      if (raw && typeof raw === "object") return raw as Record<string, unknown>;
+      return {};
+    } catch {
+      return {};
+    }
+  })();
+
   return {
     id: row.id as string,
     seller_id: (row.seller_id as string) || undefined,
@@ -46,6 +58,7 @@ function rowToProduct(row: Record<string, unknown>): Product {
     description: row.description as string || "",
     image: images[0] || "/uploads/placeholder.svg",
     images,
+    attributes,
     currency: (row.currency as string) || "DZD",
     status: (row.status as "active" | "inactive" | "sold") || "active",
     created_at: row.created_at as string,
@@ -140,6 +153,7 @@ export async function createProduct(params: {
   price: number;
   images?: string[];
   currency?: string;
+  attributes?: Record<string, unknown>;
 }): Promise<Product> {
   const { queryOne } = await getDb();
   const id = `prod-${crypto.randomBytes(8).toString("hex")}`;
@@ -148,8 +162,8 @@ export async function createProduct(params: {
     : "";
 
   await queryOne(`
-    INSERT INTO products (id, seller_id, product_type, category, title, description, price, currency, images, product_secret_code)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+    INSERT INTO products (id, seller_id, product_type, category, title, description, price, currency, images, product_secret_code, attributes)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
   `, [
     id,
     params.seller_id || null,
@@ -161,13 +175,14 @@ export async function createProduct(params: {
     params.currency || "DZD",
     JSON.stringify(params.images || []),
     secretCode,
+    JSON.stringify(params.attributes || {}),
   ]);
 
   const row = await queryOne<Record<string, unknown>>("SELECT * FROM products WHERE id = $1", [id]);
   return rowToProduct(row!);
 }
 
-export async function updateProduct(id: string, updates: Partial<Product>): Promise<Product | null> {
+export async function updateProduct(id: string, updates: Partial<Product> & { attributes?: Record<string, unknown> }): Promise<Product | null> {
   const { queryOne } = await getDb();
   const existing = await queryOne<Record<string, unknown>>("SELECT * FROM products WHERE id = $1", [id]);
   if (!existing) return null;
@@ -180,8 +195,9 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
       currency = COALESCE($4, currency),
       category = COALESCE($5, category),
       status = COALESCE($6, status),
-      images = COALESCE($7, images)
-    WHERE id = $8
+      images = COALESCE($7, images),
+      attributes = COALESCE($8, attributes)
+    WHERE id = $9
   `, [
     updates.title || null,
     updates.description || null,
@@ -190,6 +206,7 @@ export async function updateProduct(id: string, updates: Partial<Product>): Prom
     updates.category || null,
     updates.status || null,
     updates.images ? JSON.stringify(updates.images) : null,
+    updates.attributes ? JSON.stringify(updates.attributes) : null,
     id,
   ]);
 

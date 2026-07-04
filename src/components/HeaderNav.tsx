@@ -35,7 +35,7 @@ export default function HeaderNav() {
       {open && (
         <>
           <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute left-4 right-4 top-full z-50 mt-2 rounded-3xl border border-white/10 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl md:left-auto md:w-56">
+          <div className="absolute left-4 right-4 top-full z-50 mt-2 rounded-3xl border border-white/10 bg-zinc-950/95 p-3 shadow-2xl backdrop-blur-xl md:left-auto md:w-56 animate-scale-in">
             <div className="grid gap-1">
               <Link href="/pubg" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
                 PUBG
