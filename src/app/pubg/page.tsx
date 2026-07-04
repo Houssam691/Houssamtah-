@@ -26,6 +26,11 @@ export default async function PubgPage() {
             </div>
             <div className="flex flex-1 flex-col p-5">
               <div className="text-lg font-black">{p.title}</div>
+              {p.seller_name && (
+                <a href={`/profile/${encodeURIComponent(p.seller_id!)}`} className="mt-1 text-xs font-bold text-indigo-300 hover:text-indigo-200">
+                  {p.seller_name}
+                </a>
+              )}
               <div className="mt-2 flex-1 break-words text-sm leading-7 text-white/70">{p.description}</div>
               <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="text-xl font-black text-white">{p.price} دج</div>

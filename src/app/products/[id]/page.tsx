@@ -42,6 +42,18 @@ export default async function ProductDetailPage(props: { params: Promise<{ id: s
             </div>
           </div>
 
+          {product.seller_name && (
+            <div className="mt-6">
+              <h2 className="text-sm font-black text-white/80">البائع</h2>
+              <a href={`/profile/${encodeURIComponent(product.seller_id!)}`} className="mt-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-emerald-400 text-sm font-black text-white">
+                  {product.seller_name.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-bold text-white">{product.seller_name}</span>
+              </a>
+            </div>
+          )}
+
           {stats && stats.count > 0 && (
             <div className="mt-6">
               <h2 className="text-sm font-black text-white/80">تقييمات البائع</h2>
