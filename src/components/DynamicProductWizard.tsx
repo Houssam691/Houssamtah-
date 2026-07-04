@@ -517,4 +517,4 @@ export default function DynamicProductWizard({ onComplete }: Props) {
       )}
     </div>
   );
-                    }
+}
