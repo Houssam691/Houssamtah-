@@ -249,7 +249,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
   const publishBtnCls = publishBtn.loading ? "loading" : publishBtn.success ? "success" : publishBtn.error ? "error" : "";
 
   return (
-    <div className="glass rounded-2xl p-5">
+    <div className="glass rounded-2xl p-5 flex min-h-[75vh] flex-col md:min-h-[70vh]">
       <StepIndicator current={step} total={STEPS.length} />
 
       <div className="mt-2 flex items-center justify-between">
@@ -259,7 +259,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         <span className="text-xs font-bold text-indigo-300">{STEPS[step]}</span>
       </div>
 
-      <div className="mt-4 min-h-[200px] md:min-h-[260px]">
+      <div className="mt-4 flex-1 min-h-[200px] md:min-h-[260px]">
         {step === 0 && (
           <div className="grid gap-3 animate-slide-up-fade">
             <h2 className="text-base font-black">اختر نوع المنتج</h2>
@@ -517,4 +517,4 @@ export default function DynamicProductWizard({ onComplete }: Props) {
       )}
     </div>
   );
-}
+                    }
