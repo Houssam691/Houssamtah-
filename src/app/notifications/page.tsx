@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
+import EmptyState from "@/components/EmptyState";
 
 type Notification = {
   id: string;
@@ -79,13 +80,32 @@ export default function NotificationsPage() {
     );
   }
 
+  if (notifications.length === 0) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <h1 className="title">الإشعارات</h1>
+          <p className="subtitle">ليس لديك أي إشعارات جديدة.</p>
+        </section>
+        <EmptyState
+          icon="🔔"
+          title="لا توجد إشعارات"
+          description="عندما يصلك إشعار جديد، سيظهر هنا."
+          action
+          onAction={() => router.push("/")}
+          actionLabel="العودة للتسوق"
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl page-transition">
       <section className="glass rounded-3xl p-6 md:p-8">
         <div className="flex items-center justify-between gap-4">
           <div>
             <h1 className="title">الإشعارات</h1>
-            <p className="subtitle">جميع الإشعارات المتعلقة بحسابك</p>
+            <p className="subtitle">{notifications.filter((n) => !n.read).length} غير مقروءة</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <button className="btn-secondary" onClick={markAllRead}>تحديد الكل مقروء</button>
@@ -96,20 +116,32 @@ export default function NotificationsPage() {
       </section>
 
       <div className="mt-6 grid gap-3">
-        {notifications.length === 0 && <div className="glass rounded-3xl p-6 text-center text-white/70">لا توجد إشعارات</div>}
         {notifications.map((n) => (
-          <Link key={n.id} href={n.link || (n.order_id ? `/orders/${n.order_id}` : "#")} className={`glass rounded-3xl p-5 transition hover:bg-white/[0.07] group ${n.read ? "" : "border-r-2 border-indigo-400"}`}>
+          <Link
+            key={n.id}
+            href={n.link || (n.order_id ? `/orders/${n.order_id}` : "#")}
+            className={`glass rounded-3xl p-5 transition hover:bg-white/[0.07] group ${n.read ? "" : "border-r-2 border-indigo-400"}`}
+          >
             <div className="flex items-start justify-between gap-4">
               <div className="flex items-start gap-3 min-w-0 flex-1">
-                <span className="text-2xl">{n.icon || icons[n.type] || "🔔"}</span>
-                <div>
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-white/5 text-xl">
+                  {n.icon || icons[n.type] || "🔔"}
+                </span>
+                <div className="min-w-0 flex-1">
                   {n.title && <div className="font-black text-white">{n.title}</div>}
-                  <div className="text-white/90">{n.message}</div>
-                  <div className="mt-1 text-xs text-white/50">{new Date(n.created_at).toLocaleString("ar-DZ")}</div>
+                  <div className="text-sm text-white/80">{n.message}</div>
+                  <div className="mt-2 flex items-center gap-3">
+                    <span className="text-xs text-white/50">{new Date(n.created_at).toLocaleString("ar-DZ")}</span>
+                    {n.order_id && (
+                      <span className="rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-bold text-indigo-300">
+                        عرض الطلب ←
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
               <div className="flex shrink-0 items-start gap-2">
-                {!n.read && <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs font-bold text-indigo-300">جديد</span>}
+                {!n.read && <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs font-bold text-indigo-300 animate-fade-in">جديد</span>}
                 <button className="text-white/20 hover:text-rose-400 transition text-sm" onClick={(e) => { e.preventDefault(); e.stopPropagation(); deleteNotif(n.id); }}>✕</button>
               </div>
             </div>

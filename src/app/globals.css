@@ -144,12 +144,272 @@
     }
   }
 
-  @media (prefers-reduced-motion: reduce) {
+  @keyframes fadeInUp {
+    0% {
+      opacity: 0;
+      transform: translateY(24px);
+    }
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+  }
+
+  @keyframes scaleIn {
+    0% { opacity: 0; transform: scale(0.92); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 20px rgba(99, 102, 241, 0.15); }
+    50% { box-shadow: 0 0 40px rgba(99, 102, 241, 0.30); }
+  }
+
+  @keyframes countUp {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes successPop {
+    0% { transform: scale(1); }
+    30% { transform: scale(1.08); }
+    60% { transform: scale(0.97); }
+    100% { transform: scale(1); }
+  }
+
+  @keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    15% { transform: translateX(-6px); }
+    30% { transform: translateX(6px); }
+    45% { transform: translateX(-4px); }
+    60% { transform: translateX(4px); }
+    75% { transform: translateX(-2px); }
+    90% { transform: translateX(2px); }
+  }
+
+  @keyframes loadingPulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  @keyframes quickActionsUp {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes cardLift {
+    0% { transform: translateY(0) scale(1); box-shadow: 0 10px 28px rgba(2, 6, 23, 0.28); }
+    100% { transform: translateY(-6px) scale(1.02); box-shadow: 0 24px 60px rgba(2, 6, 23, 0.35), 0 0 0 1px rgba(99, 102, 241, 0.25), 0 0 55px rgba(99, 102, 241, 0.12); }
+  }
+
+  @keyframes toastEnter {
+    0% { opacity: 0; transform: translateY(20px) scale(0.95); }
+    100% { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes toastExit {
+    0% { opacity: 1; transform: translateY(0) scale(1); }
+    100% { opacity: 0; transform: translateY(-10px) scale(0.95); }
+  }
+
+  @keyframes pageEnter {
+    0% { opacity: 0; transform: translateY(12px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideDown {
+    0% { opacity: 0; transform: translateY(-8px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fadeInScale {
+    0% { opacity: 0; transform: scale(0.96); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  .animate-fade-in-up {
+    animation: fadeInUp 0.5s ease-out forwards;
+  }
+
+  .animate-fade-in {
+    animation: fadeIn 0.4s ease-out forwards;
+  }
+
+  .animate-scale-in {
+    animation: scaleIn 0.35s ease-out forwards;
+  }
+
+  .animate-pulse-glow {
+    animation: pulseGlow 2.5s ease-in-out infinite;
+  }
+
+  .animate-success-pop {
+    animation: successPop 0.45s ease-out;
+  }
+
+  .animate-error-shake {
+    animation: errorShake 0.45s ease-out;
+  }
+
+  .animate-slide-down {
+    animation: slideDown 0.3s ease-out forwards;
+  }
+
+  .animate-fade-in-scale {
+    animation: fadeInScale 0.35s ease-out forwards;
+  }
+
+  .animate-page-enter {
+    animation: pageEnter 0.35s ease-out forwards;
+  }
+
+  .stagger-1 { animation-delay: 0.08s; }
+  .stagger-2 { animation-delay: 0.16s; }
+  .stagger-3 { animation-delay: 0.24s; }
+  .stagger-4 { animation-delay: 0.32s; }
+  .stagger-5 { animation-delay: 0.40s; }
+  .stagger-6 { animation-delay: 0.48s; }
+  .stagger-7 { animation-delay: 0.56s; }
+  .stagger-8 { animation-delay: 0.64s; }
+
+  /* Button state animations */
+  .btn-primary.loading,
+  .btn-secondary.loading,
+  button:disabled.loading {
+    animation: loadingPulse 1.2s ease-in-out infinite;
+    pointer-events: none;
+    cursor: wait;
+  }
+
+  .btn-primary.success,
+  .btn-secondary.success {
+    animation: successPop 0.45s ease-out;
+    background-color: rgb(16, 185, 129) !important;
+    border-color: transparent !important;
+  }
+
+  .btn-primary.error,
+  .btn-secondary.error {
+    animation: errorShake 0.45s ease-out;
+    background-color: rgb(239, 68, 68) !important;
+    border-color: transparent !important;
+  }
+
+  /* Product card lift on hover */
+  .product-card {
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease;
+    will-change: transform;
+  }
+
+  .product-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow:
+      0 24px 60px rgba(2, 6, 23, 0.35),
+      0 0 0 1px rgba(99, 102, 241, 0.25),
+      0 0 55px rgba(99, 102, 241, 0.12);
+  }
+
+  .product-card:hover .product-card-image img {
+    transform: scale(1.08);
+  }
+
+  .product-card .product-card-image img {
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .product-card .quick-actions {
+    opacity: 0;
+    transform: translateY(12px);
+    transition: opacity 0.25s ease, transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    pointer-events: none;
+  }
+
+  .product-card:hover .quick-actions {
+    opacity: 1;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+
+  /* Decision Card badge */
+  .decision-badge {
+    background: linear-gradient(135deg, rgba(16, 185, 129, 0.15), rgba(99, 102, 241, 0.15));
+    border: 1px solid rgba(16, 185, 129, 0.20);
+  }
+
+  @keyframes flowArrow {
+  0%, 100% { opacity: 0.3; transform: translateX(0); }
+  50% { opacity: 1; transform: translateX(4px); }
+}
+
+.animate-flow-arrow {
+  animation: flowArrow 2s ease-in-out infinite;
+}
+
+@keyframes trustPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.2); }
+  50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+}
+
+.animate-trust-pulse {
+  animation: trustPulse 2s ease-in-out infinite;
+}
+
+@keyframes slideUpFade {
+  0% { opacity: 0; transform: translateY(12px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.animate-slide-up-fade {
+  animation: slideUpFade 0.4s ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
     body::before {
       animation: none;
     }
 
     body::after {
+      animation: none;
+    }
+
+    .animate-fade-in-up,
+    .animate-fade-in,
+    .animate-scale-in,
+    .animate-pulse-glow,
+    .animate-success-pop,
+    .animate-error-shake,
+    .animate-slide-down,
+    .animate-fade-in-scale,
+    .animate-page-enter,
+    .animate-flow-arrow,
+    .animate-trust-pulse,
+    .animate-slide-up-fade {
+      animation: none;
+      opacity: 1;
+      transform: none;
+    }
+
+    .product-card:hover {
+      transform: none;
+    }
+
+    .product-card:hover .product-card-image img {
+      transform: none;
+    }
+
+    .product-card .quick-actions {
+      opacity: 1;
+      transform: none;
+      pointer-events: auto;
+    }
+
+    .btn-primary.loading,
+    .btn-secondary.loading {
       animation: none;
     }
   }
@@ -290,6 +550,35 @@
     .btn-secondary:hover {
       transform: none;
     }
+  }
+
+  .spec-card {
+    @apply rounded-2xl border border-white/10 bg-white/[0.04] p-4 transition duration-200 hover:bg-white/[0.07] hover:border-white/20;
+    transform: translateZ(0);
+  }
+
+  .spec-card:hover {
+    transform: translateY(-1px);
+  }
+
+  .spec-value {
+    @apply text-lg font-black text-white;
+  }
+
+  .spec-label {
+    @apply mt-1 text-xs font-bold text-white/50;
+  }
+
+  .page-transition {
+    animation: pageEnter 0.35s ease-out forwards;
+  }
+
+  .trust-badge {
+    @apply flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-bold transition duration-200;
+  }
+
+  .trust-badge:hover {
+    transform: translateY(-1px);
   }
 
   .title {

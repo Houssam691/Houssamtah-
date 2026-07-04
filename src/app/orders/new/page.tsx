@@ -4,6 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { copyToClipboard } from "@/lib/clipboard";
 import { useToast } from "@/components/ToastProvider";
+import SuccessAnimation from "@/components/SuccessAnimation";
+import { getGameSpec } from "@/lib/game-specs";
+import TrustBadge from "@/components/TrustBadge";
+import EscrowFlow from "@/components/EscrowFlow";
 
 function NewOrderForm() {
   const router = useRouter();
@@ -28,10 +32,7 @@ function NewOrderForm() {
     fetch("/api/auth/me")
       .then((r) => r.json())
       .then((data) => {
-        if (!data.user) {
-          router.push("/login");
-          return;
-        }
+        if (!data.user) { router.push("/login"); return; }
         setUser(data.user);
       })
       .catch(() => router.push("/login"));
@@ -78,39 +79,27 @@ function NewOrderForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-
-    if (!paymentProof) {
-      setError("يرجى رفع إثبات الدفع");
-      return;
-    }
+    if (!paymentProof) { setError("يرجى رفع إثبات الدفع"); return; }
 
     setLoading(true);
     try {
       const proofUrl = await uploadProof(paymentProof);
-
-      const orderData: any = {
-        payment_proof_file: proofUrl,
-        currency,
-      };
-
+      const orderData: any = { payment_proof_file: proofUrl, currency };
       if (product) {
         orderData.product_id = product.id;
         orderData.product_type = product.product_type;
       } else {
         orderData.product_type = "account";
       }
-
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(orderData),
       });
-
       if (!res.ok) {
         const data = await res.json().catch(() => ({ error: "فشل إنشاء الطلب" }));
         throw new Error(data.error || "فشل إنشاء الطلب");
       }
-
       const order = await res.json();
       toast("success", "تم إنشاء الطلب بنجاح.");
       setCreated(order.id);
@@ -121,67 +110,97 @@ function NewOrderForm() {
     }
   }
 
+  const taxRate = parseFloat(settings?.tax_rate || "1");
+  const totalAmount = product ? Math.round(product.price * (1 + taxRate / 100) * 100) / 100 : 0;
+
   if (created) {
     return (
       <div className="mx-auto max-w-lg pt-12">
-        <section className="glass rounded-3xl p-6 text-center md:p-10">
-          <div className="text-6xl mb-4">✅</div>
-          <h1 className="title">تم إنشاء الطلب بنجاح</h1>
-          <p className="subtitle">سيتم مراجعة إثبات الدفع من قبل الإدارة. يرجى الانتظار.</p>
-          <div className="mt-6 flex gap-3 justify-center">
-            <button className="btn-primary" onClick={() => router.push(`/orders/${created}`)}>
-              عرض الطلب
-            </button>
-            <button className="btn-secondary" onClick={() => router.push("/orders")}>
-              طلباتي
-            </button>
-          </div>
+        <section className="glass rounded-3xl p-6 md:p-10">
+          <SuccessAnimation
+            title="تم إنشاء الطلب 🎉"
+            message="سيتم مراجعة إثبات الدفع من قبل الإدارة. سنخطرك عند التحديث."
+            stats={[
+              { label: "رقم الطلب", value: created.slice(-8).toUpperCase() },
+              { label: "الحالة", value: "قيد المراجعة" },
+            ]}
+            primaryAction={() => router.push(`/orders/${created}`)}
+            primaryLabel="عرض الطلب"
+            secondaryAction={() => router.push("/orders")}
+            secondaryLabel="طلباتي"
+          />
         </section>
       </div>
     );
   }
 
+  const spec = product ? getGameSpec(product.category) : null;
+
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg page-transition">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">طلب جديد</h1>
-        <p className="subtitle">ارفع إثبات الدفع لإتمام الطلب.</p>
+        <p className="subtitle">قبل التأكيد، راجع ملخص الطلب.</p>
 
-        <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
-          {product && (
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <div className="font-black text-white">{product.title}</div>
-                  <div className="mt-1 text-sm text-white/70">{product.description}</div>
-                </div>
-                <div className="text-right">
-                  <div className="text-lg font-black text-indigo-300">
-                    {Math.round(product.price * (1 + (parseFloat(settings?.tax_rate || "1") / 100)) * 100) / 100} {product.currency}
-                  </div>
-                  <div className="text-xs text-white/50">
-                    {product.price} + {(parseFloat(settings?.tax_rate || "1"))}% ضريبة
-                  </div>
-                </div>
+        {/* Order Summary */}
+        {product && (
+          <div className="mt-6 rounded-3xl border border-indigo-400/20 bg-indigo-500/5 p-5">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="flex h-10 w-10 items-center justify-center rounded-full bg-indigo-500/20 text-lg">🛡️</span>
+              <div>
+                <div className="text-sm font-bold text-white">ملخص الطلب</div>
+                <div className="text-xs text-white/50">تمتع بالحماية الكاملة</div>
               </div>
             </div>
-          )}
 
+            <div className="space-y-3">
+              <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <span className="text-sm text-white/70">المنتج</span>
+                <span className="text-sm font-bold text-white">{product.title}</span>
+              </div>
+
+              {spec && product.attributes && (
+                <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                  <span className="text-sm text-white/70">القسم</span>
+                  <span className="text-sm font-bold text-white">{spec.name}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <span className="text-sm text-white/70">السعر</span>
+                <span className="text-sm font-bold text-white">{product.price} {product.currency}</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-white/5 px-4 py-3">
+                <span className="text-sm text-white/70">الضريبة ({taxRate}%)</span>
+                <span className="text-sm font-bold text-amber-300">+{Math.round(product.price * taxRate / 100 * 100) / 100} {product.currency}</span>
+              </div>
+
+              <div className="flex items-center justify-between rounded-xl bg-indigo-500/10 px-4 py-3 border border-indigo-400/20">
+                <span className="text-sm font-bold text-white">الإجمالي</span>
+                <span className="text-lg font-black text-indigo-300">{totalAmount} {product.currency}</span>
+              </div>
+            </div>
+
+            {/* Trust Protection */}
+            <div className="mt-4 grid grid-cols-2 gap-2">
+              <TrustBadge variant="shield" />
+              <TrustBadge variant="dispute" />
+            </div>
+          </div>
+        )}
+
+        {/* Escrow Explanation */}
+        {product && <div className="mt-4"><EscrowFlow compact /></div>}
+
+        <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
           <label className="grid gap-2">
             <span className="text-sm font-bold text-white/80">عملة الدفع</span>
             <div className="flex gap-2">
-              <button
-                type="button"
-                className={currency === "DZD" ? "btn-primary flex-1" : "btn-secondary flex-1"}
-                onClick={() => setCurrency("DZD")}
-              >
+              <button type="button" className={currency === "DZD" ? "btn-primary flex-1" : "btn-secondary flex-1"} onClick={() => setCurrency("DZD")}>
                 دينار (DZD)
               </button>
-              <button
-                type="button"
-                className={currency === "USDT" ? "btn-primary flex-1" : "btn-secondary flex-1"}
-                onClick={() => setCurrency("USDT")}
-              >
+              <button type="button" className={currency === "USDT" ? "btn-primary flex-1" : "btn-secondary flex-1"} onClick={() => setCurrency("USDT")}>
                 USDT
               </button>
             </div>
@@ -237,20 +256,10 @@ function NewOrderForm() {
               <span className="text-sm text-white/70">
                 {paymentProof ? paymentProof.name : "PDF, JPG, PNG"}
               </span>
-              <button
-                type="button"
-                className="btn-secondary text-sm"
-                onClick={() => document.getElementById("proof-input")?.click()}
-              >
+              <button type="button" className="btn-secondary text-sm" onClick={() => document.getElementById("proof-input")?.click()}>
                 تصفّح
               </button>
-              <input
-                id="proof-input"
-                type="file"
-                accept=".pdf,image/*"
-                className="hidden"
-                onChange={(e) => setPaymentProof(e.target.files?.[0] || null)}
-              />
+              <input id="proof-input" type="file" accept=".pdf,image/*" className="hidden" onChange={(e) => setPaymentProof(e.target.files?.[0] || null)} />
             </div>
             {uploading && (
               <div className="grid gap-1">
@@ -263,17 +272,14 @@ function NewOrderForm() {
           </label>
 
           {error && (
-            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
-              {error}
+            <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100 animate-error-shake">
+              <div className="font-bold">❌ خطأ</div>
+              <div className="mt-1 text-rose-200">{error}</div>
             </div>
           )}
 
-          <button
-            className="btn-primary h-12 w-full"
-            type="submit"
-            disabled={loading || uploading || !paymentProof}
-          >
-            {loading ? "جاري إنشاء الطلب..." : "إرسال الطلب"}
+          <button className="btn-primary h-12 w-full" type="submit" disabled={loading || uploading || !paymentProof}>
+            {loading ? "جاري إنشاء الطلب..." : "✅ تأكيد الطلب"}
           </button>
         </form>
       </section>

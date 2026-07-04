@@ -1,13 +1,19 @@
-import Image from "next/image";
 import Link from "next/link";
 import { getProductById } from "@/lib/products";
 import { getSellerReviews, getSellerStats } from "@/lib/reviews";
-import RatingStars from "@/components/RatingStars";
+import { getGameSpec } from "@/lib/game-specs";
+import ProductImageGallery from "@/components/ProductImageGallery";
+import ProductSpecDisplay from "@/components/ProductSpecDisplay";
+import TrustBadge from "@/components/TrustBadge";
+import SellerReputation from "@/components/SellerReputation";
+import EscrowFlow from "@/components/EscrowFlow";
 
 export default async function ProductDetailPage(props: { params: Promise<{ id: string }> }) {
   const { id } = await props.params;
   const product = await getProductById(id);
   if (!product) return <div className="mx-auto max-w-2xl pt-12"><section className="glass rounded-3xl p-6 text-center md:p-10"><h1 className="title">المنتج غير موجود</h1><Link href="/" className="btn-secondary mt-4 inline-block">الرئيسية</Link></section></div>;
+
+  const spec = getGameSpec(product.category);
 
   let stats = null;
   let reviews: any[] = [];
@@ -18,65 +24,139 @@ export default async function ProductDetailPage(props: { params: Promise<{ id: s
     ]);
   }
 
+  const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
+
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl page-transition">
+      <Link href="/" className="btn-secondary mb-4 inline-block">← الرجوع</Link>
+
+      {/* Decision Card */}
       <section className="glass rounded-3xl p-6 md:p-8">
-        <Link href="/" className="btn-secondary mb-4 inline-block">← الرجوع</Link>
-        <div className="relative h-64 overflow-hidden rounded-2xl">
-          <Image src={product.image || "/uploads/placeholder.svg"} alt={product.title} fill className="object-cover" />
+        <ProductImageGallery images={allImages} />
+
+        <div className="mt-6 flex items-start justify-between gap-4 flex-wrap">
+          <div>
+            <h1 className="title">{product.title}</h1>
+            <p className="subtitle mt-1">{spec?.name || product.category} • {product.product_type === "account" ? "حساب" : "شحن"}</p>
+          </div>
+          <div className="text-right">
+            <span className={`inline-block rounded-full px-3 py-1 text-xs font-bold ${
+              product.status === "active" ? "bg-emerald-500/20 text-emerald-300"
+              : product.status === "sold" ? "bg-rose-500/20 text-rose-300"
+              : "bg-yellow-500/20 text-yellow-300"
+            }`}>
+              {product.status === "active" ? "متوفر" : product.status === "sold" ? "تم البيع" : "غير نشط"}
+            </span>
+            <div className="mt-2 text-3xl font-black text-indigo-300">{product.price} {product.currency}</div>
+          </div>
         </div>
+
+        {/* Trust Shield Message */}
+        <div className="mt-4 decision-badge rounded-2xl p-4 text-center">
+          <div className="flex items-center justify-center gap-2 text-sm font-bold text-emerald-300">
+            <span>🛡️</span>
+            <span>أموالك محمية بواسطة نظام الوسيط في Nexivo</span>
+          </div>
+        </div>
+
+        {/* CTA */}
         <div className="mt-6">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="title">{product.title}</h1>
-              <p className="subtitle">{product.category} • {product.product_type === "account" ? "حساب" : "شحن"}</p>
-            </div>
-            <div className="text-right">
-              <div className="text-3xl font-black text-indigo-300">{product.price} {product.currency}</div>
-            </div>
-          </div>
-          <div className="mt-6">
-            <h2 className="text-sm font-black text-white/80">المواصفات والتفاصيل</h2>
-            <div className="mt-2 whitespace-pre-wrap break-words rounded-2xl border border-white/10 bg-white/5 p-4 text-sm leading-7 text-white/90">
-              {product.description || "لا توجد تفاصيل"}
-            </div>
-          </div>
-
-          {product.seller_name && (
-            <div className="mt-6">
-              <h2 className="text-sm font-black text-white/80">البائع</h2>
-              <a href={`/profile/${encodeURIComponent(product.seller_id!)}`} className="mt-2 inline-flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 p-4 hover:bg-white/10">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-emerald-400 text-sm font-black text-white">
-                  {product.seller_name.charAt(0).toUpperCase()}
-                </div>
-                <span className="font-bold text-white">{product.seller_name}</span>
-              </a>
-            </div>
-          )}
-
-          {stats && stats.count > 0 && (
-            <div className="mt-6">
-              <h2 className="text-sm font-black text-white/80">تقييمات البائع</h2>
-              <div className="mt-2 flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                <div className="text-center">
-                  <div className="text-3xl font-black text-yellow-300">{stats.average}</div>
-                  <div className="text-xs text-white/50">من 5</div>
-                </div>
-                <div>
-                  <RatingStars rating={Math.round(stats.average)} size="sm" />
-                  <div className="mt-1 text-xs text-white/50">{stats.count} تقييم | {stats.satisfaction}% رضا</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          <div className="mt-6">
-            <Link className="btn-primary w-full py-4 text-center text-lg" href={`/orders/new?productId=${encodeURIComponent(product.id)}`}>
+          {product.status === "active" ? (
+            <Link className="btn-primary w-full py-4 text-center text-lg animate-pulse-glow" href={`/orders/new?productId=${encodeURIComponent(product.id)}`}>
               شراء الآن
             </Link>
-          </div>
+          ) : (
+            <span className="btn-primary w-full py-4 text-center text-lg opacity-50 cursor-not-allowed block">
+              {product.status === "sold" ? "تم البيع" : "غير متوفر"}
+            </span>
+          )}
+        </div>
+
+        {/* Trust Badges */}
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <TrustBadge variant="shield" />
+          <TrustBadge variant="dispute" />
+          <TrustBadge variant="secure" />
+          <TrustBadge variant="guaranteed" />
         </div>
       </section>
+
+      {/* Organized Specs from Game Spec */}
+      {spec && product.attributes && Object.keys(product.attributes).length > 0 && (
+        <section className="mt-6 animate-fade-in-up stagger-1">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-sm font-black text-white/60">المواصفات</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+          <div className="glass rounded-3xl p-5">
+            <ProductSpecDisplay category={product.category} attributes={product.attributes} />
+          </div>
+        </section>
+      )}
+
+      {/* Description */}
+      {product.description && (
+        <section className="mt-6 animate-fade-in-up stagger-2">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-sm font-black text-white/60">الوصف</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+          <div className="glass rounded-3xl p-5">
+            <div className="whitespace-pre-wrap break-words text-sm leading-7 text-white/80">
+              {product.description}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Seller Info */}
+      {product.seller_name && product.seller_id && (
+        <section className="mt-6 animate-fade-in-up stagger-3">
+          <div className="flex items-center gap-2 mb-4">
+            <div className="h-px flex-1 bg-white/10" />
+            <span className="text-sm font-black text-white/60">البائع</span>
+            <div className="h-px flex-1 bg-white/10" />
+          </div>
+          <div className="glass rounded-3xl p-5">
+            <SellerReputation
+              sellerName={product.seller_name}
+              sellerId={product.seller_id}
+              stats={{
+                average: stats?.average || 0,
+                count: stats?.count || 0,
+                satisfaction: stats?.satisfaction || 0,
+              }}
+            />
+
+            {reviews.length > 0 && (
+              <div className="mt-4 space-y-3">
+                {reviews.slice(0, 3).map((review) => (
+                  <div key={review.id} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs font-bold text-white/70">{review.buyer_name || "مشتري"}</div>
+                      <div className="flex items-center gap-1">
+                        <span className="text-yellow-300 text-xs">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
+                      </div>
+                    </div>
+                    {review.comment && (
+                      <div className="mt-2 text-sm leading-7 text-white/60">{review.comment}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+      )}
+
+      {/* Escrow Flow */}
+      {product.status === "active" && (
+        <section className="mt-6 animate-fade-in-up stagger-4">
+          <EscrowFlow />
+        </section>
+      )}
     </div>
   );
 }

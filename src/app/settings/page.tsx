@@ -39,6 +39,9 @@ export default function SettingsPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
+  const [securityEvents, setSecurityEvents] = useState<any[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+
   useEffect(() => {
     fetch("/api/auth/me")
       .then((r) => r.json())
@@ -56,6 +59,15 @@ export default function SettingsPage() {
         setPayCurrency(u.payment_currency || "DZD");
         setPayUsdt(u.payment_usdt_address || "");
         setLoading(false);
+        if (d.user?.id) {
+          fetch(`/api/audit-log/user?id=${encodeURIComponent(d.user.id)}`, { cache: "no-store" })
+            .then((r) => r.ok ? r.json() : [])
+            .then((events) => setSecurityEvents(Array.isArray(events) ? events : []))
+            .catch(() => {})
+            .finally(() => setEventsLoading(false));
+        } else {
+          setEventsLoading(false);
+        }
       })
       .catch(() => router.push("/login"));
   }, [router]);
@@ -223,6 +235,51 @@ export default function SettingsPage() {
             {changingPassword ? "جاري التغيير..." : "تغيير كلمة المرور"}
           </button>
         </form>
+      </section>
+
+      {/* Security Events */}
+      <section className="glass mt-6 rounded-3xl p-6 md:p-8">
+        <h2 className="text-lg font-black">سجل الأمان</h2>
+        <p className="mt-1 text-sm text-white/60">أحداث الأمان الأخيرة لحسابك.</p>
+        <div className="mt-4 grid gap-2">
+          {eventsLoading ? (
+            <div className="flex items-center justify-center py-8 text-sm text-white/50">جاري التحميل...</div>
+          ) : securityEvents.length === 0 ? (
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center text-sm text-white/50">
+              لا توجد أحداث أمان مسجلة
+            </div>
+          ) : (
+            securityEvents.slice(0, 10).map((event) => (
+              <div key={event.id} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-4">
+                <span className="mt-0.5 text-lg">
+                  {event.event_type === "login" ? "🔓" :
+                   event.event_type === "logout" ? "🔒" :
+                   event.event_type === "password_change" ? "🔑" :
+                   event.event_type === "account_delete" ? "🗑️" :
+                   event.event_type === "profile_update" ? "✏️" :
+                   event.event_type === "delivery_data_access" ? "👁️" : "🔔"}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <div className="text-sm font-bold text-white">
+                    {event.event_type === "login" ? "تسجيل دخول" :
+                     event.event_type === "logout" ? "تسجيل خروج" :
+                     event.event_type === "password_change" ? "تغيير كلمة المرور" :
+                     event.event_type === "account_delete" ? "حذف حساب" :
+                     event.event_type === "profile_update" ? "تحديث الملف الشخصي" :
+                     event.event_type === "delivery_data_access" ? "عرض بيانات التسليم" : event.event_type}
+                  </div>
+                  {event.details && (
+                    <div className="mt-0.5 text-xs text-white/60">{event.details}</div>
+                  )}
+                  <div className="mt-1 flex items-center gap-2 text-[10px] text-white/40">
+                    <span>{new Date(event.created_at).toLocaleString("ar-DZ")}</span>
+                    {event.ip_address && <span>• IP: {event.ip_address}</span>}
+                  </div>
+                </div>
+              </div>
+            ))
+          )}
+        </div>
       </section>
 
       {/* Delete Account */}

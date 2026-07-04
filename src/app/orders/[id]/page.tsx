@@ -6,6 +6,8 @@ import { copyToClipboard } from "@/lib/clipboard";
 import RatingStars from "@/components/RatingStars";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
+import OrderTrust from "@/components/OrderTrust";
+import DisputeClarity from "@/components/DisputeClarity";
 
 type Order = {
   id: string;
@@ -300,6 +302,11 @@ export default function OrderDetailPage() {
             </div>
           </div>
 
+          {/* OrderTrust - who holds the money */}
+          <div className="mt-4">
+            <OrderTrust status={order.status} />
+          </div>
+
           {order.status === "payment_confirmed_waiting_code" && isBuyer && order.order_secret_code && (
             <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
               <div className="text-xs font-bold text-white/50">الكود السري (أرسله للبائع)</div>
@@ -398,7 +405,11 @@ export default function OrderDetailPage() {
           )}
 
           {order.status === "disputed" && (
-            <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
+            <>
+              <div className="mt-4">
+                <DisputeClarity />
+              </div>
+              <div className="mt-4 rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4">
               <div className="text-sm font-bold text-white/80">دردشة النزاع (الأدمن + البائع + المشتري)</div>
               <div className="mt-3 grid gap-3 max-h-60 overflow-y-auto">
                 {chatMessages.length > 0 ? (
@@ -426,6 +437,7 @@ export default function OrderDetailPage() {
                 <button className="btn-primary" onClick={sendChatMessage}>إرسال</button>
               </div>
             </div>
+            </>
           )}
 
           {order.status === "delivered" && isBuyer && (

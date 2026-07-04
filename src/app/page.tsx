@@ -1,44 +1,219 @@
-export default function Home() {
-  return (
-    <div className="grid gap-6">
-      <section className="glass glass-hover rounded-3xl p-6 md:p-10">
-        <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white/80 max-w-full">
-          متجر حسابات الألعاب • شحن • تسليم سريع
-        </div>
-        <h1 className="title mt-6">Nexivo</h1>
-        <p className="subtitle max-w-2xl">
-          اختر القسم الذي تريده. ستجد منتجات جاهزة للعرض ويمكن للآدمن إدارتها من لوحة التحكم.
-        </p>
+import Image from "next/image";
+import Link from "next/link";
+import { readProducts } from "@/lib/products";
+import { getDb } from "@/lib/db";
+import EscrowFlow from "@/components/EscrowFlow";
+import TrustBadge from "@/components/TrustBadge";
 
-        <div className="mt-6 grid gap-3 sm:flex sm:flex-wrap">
-          <a className="btn-primary" href="/pubg">
-            حسابات PUBG Mobile
-          </a>
-          <a className="btn-secondary" href="/free-fire">
-            حسابات Free Fire
-          </a>
-          <a className="btn-secondary" href="/topup">
-            خدمات الشحن (Top-up)
-          </a>
+export const dynamic = "force-dynamic";
+
+export default async function Home() {
+  const products = await readProducts();
+  const featured = products.filter((p) => p.status === "active").slice(0, 6);
+  const { queryOne } = await getDb();
+  const userCount = await queryOne<{ c: number }>("SELECT COUNT(*) as c FROM users");
+  const orderCount = await queryOne<{ c: number }>("SELECT COUNT(*) as c FROM orders WHERE status IN ('delivered','seller_paid')");
+
+  const stats = [
+    { label: "مستخدم مسجل", value: (userCount?.c || 0).toLocaleString("ar-DZ"), icon: "👥" },
+    { label: "صفقة مكتملة", value: (orderCount?.c || 0).toLocaleString("ar-DZ"), icon: "✅" },
+    { label: "نسبة رضا", value: "98%", icon: "⭐" },
+    { label: "وساطة آمنة", value: "100%", icon: "🛡️" },
+  ];
+
+
+
+  const categories = [
+    { href: "/pubg", name: "PUBG", title: "حسابات ببجي", desc: "حسابات وسكنات ومستويات نادرة", gradient: "from-amber-500/20 to-orange-600/10", icon: "🎯" },
+    { href: "/free-fire", name: "Free Fire", title: "حسابات فري فاير", desc: "حسابات نادرة وعروض مميزة", gradient: "from-rose-500/20 to-pink-600/10", icon: "🔥" },
+    { href: "/topup", name: "Top-up", title: "خدمات الشحن", desc: "شحن شدات وجواهر وعملات بسرعة", gradient: "from-emerald-500/20 to-teal-600/10", icon: "⚡" },
+  ];
+
+  const faq = [
+    { q: "ما هي الوساطة الرقمية؟", a: "نظام يضمن حق البائع والمشتري. المشتري يدفع للمنصة، المنصة تحتفظ بالمبلغ لحين تأكيد الاستلام، ثم تصرفه للبائع." },
+    { q: "كم تستغرق عملية الشراء؟", a: "متوسط وقت التسليم أقل من 24 ساعة من تاريخ تأكيد الدفع." },
+    { q: "ماذا لو واجهت مشكلة مع البائع؟", a: "فريق Nexivo للدعم يتدخل فوراً. يمكنك فتح نزاع من لوحة الطلبات، ونقوم بالتحقيق خلال 24 ساعة." },
+    { q: "كيف أصبح بائعاً في المنصة؟", a: "بعد التسجيل، يمكنك رفع طلب توثيق من لوحة التحكم. فريق الإدارة يراجع طلبك ويؤهلك للنشر." },
+  ];
+
+  return (
+    <div className="grid gap-6 page-transition">
+      {/* Hero */}
+      <section className="animate-fade-in-up relative overflow-hidden rounded-3xl border border-white/10 bg-gradient-to-br from-indigo-500/10 via-transparent to-emerald-500/10 p-6 md:p-12">
+        <div className="absolute left-0 top-0 h-full w-1/2 bg-gradient-to-r from-indigo-500/5 to-transparent pointer-events-none" />
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
+            <span>🛡️</span>
+            <span>منصة وساطة رقمية — أمان ١٠٠٪</span>
+          </div>
+          <h1 className="title mt-6 bg-gradient-to-r from-indigo-200 via-white to-emerald-200 bg-clip-text text-transparent">
+            Nexivo
+          </h1>
+          <p className="subtitle max-w-2xl">
+            منصة الوساطة الأكثر أماناً لبيع وشراء المنتجات الرقمية.
+            <span className="block mt-1 text-white/90">نحن الحارس بين البائع والمشتري. أموالك في أمان.</span>
+          </p>
+
+          <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap">
+            <Link className="btn-primary px-8 py-3 text-base animate-pulse-glow" href="/pubg">
+              تسوق الآن
+            </Link>
+            <Link className="btn-secondary px-8 py-3 text-base" href="#how-it-works">
+              كيف يعمل؟
+            </Link>
+          </div>
         </div>
       </section>
 
-      <section className="grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-        <a className="glass glass-hover rounded-3xl p-6" href="/pubg">
-          <div className="text-sm font-bold text-white/70">PUBG</div>
-          <div className="mt-2 text-xl font-black">حسابات ببجي</div>
-          <div className="mt-2 text-sm leading-7 text-white/70">عروض حسابات، سكنات، مستويات.</div>
-        </a>
-        <a className="glass glass-hover rounded-3xl p-6" href="/free-fire">
-          <div className="text-sm font-bold text-white/70">Free Fire</div>
-          <div className="mt-2 text-xl font-black">حسابات فري فاير</div>
-          <div className="mt-2 text-sm leading-7 text-white/70">حسابات نادرة وعروض مميزة.</div>
-        </a>
-        <a className="glass glass-hover rounded-3xl p-6" href="/topup">
-          <div className="text-sm font-bold text-white/70">Top-up</div>
-          <div className="mt-2 text-xl font-black">خدمات الشحن</div>
-          <div className="mt-2 text-sm leading-7 text-white/70">شحن شدات/جواهر/عملات بسرعة.</div>
-        </a>
+      {/* Stats */}
+      <section className="animate-fade-in-up stagger-1 grid gap-3 sm:grid-cols-2 md:grid-cols-4">
+        {stats.map((s, i) => (
+          <div key={i} className="glass rounded-3xl p-5 text-center">
+            <div className="text-2xl">{s.icon}</div>
+            <div className="mt-2 text-2xl font-black text-white">{s.value}</div>
+            <div className="mt-1 text-sm text-white/60">{s.label}</div>
+          </div>
+        ))}
+      </section>
+
+      {/* Categories */}
+      <section className="animate-fade-in-up stagger-2 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+        {categories.map((cat) => (
+          <Link key={cat.href} href={cat.href} className="product-card glass rounded-3xl p-6 overflow-hidden relative">
+            <div className={`absolute inset-0 bg-gradient-to-br ${cat.gradient} opacity-60 transition duration-300 group-hover:opacity-100`} />
+            <div className="relative">
+              <div className="text-3xl">{cat.icon}</div>
+              <div className="mt-2 text-xs font-bold text-white/50">{cat.name}</div>
+              <div className="mt-1 text-xl font-black text-white">{cat.title}</div>
+              <div className="mt-2 text-sm leading-7 text-white/70">{cat.desc}</div>
+            </div>
+          </Link>
+        ))}
+      </section>
+
+      {/* How it Works */}
+      <section id="how-it-works" className="animate-fade-in-up stagger-3">
+        <EscrowFlow />
+      </section>
+
+      {/* Featured Products */}
+      {featured.length > 0 && (
+        <section className="animate-fade-in-up stagger-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-black">منتجات مميزة</h2>
+            <Link href="/pubg" className="text-sm font-bold text-indigo-300 hover:text-indigo-200">عرض الكل ←</Link>
+          </div>
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
+            {featured.map((p, i) => {
+              const images = (() => {
+                try { const parsed = JSON.parse(p.image || "[]"); return Array.isArray(parsed) ? parsed : []; }
+                catch { return []; }
+              })();
+              return (
+                <Link key={p.id} href={`/products/${encodeURIComponent(p.id)}`} className={`product-card glass flex flex-col rounded-3xl animate-fade-in-up`} style={{ animationDelay: `${(i + 1) * 100}ms` }}>
+                  <div className="relative h-44 shrink-0 overflow-hidden rounded-t-3xl product-card-image">
+                    <Image src={images[0] || "/uploads/placeholder.svg"} alt={p.title} fill className="object-cover" />
+                    {p.status === "sold" && (
+                      <div className="absolute left-2 top-2 z-10 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold text-white shadow-lg">تم البيع</div>
+                    )}
+                    {p.status !== "sold" && (
+                      <div className="quick-actions absolute inset-x-0 bottom-0 z-10 flex gap-2 p-3 bg-gradient-to-t from-black/60 to-transparent">
+                        <span className="flex-1 rounded-full bg-white/20 backdrop-blur-md px-3 py-2 text-center text-xs font-bold text-white">
+                          عرض المنتج
+                        </span>
+                        <span className="flex-1 rounded-full bg-indigo-500/80 backdrop-blur-md px-3 py-2 text-center text-xs font-bold text-white">
+                          شراء
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex flex-1 flex-col p-5">
+                    <div className="flex items-center gap-2 text-xs text-white/50">
+                      <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-indigo-300">{p.category === "pubg" ? "PUBG" : p.category === "free-fire" ? "Free Fire" : "Top-up"}</span>
+                    </div>
+                    <div className="mt-2 text-lg font-black text-white group-hover:text-indigo-200 transition">{p.title}</div>
+                    {p.seller_name && (
+                      <span className="mt-1 text-xs text-indigo-300/70">{p.seller_name}</span>
+                    )}
+                    <div className="mt-2 flex-1 line-clamp-2 text-sm leading-7 text-white/60">{p.description}</div>
+                    <div className="mt-4 flex items-center justify-between">
+                      <div className="text-xl font-black text-white">{p.price} {p.currency}</div>
+                      <span className="btn-primary text-sm px-4 py-2">شراء</span>
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
+
+      {/* Trust Signals */}
+      <section className="animate-fade-in-up stagger-5 glass rounded-3xl p-6 md:p-10">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
+            <span>🛡️</span>
+            <span>لماذا Nexivo؟</span>
+          </div>
+          <h2 className="title mt-6 text-white">الثقة هي أساسنا</h2>
+          <p className="subtitle max-w-xl mx-auto">نظام متكامل يحمي البائع والمشتري من البداية للنهاية.</p>
+        </div>
+
+        <div className="mt-10 grid gap-4 sm:grid-cols-2">
+          <TrustBadge variant="shield" showDescription />
+          <TrustBadge variant="dispute" showDescription />
+          <TrustBadge variant="secure" showDescription />
+          <TrustBadge variant="guaranteed" showDescription />
+        </div>
+      </section>
+
+      {/* FAQ */}
+      <section className="animate-fade-in-up stagger-6 glass rounded-3xl p-6 md:p-10">
+        <div className="text-center">
+          <div className="inline-flex items-center gap-2 rounded-full border border-amber-400/20 bg-amber-500/10 px-4 py-2 text-sm font-bold text-amber-300">
+            <span>❓</span>
+            <span>أسئلة شائعة</span>
+          </div>
+          <h2 className="title mt-6 text-white">كل ما تحتاج معرفته</h2>
+          <p className="subtitle max-w-xl mx-auto">إجابات سريعة لأكثر الأسئلة شيوعاً حول المنصة.</p>
+        </div>
+
+        <div className="mt-10 grid gap-3 max-w-2xl mx-auto">
+          {faq.map((item, i) => (
+            <details key={i} className="group rounded-2xl border border-white/10 bg-white/[0.03] transition duration-200 hover:bg-white/[0.06]">
+              <summary className="flex cursor-pointer items-center justify-between p-5 font-bold text-white">
+                <span>{item.q}</span>
+                <span className="text-white/40 transition duration-200 group-open:rotate-180">▼</span>
+              </summary>
+              <div className="px-5 pb-5 text-sm leading-7 text-white/70">
+                {item.a}
+              </div>
+            </details>
+          ))}
+        </div>
+      </section>
+
+      {/* Seller CTA */}
+      <section className="animate-fade-in-up stagger-7 relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-indigo-500/5 to-emerald-500/10 p-8 md:p-12 text-center">
+        <div className="absolute left-0 top-0 h-full w-1/3 bg-gradient-to-r from-emerald-500/10 to-transparent pointer-events-none" />
+        <div className="relative">
+          <div className="inline-flex items-center gap-2 rounded-full border border-emerald-400/20 bg-emerald-500/10 px-4 py-2 text-sm font-bold text-emerald-300">
+            <span>🚀</span>
+            <span>انضم لفريق البائعين</span>
+          </div>
+          <h2 className="title mt-6 text-white">تبيع منتجات رقمية؟</h2>
+          <p className="subtitle max-w-xl mx-auto">
+            وثّق حسابك الآن وابدأ النشر. نظام الوساطة يحميك ويحمي المشتري، ونسبة المنصة منافسة.
+          </p>
+          <div className="mt-8 flex flex-wrap justify-center gap-3">
+            <Link className="btn-primary px-8 py-3 text-base animate-pulse-glow" href="/register">
+              أنشئ حساب بائع
+            </Link>
+            <Link className="btn-secondary px-8 py-3 text-base" href="/login">
+              تسجيل الدخول
+            </Link>
+          </div>
+        </div>
       </section>
     </div>
   );
