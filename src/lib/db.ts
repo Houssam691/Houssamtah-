@@ -217,6 +217,15 @@ async function initializeSchema(): Promise<void> {
 
     CREATE INDEX IF NOT EXISTS idx_disputes_order_id ON disputes(order_id);
     CREATE UNIQUE INDEX IF NOT EXISTS idx_email_verification_user_id ON email_verification_tokens(user_id);
+
+    CREATE TABLE IF NOT EXISTS password_reset_tokens (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      token_hash TEXT NOT NULL,
+      expires_at TIMESTAMPTZ NOT NULL,
+      used SMALLINT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `;
 
   const client = await getPool().connect();

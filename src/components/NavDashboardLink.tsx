@@ -15,8 +15,10 @@ export default function NavDashboardLink({ className: linkClass }: { className?:
       .catch(() => setRole(null));
   }, [pathname]);
 
-  let href = "/login";
-  let label = "تسجيل الدخول";
+  if (role === null) return null;
+
+  let href = "/";
+  let label = "";
 
   if (role === "admin") { href = "/admin"; label = "لوحة الإدارة"; }
   else if (role === "seller") { href = "/seller"; label = "لوحة البائع"; }

@@ -296,6 +296,33 @@ export async function invalidateOldVerificationTokens(userId: string): Promise<v
   await execute("DELETE FROM email_verification_tokens WHERE user_id = $1", [userId]);
 }
 
+export function generateResetToken(): { raw: string; hash: string } {
+  const raw = crypto.randomBytes(32).toString("hex");
+  const hash = crypto.createHash("sha256").update(raw).digest("hex");
+  return { raw, hash };
+}
+
+export async function storeResetToken(userId: string, hash: string): Promise<void> {
+  const { queryOne } = await getDb();
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+  await queryOne(
+    "INSERT INTO password_reset_tokens (id, user_id, token_hash, expires_at) VALUES ($1, $2, $3, $4) RETURNING id",
+    [generateId("prt"), userId, hash, expiresAt]
+  );
+}
+
+export async function consumeResetToken(rawToken: string): Promise<string | null> {
+  const { queryOne, execute } = await getDb();
+  const hash = crypto.createHash("sha256").update(rawToken).digest("hex");
+  const token = await queryOne<{ id: string; user_id: string }>(
+    "SELECT id, user_id FROM password_reset_tokens WHERE token_hash = $1 AND expires_at > NOW() AND used = 0",
+    [hash]
+  );
+  if (!token) return null;
+  await execute("UPDATE password_reset_tokens SET used = 1 WHERE id = $1", [token.id]);
+  return token.user_id;
+}
+
 export function isAccountFullyActivated(user: User): boolean {
   if (!user.email_verified) return false;
   if (user.role === "seller" && user.seller_status !== "approved") return false;
