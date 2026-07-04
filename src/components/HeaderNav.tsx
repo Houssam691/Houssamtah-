@@ -9,9 +9,17 @@ import { useEffect, useState } from "react";
 
 export default function HeaderNav() {
   const [open, setOpen] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const pathname = usePathname();
 
   useEffect(() => { setOpen(false); }, [pathname]);
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((d) => setUserId(d.user?.id || null))
+      .catch(() => setUserId(null));
+  }, [pathname]);
 
   return (
     <div className="flex w-full items-center justify-between gap-4">
@@ -39,6 +47,16 @@ export default function HeaderNav() {
                 Top-up
               </Link>
               <hr className="border-white/10" />
+              {userId && (
+                <>
+                  <Link href={`/profile/${encodeURIComponent(userId)}`} className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
+                    الملف الشخصي
+                  </Link>
+                  <Link href="/settings" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
+                    الإعدادات
+                  </Link>
+                </>
+              )}
               <NavDashboardLink className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white" />
               <NavAuthButton className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white" />
             </div>

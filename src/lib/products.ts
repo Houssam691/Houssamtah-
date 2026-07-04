@@ -6,6 +6,7 @@ export type ProductCategory = "pubg" | "free-fire" | "topup";
 export type Product = {
   id: string;
   seller_id?: string;
+  seller_name?: string;
   product_type: "account" | "recharge";
   category: ProductCategory;
   title: string;
@@ -37,6 +38,7 @@ function rowToProduct(row: Record<string, unknown>): Product {
   return {
     id: row.id as string,
     seller_id: (row.seller_id as string) || undefined,
+    seller_name: (row.seller_name as string) || undefined,
     product_type: (row.product_type as "account" | "recharge") || "account",
     category: row.category as ProductCategory,
     title: row.title as string,
@@ -53,7 +55,9 @@ function rowToProduct(row: Record<string, unknown>): Product {
 export async function readProducts(): Promise<Product[]> {
   const { query } = await getDb();
   const rows = await query<Record<string, unknown>>(
-    "SELECT * FROM products WHERE status IN ('active', 'sold') ORDER BY created_at DESC"
+    `SELECT p.*, u.first_name || ' ' || u.last_name as seller_name
+     FROM products p LEFT JOIN users u ON p.seller_id = u.id
+     WHERE p.status IN ('active', 'sold') ORDER BY p.created_at DESC`
   );
   return rows.map(rowToProduct);
 }
@@ -61,7 +65,9 @@ export async function readProducts(): Promise<Product[]> {
 export async function readAllProducts(): Promise<Product[]> {
   const { query } = await getDb();
   const rows = await query<Record<string, unknown>>(
-    "SELECT * FROM products ORDER BY created_at DESC"
+    `SELECT p.*, u.first_name || ' ' || u.last_name as seller_name
+     FROM products p LEFT JOIN users u ON p.seller_id = u.id
+     ORDER BY p.created_at DESC`
   );
   return rows.map(rowToProduct);
 }
@@ -101,7 +107,10 @@ export async function writeProducts(products: Product[]): Promise<void> {
 
 export async function getProductById(id: string): Promise<Product | null> {
   const { queryOne } = await getDb();
-  const row = await queryOne<Record<string, unknown>>("SELECT * FROM products WHERE id = $1", [id]);
+  const row = await queryOne<Record<string, unknown>>(
+    `SELECT p.*, u.first_name || ' ' || u.last_name as seller_name
+     FROM products p LEFT JOIN users u ON p.seller_id = u.id
+     WHERE p.id = $1`, [id]);
   return row ? rowToProduct(row) : null;
 }
 
