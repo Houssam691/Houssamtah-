@@ -76,17 +76,7 @@ export default function RootLayout({
           <footer className="border-t border-white/10 py-10 text-white/70">
             <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 md:flex-row md:items-center md:justify-between">
               <div>© {new Date().getFullYear()} متجر الألعاب</div>
-              <div className="flex flex-wrap items-center gap-2">
-                <Link href="/pubg" className="rounded-full px-4 py-2 hover:bg-white/5">
-                  PUBG
-                </Link>
-                <Link href="/free-fire" className="rounded-full px-4 py-2 hover:bg-white/5">
-                  Free Fire
-                </Link>
-                <Link href="/topup" className="rounded-full px-4 py-2 hover:bg-white/5">
-                  Top-up
-                </Link>
-              </div>
+
             </div>
           </footer>
         </div>
