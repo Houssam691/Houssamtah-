@@ -46,7 +46,7 @@ export default function SideNav({ userId }: Props) {
           <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white text-lg leading-none transition">✕</button>
         </div>
 
-        <nav className="flex-1 px-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+        <nav className="flex flex-1 flex-col px-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid gap-1">
             <Link href="/pubg" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
               PUBG
@@ -69,8 +69,10 @@ export default function SideNav({ userId }: Props) {
                 </Link>
               </>
             )}
+          </div>
 
-            <hr className="my-1 border-white/10" />
+          <div className="mt-auto grid gap-1 pt-4">
+            <hr className="mb-1 border-white/10" />
             <NavDashboardLink className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" />
             <NavAuthButton className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" />
           </div>
