@@ -1,9 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import NavDashboardLink from "@/components/NavDashboardLink";
-import NavAuthButton from "@/components/NavAuthButton";
 import NavNotificationBell from "@/components/NavNotificationBell";
+import SideNav from "@/components/SideNav";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -29,33 +28,8 @@ export default function HeaderNav() {
         <NavNotificationBell
           userId={userId}
           className="rounded-full px-3 py-2 font-bold text-white/80 hover:bg-white/5 hover:text-white"
-          links={
-            <div className="grid gap-1">
-              <Link href="/pubg" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
-                PUBG
-              </Link>
-              <Link href="/free-fire" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
-                Free Fire
-              </Link>
-              <Link href="/topup" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
-                Top-up
-              </Link>
-              <hr className="border-white/10" />
-              {userId && (
-                <>
-                  <Link href={`/profile/${encodeURIComponent(userId)}`} className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
-                    الملف الشخصي
-                  </Link>
-                  <Link href="/settings" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white">
-                    الإعدادات
-                  </Link>
-                </>
-              )}
-              <NavDashboardLink className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white" />
-              <NavAuthButton className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white" />
-            </div>
-          }
         />
+        <SideNav userId={userId} />
       </div>
     </div>
   );

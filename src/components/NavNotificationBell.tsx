@@ -21,10 +21,9 @@ type Notification = {
 type Props = {
   className?: string;
   userId?: string | null;
-  links?: React.ReactNode;
 };
 
-export default function NavNotificationBell({ className, userId, links }: Props) {
+export default function NavNotificationBell({ className, userId }: Props) {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -108,48 +107,45 @@ export default function NavNotificationBell({ className, userId, links }: Props)
       {open && (
         <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:right-2 max-md:left-auto max-md:translate-x-0 max-md:max-w-[calc(100vw-1rem)] rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)] animate-scale-in">
           {/* Notifications */}
-          <div className="flex items-center justify-between">
-            <div className="text-sm font-black text-white">الإشعارات</div>
-            <div className="flex gap-2">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-black text-white">الإشعارات</span>
               {unread > 0 && (
-                <button className="text-xs font-bold text-indigo-400 hover:text-indigo-300" onClick={markAllRead}>
-                  تحديد الكل كمقروء
-                </button>
+                <span className="rounded-full bg-rose-500/20 px-2 py-0.5 text-[10px] font-bold text-rose-300">
+                  {unread}
+                </span>
               )}
             </div>
+            {unread > 0 && (
+              <button className="text-[10px] font-bold text-indigo-400 hover:text-indigo-300 shrink-0" onClick={markAllRead}>
+                تحديد الكل
+              </button>
+            )}
           </div>
 
-          <div className="mt-3 grid max-h-60 gap-2 overflow-y-auto">
+          <div className="mt-3 grid max-h-60 gap-1 overflow-y-auto">
             {notifications.length === 0 && (
-              <div className="py-4 text-center text-sm text-white/50">لا توجد إشعارات</div>
+              <div className="py-6 text-center text-sm text-white/50">لا توجد إشعارات</div>
             )}
             {notifications.map((n) => (
-              <Link key={n.id} href={getLink(n)} className={`group relative rounded-2xl p-3 text-sm transition hover:bg-white/5 ${n.read ? "opacity-60" : "border-r-2 border-indigo-400"}`} onClick={() => setOpen(false)}>
+              <Link key={n.id} href={getLink(n)} className={`group relative rounded-2xl p-3 text-sm transition hover:bg-white/5 ${n.read ? "opacity-40" : "bg-white/[0.03]"}`} onClick={() => setOpen(false)}>
                 <div className="flex items-start gap-3">
-                  <span className="mt-0.5 text-lg">{getIcon(n)}</span>
+                  <span className="mt-0.5 shrink-0 text-lg">{getIcon(n)}</span>
                   <div className="min-w-0 flex-1">
-                    {n.title && <div className="font-bold text-white">{n.title}</div>}
-                    <div className="text-white/90">{n.message}</div>
-                    <div className="mt-1 text-[10px] text-white/50">{new Date(n.created_at).toLocaleString("ar-DZ")}</div>
+                    {n.title && <div className="font-bold text-white text-sm">{n.title}</div>}
+                    <div className="text-white/80 leading-5 line-clamp-2 text-xs">{n.message}</div>
+                    <div className="mt-0.5 text-[10px] text-white/40">{new Date(n.created_at).toLocaleString("ar-DZ")}</div>
                   </div>
-                  <button className="shrink-0 opacity-0 group-hover:opacity-100 transition text-white/30 hover:text-rose-400 text-xs" onClick={(e) => deleteNotif(n.id, e)}>✕</button>
+                  <button className="shrink-0 opacity-0 group-hover:opacity-100 transition text-white/30 hover:text-rose-400 text-[10px] mt-1" onClick={(e) => deleteNotif(n.id, e)}>✕</button>
                 </div>
               </Link>
             ))}
           </div>
 
           {notifications.length > 0 && (
-            <Link href="/notifications" className="mt-2 block text-center text-xs font-bold text-indigo-400 hover:text-indigo-300" onClick={() => setOpen(false)}>
+            <Link href="/notifications" className="mt-1.5 block text-center text-xs font-bold text-indigo-400 hover:text-indigo-300" onClick={() => setOpen(false)}>
               عرض الكل
             </Link>
-          )}
-
-          {/* Nav Links */}
-          {links && (
-            <>
-              <hr className="my-3 border-white/10" />
-              {links}
-            </>
           )}
         </div>
       )}
