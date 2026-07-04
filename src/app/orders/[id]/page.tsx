@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { copyToClipboard } from "@/lib/clipboard";
 import RatingStars from "@/components/RatingStars";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Order = {
   id: string;
@@ -56,6 +58,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 export default function OrderDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const { toast } = useToast();
   const [order, setOrder] = useState<Order | null>(null);
   const [user, setUser] = useState<SafeUser | null>(null);
   const [loading, setLoading] = useState(true);
@@ -142,21 +145,27 @@ export default function OrderDetailPage() {
   }
 
   async function confirmPayment() {
-    await fetch(`/api/admin/orders/${params.id}/confirm`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${params.id}/confirm`, { method: "POST" });
+    if (res.ok) toast("success", "تم تأكيد الدفع.");
+    else toast("error", "فشل تأكيد الدفع.");
     const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
     if (orderRes.ok) setOrder(await orderRes.json());
   }
 
   async function rejectPayment() {
     if (!confirm("هل أنت متأكد؟ سيتم حظر المشتري.")) return;
-    await fetch(`/api/admin/orders/${params.id}/reject`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${params.id}/reject`, { method: "POST" });
+    if (res.ok) toast("success", "تم رفض الدفع.");
+    else toast("error", "فشل رفض الدفع.");
     const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
     if (orderRes.ok) setOrder(await orderRes.json());
   }
 
   async function paySeller() {
     if (!confirm("تأكيد دفع مبلغ الطلب للبائع؟")) return;
-    await fetch(`/api/admin/orders/${params.id}/pay-seller`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${params.id}/pay-seller`, { method: "POST" });
+    if (res.ok) toast("success", "تم تأكيد الدفع للبائع.");
+    else toast("error", "فشل تأكيد الدفع.");
     const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
     if (orderRes.ok) setOrder(await orderRes.json());
   }
@@ -170,10 +179,13 @@ export default function OrderDetailPage() {
       body: JSON.stringify({ order_id: params.id, reason: r }),
     });
     if (res.ok) {
+      toast("success", "تم فتح النزاع.");
       setShowDisputeForm(false);
       setDisputeReason("");
       const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
       if (orderRes.ok) setOrder(await orderRes.json());
+    } else {
+      toast("error", "فشل فتح النزاع.");
     }
   }
 
@@ -203,13 +215,30 @@ export default function OrderDetailPage() {
     if (res.ok) {
       const review = await res.json();
       setExistingReview(review);
+      toast("success", "تم إرسال التقييم بنجاح.");
     } else {
       const data = await res.json();
-      alert(data.error || "فشل إرسال التقييم");
+      toast("error", data.error || "فشل إرسال التقييم");
     }
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-5 w-56" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <section className="glass rounded-3xl p-5">
+            <Skeleton className="h-6 w-full" />
+            <Skeleton className="mt-4 h-6 w-full" />
+            <Skeleton className="mt-4 h-6 w-3/4" />
+          </section>
+        </div>
+      </div>
+    );
+  }
   if (!order) {
     return (
       <div className="mx-auto max-w-2xl pt-12">
@@ -426,7 +455,7 @@ export default function OrderDetailPage() {
                   />
                   <div className="mt-3 flex gap-2">
                     <button className="btn-primary" onClick={submitReview} disabled={sendingReview}>
-                      {sendingReview ? "..." : "إرسال التقييم"}
+                      {sendingReview ? "جاري الإرسال..." : "إرسال التقييم"}
                     </button>
                   </div>
                 </div>
@@ -478,7 +507,7 @@ export default function OrderDetailPage() {
                   onClick={sendCodeToChat}
                   disabled={sendingCode || !codeToSend.trim()}
                 >
-                  {sendingCode ? "..." : "إرسال الكود"}
+                  {sendingCode ? "جاري الإرسال..." : "إرسال الكود"}
                 </button>
               </div>
 

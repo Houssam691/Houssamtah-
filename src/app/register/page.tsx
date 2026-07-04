@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [step, setStep] = useState<"form" | "uploading">("form");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,6 +19,7 @@ export default function RegisterPage() {
   const [role, setRole] = useState<"buyer" | "seller">("buyer");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [idFile, setIdFile] = useState<File | null>(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -40,15 +43,25 @@ export default function RegisterPage() {
         return;
       }
       setStep("uploading");
+      setUploadProgress(0);
       const formData = new FormData();
       formData.append("file", idFile);
-      const uploadRes = await fetch("/api/upload-id", { method: "POST", body: formData });
+      const xhr = new XMLHttpRequest();
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+      };
+      const uploadRes = await new Promise<Response>((resolve, reject) => {
+        xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }));
+        xhr.onerror = () => reject(new Error("Network error"));
+        xhr.open("POST", "/api/upload-id");
+        xhr.send(formData);
+      });
       if (!uploadRes.ok) {
         setError("فشل رفع بطاقة الهوية");
         setStep("form");
         return;
       }
-      const uploadData = await uploadRes.json();
+      const uploadData = JSON.parse(xhr.responseText);
       idFilePath = uploadData.url || "";
     }
 
@@ -77,6 +90,7 @@ export default function RegisterPage() {
       return;
     }
 
+    toast("success", "تم إنشاء الحساب بنجاح! تحقق من بريدك الإلكتروني.");
     setRegistered(true);
   }
 
@@ -206,11 +220,16 @@ export default function RegisterPage() {
           )}
 
           {step === "uploading" && (
-            <div className="text-center text-sm text-white/70">جاري رفع الملفات...</div>
+            <div className="grid gap-2">
+              <div className="text-center text-sm text-white/70">جاري رفع الملفات... {uploadProgress}%</div>
+              <div className="h-2 overflow-hidden rounded-full bg-white/10">
+                <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+              </div>
+            </div>
           )}
 
           <button className="btn-primary h-12 w-full" type="submit" disabled={loading || step === "uploading"}>
-            {loading ? "..." : "إنشاء حساب"}
+            {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
           </button>
 
           <div className="text-center text-sm text-white/60">

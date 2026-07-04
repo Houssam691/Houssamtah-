@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { copyToClipboard } from "@/lib/clipboard";
 import { downloadCSV } from "@/lib/export";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Order = {
   id: string;
@@ -42,6 +44,7 @@ const statusLabels: Record<string, string> = {
 
 export default function AdminOrdersPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [filter, setFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
@@ -80,30 +83,49 @@ export default function AdminOrdersPage() {
 
   async function confirmPayment(orderId: string) {
     setActionLoading(orderId);
-    await fetch(`/api/admin/orders/${orderId}/confirm`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${orderId}/confirm`, { method: "POST" });
     setActionLoading(null);
+    if (res.ok) toast("success", "تم تأكيد الدفع.");
+    else toast("error", "فشل تأكيد الدفع.");
     await loadOrders();
   }
 
   async function rejectPayment(orderId: string) {
     if (!confirm("هل أنت متأكد؟ سيتم حظر المشتري.")) return;
     setActionLoading(orderId);
-    await fetch(`/api/admin/orders/${orderId}/reject`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${orderId}/reject`, { method: "POST" });
     setActionLoading(null);
+    if (res.ok) toast("success", "تم رفض الدفع.");
+    else toast("error", "فشل رفض الدفع.");
     await loadOrders();
   }
 
   async function paySeller(orderId: string) {
     if (!confirm("تأكيد دفع مبلغ الطلب للبائع؟")) return;
     setActionLoading(orderId);
-    await fetch(`/api/admin/orders/${orderId}/pay-seller`, { method: "POST" });
+    const res = await fetch(`/api/admin/orders/${orderId}/pay-seller`, { method: "POST" });
     setActionLoading(null);
+    if (res.ok) toast("success", "تم تأكيد الدفع للبائع.");
+    else toast("error", "فشل تأكيد الدفع.");
     await loadOrders();
   }
 
   const filtered = filter === "all" ? orders : orders.filter((o) => o.status === filter);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-5 w-56" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -181,7 +203,7 @@ export default function AdminOrdersPage() {
                       onClick={() => confirmPayment(order.id)}
                       disabled={actionLoading === order.id}
                     >
-                      {actionLoading === order.id ? "..." : "تأكيد الدفع"}
+                      {actionLoading === order.id ? "جاري التنفيذ..." : "تأكيد الدفع"}
                     </button>
                     <button
                       className="btn-secondary"
@@ -219,7 +241,7 @@ export default function AdminOrdersPage() {
                     onClick={() => paySeller(order.id)}
                     disabled={actionLoading === order.id}
                   >
-                    {actionLoading === order.id ? "..." : "دفع للبائع"}
+                    {actionLoading === order.id ? "جاري التنفيذ..." : "دفع للبائع"}
                   </button>
                 )}
 
@@ -243,7 +265,7 @@ export default function AdminOrdersPage() {
                       }}
                       disabled={actionLoading === order.id}
                     >
-                      {actionLoading === order.id ? "..." : "إغلاق النزاع"}
+                      {actionLoading === order.id ? "جاري التنفيذ..." : "إغلاق النزاع"}
                     </button>
                   </>
                 )}

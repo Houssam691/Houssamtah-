@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/Skeleton";
 
 type User = {
   id: string;
@@ -35,7 +36,17 @@ export default function SellerPendingPage() {
       });
   }, [router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-lg pt-12">
+        <section className="glass rounded-3xl p-6 md:p-10">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-3 h-5 w-64" />
+          <Skeleton className="mt-4 h-20 w-full" />
+        </section>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-lg pt-12">

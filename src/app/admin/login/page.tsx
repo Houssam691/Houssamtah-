@@ -2,9 +2,11 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 export default function AdminLoginPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -24,10 +26,12 @@ export default function AdminLoginPage() {
     setLoading(false);
 
     if (!res.ok) {
+      toast("error", "بيانات الدخول غير صحيحة");
       setError("بيانات الدخول غير صحيحة");
       return;
     }
 
+    toast("success", "تم تسجيل الدخول.");
     router.push("/admin");
   }
 
@@ -63,7 +67,7 @@ export default function AdminLoginPage() {
           {error ? <div className="text-sm font-bold text-rose-300">{error}</div> : null}
 
           <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
-            {loading ? "..." : "دخول"}
+            {loading ? "جاري تسجيل الدخول..." : "دخول"}
           </button>
         </form>
       </section>

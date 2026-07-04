@@ -2,10 +2,12 @@
 
 import { useSearchParams, useRouter } from "next/navigation";
 import { useState, Suspense } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const token = searchParams.get("token");
 
   const [password, setPassword] = useState("");
@@ -41,6 +43,7 @@ function ResetPasswordForm() {
       return;
     }
 
+    toast("success", "تم تغيير كلمة المرور بنجاح.");
     setSuccess(true);
   }
 
@@ -103,7 +106,7 @@ function ResetPasswordForm() {
           ) : null}
 
           <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
-            {loading ? "..." : "تغيير كلمة المرور"}
+            {loading ? "جاري تغيير كلمة المرور..." : "تغيير كلمة المرور"}
           </button>
         </form>
       </section>

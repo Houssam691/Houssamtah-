@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/Skeleton";
 
 type Order = {
   id: string;
@@ -49,7 +50,21 @@ export default function OrdersPage() {
       .catch(() => router.push("/login"));
   }, [router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="mt-3 h-5 w-48" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

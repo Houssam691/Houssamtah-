@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Skeleton } from "@/components/Skeleton";
 
 type Dispute = {
   id: string;
@@ -31,7 +32,20 @@ export default function SellerDisputesPage() {
     });
   }, [router]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl pt-12">
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-5 w-56" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-24 rounded-3xl" />
+          <Skeleton className="h-24 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl pt-12">

@@ -5,7 +5,7 @@ export default function Home() {
         <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-bold text-white/80 max-w-full">
           متجر حسابات الألعاب • شحن • تسليم سريع
         </div>
-        <h1 className="title mt-6">متجر الألعاب</h1>
+        <h1 className="title mt-6">Nexivo</h1>
         <p className="subtitle max-w-2xl">
           اختر القسم الذي تريده. ستجد منتجات جاهزة للعرض ويمكن للآدمن إدارتها من لوحة التحكم.
         </p>

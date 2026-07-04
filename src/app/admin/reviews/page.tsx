@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import RatingStars from "@/components/RatingStars";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Review = {
   id: string;
@@ -16,6 +18,7 @@ type Review = {
 
 export default function AdminReviewsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -34,16 +37,33 @@ export default function AdminReviewsPage() {
 
   async function deleteReview(id: string) {
     if (!confirm("حذف التقييم؟")) return;
-    await fetch(`/api/reviews/${id}`, { method: "DELETE" });
+    const res = await fetch(`/api/reviews/${id}`, { method: "DELETE" });
+    if (res.ok) toast("success", "تم حذف التقييم.");
+    else toast("error", "فشل حذف التقييم.");
     await loadReviews();
   }
 
   async function hideComment(id: string) {
-    await fetch(`/api/reviews/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "hide" }) });
+    const res = await fetch(`/api/reviews/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action: "hide" }) });
+    if (res.ok) toast("success", "تم إخفاء التعليق.");
+    else toast("error", "فشل إخفاء التعليق.");
     await loadReviews();
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-44" />
+          <Skeleton className="mt-3 h-5 w-56" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

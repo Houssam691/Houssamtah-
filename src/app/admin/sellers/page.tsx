@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Seller = {
   id: string;
@@ -15,6 +17,7 @@ type Seller = {
 
 export default function AdminSellersPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [sellers, setSellers] = useState<Seller[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -45,11 +48,27 @@ export default function AdminSellersPage() {
     if (!res.ok) {
       const data = await res.json().catch(() => ({ error: "فشل العملية" }));
       setError(data.error || `خطأ ${res.status}`);
+      toast("error", data.error || `خطأ ${res.status}`);
+    } else {
+      toast("success", "تمت العملية بنجاح.");
     }
     await loadSellers();
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-5 w-64" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>

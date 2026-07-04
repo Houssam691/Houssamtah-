@@ -2,10 +2,12 @@
 
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, Suspense } from "react";
+import { useToast } from "@/components/ToastProvider";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -58,9 +60,11 @@ function LoginForm() {
 
     if (data.requires_verification) {
       setShowVerifyPrompt(true);
+      toast("info", "يجب تأكيد بريدك الإلكتروني أولاً.");
       return;
     }
 
+    toast("success", "تم تسجيل الدخول بنجاح.");
     if (role === "admin") {
       router.push("/admin");
     } else if (role === "seller") {
@@ -151,7 +155,7 @@ function LoginForm() {
               onClick={handleResend}
               disabled={resending}
             >
-              {resending ? "..." : "إعادة إرسال رابط التأكيد"}
+              {resending ? "جاري الإرسال..." : "إعادة إرسال رابط التأكيد"}
             </button>
           </div>
         ) : null}
@@ -181,7 +185,7 @@ function LoginForm() {
               </div>
             ) : null}
             <button className="btn-primary h-12 w-full" type="submit" disabled={forgotLoading}>
-              {forgotLoading ? "..." : "إرسال رابط إعادة التعيين"}
+              {forgotLoading ? "جاري الإرسال..." : "إرسال رابط إعادة التعيين"}
             </button>
             <button
               type="button"
@@ -232,7 +236,7 @@ function LoginForm() {
             ) : null}
 
             <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
-              {loading ? "..." : "دخول"}
+              {loading ? "جاري تسجيل الدخول..." : "دخول"}
             </button>
 
             <div className="text-center text-sm text-white/60">

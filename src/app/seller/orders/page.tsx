@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { copyToClipboard } from "@/lib/clipboard";
 import RatingStars from "@/components/RatingStars";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Order = {
   id: string;
@@ -37,6 +39,7 @@ const statusLabels: Record<string, string> = {
 
 export default function SellerOrdersPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [verifyCode, setVerifyCode] = useState<string | null>(null);
@@ -93,12 +96,14 @@ export default function SellerOrdersPage() {
     });
     setActionLoading(false);
     if (res.ok) {
+      toast("success", "تم التحقق من الكود بنجاح.");
       setVerifyCode(null);
       setCodeInput("");
       await loadOrders();
     } else {
       const data = await res.json().catch(() => ({ error: "الكود غير صحيح" }));
       setCodeError(data.error || "الكود غير صحيح");
+      toast("error", data.error || "الكود غير صحيح");
     }
   }
 
@@ -129,12 +134,14 @@ export default function SellerOrdersPage() {
     });
     setActionLoading(false);
     if (res.ok) {
+      toast("success", "تم تسليم المنتج بنجاح.");
       setDeliveryData(null);
       setDeliveryInput("");
       await loadOrders();
     } else {
       const data = await res.json().catch(() => ({ error: "فشل التسليم" }));
       setDeliveryError(data.error || "فشل التسليم");
+      toast("error", data.error || "فشل التسليم");
     }
   }
 
@@ -144,7 +151,20 @@ export default function SellerOrdersPage() {
     setTimeout(() => setCopied(null), 2000);
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-3 h-5 w-56" />
+        </section>
+        <div className="mt-6 grid gap-4">
+          <Skeleton className="h-28 rounded-3xl" />
+          <Skeleton className="h-28 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   const pendingOrders = orders.filter(
     (o) => o.status === "payment_confirmed_waiting_code" || o.status === "code_verified_deliver_now"

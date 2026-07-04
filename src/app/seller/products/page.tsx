@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type SafeUser = {
   id: string;
@@ -28,6 +30,7 @@ type Product = {
 
 export default function SellerProductsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [user, setUser] = useState<SafeUser | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,8 +42,10 @@ export default function SellerProductsPage() {
   const [productType, setProductType] = useState<"account" | "recharge">("account");
   const [imageUrl, setImageUrl] = useState("");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -92,6 +97,7 @@ export default function SellerProductsPage() {
     setSaving(false);
 
     if (res.ok) {
+      toast("success", "تمت إضافة المنتج بنجاح.");
       setTitle("");
       setDescription("");
       setPrice(0);
@@ -111,16 +117,36 @@ export default function SellerProductsPage() {
   async function removeProduct(id: string, title: string) {
     if (!confirm(`هل أنت متأكد من حذف "${title}"؟`)) return;
     setError(null);
+    setDeleting(id);
     const res = await fetch(`/api/products/${id}`, { method: "DELETE" });
+    setDeleting(null);
     if (res.ok) {
-      await loadProducts();
+      setProducts((prev) => prev.filter((p) => p.id !== id));
+      toast("success", "تم حذف المنتج بنجاح.");
     } else {
       const data = await res.json().catch(() => ({ error: "فشل الحذف" }));
       setError(data.error || `خطأ ${res.status}`);
+      toast("error", data.error || "فشل حذف المنتج.");
     }
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div>
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-48" />
+          <Skeleton className="mt-3 h-5 w-72" />
+        </section>
+        <div className="mt-6 grid gap-6 lg:grid-cols-[380px_1fr]">
+          <Skeleton className="h-[500px] rounded-3xl" />
+          <div className="grid gap-4">
+            <Skeleton className="h-32 rounded-3xl" />
+            <Skeleton className="h-32 rounded-3xl" />
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -225,18 +251,36 @@ export default function SellerProductsPage() {
                     const file = e.target.files?.[0];
                     if (!file) return;
                     setUploadingImage(true);
+                    setUploadProgress(0);
                     const formData = new FormData();
                     formData.append("file", file);
-                    const res = await fetch("/api/upload", { method: "POST", body: formData });
-                    if (res.ok) {
-                      const data = await res.json();
+                    const xhr = new XMLHttpRequest();
+                    xhr.upload.onprogress = (e) => {
+                      if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+                    };
+                    await new Promise<void>((resolve, reject) => {
+                      xhr.onload = () => resolve();
+                      xhr.onerror = () => reject();
+                      xhr.open("POST", "/api/upload");
+                      xhr.send(formData);
+                    });
+                    if (xhr.status === 200) {
+                      const data = JSON.parse(xhr.responseText);
                       setImageUrl(data.url);
+                      toast("success", "تم رفع الصورة بنجاح.");
+                    } else {
+                      toast("error", "فشل رفع الصورة.");
                     }
                     setUploadingImage(false);
                   }}
                 />
-                {uploadingImage ? "جاري الرفع..." : "اختر صورة من الجهاز"}
+                {uploadingImage ? `جاري الرفع... ${uploadProgress}%` : "اختر صورة من الجهاز"}
               </label>
+              {uploadingImage && (
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                </div>
+              )}
             </label>
 
             {error && (
@@ -246,7 +290,7 @@ export default function SellerProductsPage() {
             )}
 
             <button className="btn-primary w-full" type="submit" disabled={saving}>
-              {saving ? "..." : "إضافة منتج"}
+              {saving ? "جاري النشر..." : "إضافة منتج"}
             </button>
           </form>
         </section>
@@ -277,8 +321,12 @@ export default function SellerProductsPage() {
                     </span>
                   </div>
                 </div>
-                <button className="btn-secondary shrink-0" onClick={() => removeProduct(p.id, p.title)}>
-                  حذف
+                <button
+                  className="btn-secondary shrink-0"
+                  onClick={() => removeProduct(p.id, p.title)}
+                  disabled={deleting === p.id}
+                >
+                  {deleting === p.id ? "جاري الحذف..." : "حذف"}
                 </button>
               </div>
             </div>

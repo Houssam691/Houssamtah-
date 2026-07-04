@@ -3,10 +3,12 @@
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { copyToClipboard } from "@/lib/clipboard";
+import { useToast } from "@/components/ToastProvider";
 
 function NewOrderForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { toast } = useToast();
   const productIdParam = searchParams.get("productId");
 
   const [user, setUser] = useState<any>(null);
@@ -21,6 +23,8 @@ function NewOrderForm() {
   const [created, setCreated] = useState<string | null>(null);
   const [copiedEmail, setCopiedEmail] = useState(false);
   const [copiedBank, setCopiedBank] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -64,11 +68,22 @@ function NewOrderForm() {
   }, [selectedProductId, products]);
 
   async function uploadProof(file: File): Promise<string> {
+    setUploading(true);
+    setUploadProgress(0);
     const formData = new FormData();
     formData.append("file", file);
-    const res = await fetch("/api/upload-proof", { method: "POST", body: formData });
-    if (!res.ok) throw new Error("Upload failed");
-    const data = await res.json();
+    const xhr = new XMLHttpRequest();
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
+    };
+    await new Promise<void>((resolve, reject) => {
+      xhr.onload = () => resolve();
+      xhr.onerror = () => reject(new Error("Network error"));
+      xhr.open("POST", "/api/upload-proof");
+      xhr.send(formData);
+    });
+    if (xhr.status !== 200) throw new Error("فشل رفع الملف");
+    const data = JSON.parse(xhr.responseText);
     return data.url;
   }
 
@@ -109,6 +124,7 @@ function NewOrderForm() {
       }
 
       const order = await res.json();
+      toast("success", "تم إنشاء الطلب بنجاح.");
       setCreated(order.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "فشل إنشاء الطلب");
@@ -264,6 +280,14 @@ function NewOrderForm() {
                 onChange={(e) => setPaymentProof(e.target.files?.[0] || null)}
               />
             </div>
+            {uploading && (
+              <div className="grid gap-1">
+                <div className="text-xs text-white/60">جاري الرفع... {uploadProgress}%</div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+                  <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
+                </div>
+              </div>
+            )}
           </label>
 
           {error && (
@@ -275,9 +299,9 @@ function NewOrderForm() {
           <button
             className="btn-primary h-12 w-full"
             type="submit"
-            disabled={loading || !paymentProof}
+            disabled={loading || uploading || !paymentProof}
           >
-            {loading ? "..." : "إرسال الطلب"}
+            {loading ? "جاري إنشاء الطلب..." : "إرسال الطلب"}
           </button>
         </form>
       </section>

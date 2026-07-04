@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useToast } from "@/components/ToastProvider";
+import { Skeleton } from "@/components/Skeleton";
 
 type Notification = {
   id: string;
@@ -26,6 +28,7 @@ const icons: Record<string, string> = {
 
 export default function NotificationsPage() {
   const router = useRouter();
+  const { toast } = useToast();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -43,22 +46,38 @@ export default function NotificationsPage() {
   }
 
   async function markAllRead() {
-    await fetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    const res = await fetch("/api/notifications", { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({}) });
+    if (res.ok) toast("success", "تم تحديد الكل كمقروء.");
     setNotifications((prev) => prev.map((n) => ({ ...n, read: 1 })));
   }
 
   async function deleteNotif(id: string) {
-    await fetch("/api/notifications", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notificationId: id }) });
+    const res = await fetch("/api/notifications", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ notificationId: id }) });
+    if (res.ok) toast("success", "تم حذف الإشعار.");
     setNotifications((prev) => prev.filter((n) => n.id !== id));
   }
 
   async function deleteAll() {
     if (!confirm("حذف جميع الإشعارات؟")) return;
-    await fetch("/api/notifications", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ all: true }) });
+    const res = await fetch("/api/notifications", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ all: true }) });
+    if (res.ok) toast("success", "تم حذف جميع الإشعارات.");
     setNotifications([]);
   }
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-2xl">
+        <section className="glass rounded-3xl p-6 md:p-8">
+          <Skeleton className="h-8 w-32" />
+          <Skeleton className="mt-3 h-5 w-48" />
+        </section>
+        <div className="mt-6 grid gap-3">
+          <Skeleton className="h-24 rounded-3xl" />
+          <Skeleton className="h-24 rounded-3xl" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto max-w-2xl">

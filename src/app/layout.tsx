@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import NavDashboardLink from "@/components/NavDashboardLink";
 import NavAuthButton from "@/components/NavAuthButton";
 import NavNotificationBell from "@/components/NavNotificationBell";
+import { ToastProvider } from "@/components/ToastProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,7 +18,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "متجر الألعاب",
+  title: "Nexivo",
   description: "متجر حسابات الألعاب وخدمات الشحن",
 };
 
@@ -36,7 +37,7 @@ export default function RootLayout({
             <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
               <Link href="/" className="flex items-center gap-3 font-black tracking-tight">
                 <span className="h-9 w-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-400 shadow-[0_10px_30px_rgba(2,6,23,0.18)]" />
-                <span>متجر الألعاب</span>
+                <span>Nexivo</span>
               </Link>
 
               <nav className="hidden items-center gap-2 md:flex" aria-label="التنقل الرئيسي">
@@ -71,11 +72,11 @@ export default function RootLayout({
             </div>
           </header>
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 md:py-10">{children}</main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 md:py-10"><ToastProvider>{children}</ToastProvider></main>
 
           <footer className="border-t border-white/10 py-10 text-white/70">
             <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 md:flex-row md:items-center md:justify-between">
-              <div>© {new Date().getFullYear()} متجر الألعاب</div>
+              <div>© {new Date().getFullYear()} Nexivo</div>
 
             </div>
           </footer>
