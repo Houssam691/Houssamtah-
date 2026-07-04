@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/Skeleton";
 type Order = {
   id: string;
   order_tracking_id: string;
+  seller_id: string | null;
   buyer_name: string;
   seller_name: string | null;
   product_title: string | null;
@@ -29,6 +30,17 @@ type ChatMessage = {
   sender_name: string;
   text: string;
   created_at: string;
+};
+
+type SellerPaymentInfo = {
+  id: string;
+  first_name: string;
+  last_name: string;
+  payment_full_name: string;
+  payment_surname: string;
+  payment_rip: string;
+  payment_currency: string;
+  payment_usdt_address: string;
 };
 
 const statusLabels: Record<string, string> = {
@@ -51,6 +63,9 @@ export default function AdminOrdersPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [showSecret, setShowSecret] = useState<string | null>(null);
   const [chatData, setChatData] = useState<Record<string, ChatMessage[]>>({});
+  const [paySellerOrder, setPaySellerOrder] = useState<Order | null>(null);
+  const [sellerPayInfo, setSellerPayInfo] = useState<SellerPaymentInfo | null>(null);
+  const [loadingPayInfo, setLoadingPayInfo] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -100,13 +115,29 @@ export default function AdminOrdersPage() {
     await loadOrders();
   }
 
-  async function paySeller(orderId: string) {
-    if (!confirm("تأكيد دفع مبلغ الطلب للبائع؟")) return;
-    setActionLoading(orderId);
-    const res = await fetch(`/api/admin/orders/${orderId}/pay-seller`, { method: "POST" });
+  async function showPaySellerInfo(order: Order) {
+    if (!order.seller_id) { toast("error", "الطلب لا يحتوي على بائع."); return; }
+    setPaySellerOrder(order);
+    setLoadingPayInfo(true);
+    setSellerPayInfo(null);
+    try {
+      const res = await fetch(`/api/users/${order.seller_id}`);
+      if (!res.ok) { toast("error", "فشل تحميل معلومات البائع."); setPaySellerOrder(null); setLoadingPayInfo(false); return; }
+      const data = await res.json();
+      setSellerPayInfo(data.user);
+    } catch { toast("error", "خطأ في الاتصال."); setPaySellerOrder(null); }
+    setLoadingPayInfo(false);
+  }
+
+  async function confirmPaySeller() {
+    if (!paySellerOrder) return;
+    setActionLoading(paySellerOrder.id);
+    const res = await fetch(`/api/admin/orders/${paySellerOrder.id}/pay-seller`, { method: "POST" });
     setActionLoading(null);
     if (res.ok) toast("success", "تم تأكيد الدفع للبائع.");
     else toast("error", "فشل تأكيد الدفع.");
+    setPaySellerOrder(null);
+    setSellerPayInfo(null);
     await loadOrders();
   }
 
@@ -238,7 +269,7 @@ export default function AdminOrdersPage() {
                 {order.status === "delivered" && (
                   <button
                     className="btn-primary"
-                    onClick={() => paySeller(order.id)}
+                    onClick={() => showPaySellerInfo(order)}
                     disabled={actionLoading === order.id}
                   >
                     {actionLoading === order.id ? "جاري التنفيذ..." : "دفع للبائع"}
@@ -337,6 +368,68 @@ export default function AdminOrdersPage() {
           <div className="glass rounded-3xl p-6 text-center text-white/70">لا توجد طلبات.</div>
         )}
       </div>
+
+      {paySellerOrder && (
+        <>
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm" onClick={() => { setPaySellerOrder(null); setSellerPayInfo(null); }} />
+          <div className="fixed left-1/2 top-1/2 z-50 w-full max-w-md -translate-x-1/2 -translate-y-1/2 p-4">
+            <div className="glass rounded-3xl p-6 shadow-2xl">
+              <h2 className="text-lg font-black">معلومات دفع البائع</h2>
+              <p className="mt-1 text-sm text-white/60">قم بتحويل المبلغ إلى الحساب التالي ثم أكد الدفع.</p>
+
+              {loadingPayInfo ? (
+                <p className="mt-4 text-center text-white/50">جاري التحميل...</p>
+              ) : sellerPayInfo ? (
+                <div className="mt-4 grid gap-3">
+                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="text-xs font-bold text-white/50">اسم البائع</div>
+                    <div className="mt-1 font-bold text-white">{sellerPayInfo.first_name} {sellerPayInfo.last_name}</div>
+                  </div>
+                  {sellerPayInfo.payment_full_name && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-bold text-white/50">الاسم الكامل للدفع</div>
+                      <div className="mt-1 font-bold text-white" dir="ltr">{sellerPayInfo.payment_full_name} {sellerPayInfo.payment_surname}</div>
+                    </div>
+                  )}
+                  {sellerPayInfo.payment_rip && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-bold text-white/50">RIP</div>
+                      <div className="mt-1 font-bold text-white" dir="ltr">{sellerPayInfo.payment_rip}</div>
+                    </div>
+                  )}
+                  {sellerPayInfo.payment_usdt_address && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-bold text-white/50">USDT (TRC20)</div>
+                      <div className="mt-1 break-all font-bold text-white font-mono text-sm" dir="ltr">{sellerPayInfo.payment_usdt_address}</div>
+                    </div>
+                  )}
+                  {sellerPayInfo.payment_currency && (
+                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+                      <div className="text-xs font-bold text-white/50">العملة</div>
+                      <div className="mt-1 font-bold text-white">{sellerPayInfo.payment_currency}</div>
+                    </div>
+                  )}
+                  <div className="rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+                    <div className="text-xs font-bold text-white/50">المبلغ</div>
+                    <div className="mt-1 text-xl font-black text-emerald-300">{paySellerOrder.total_amount} {paySellerOrder.currency}</div>
+                  </div>
+
+                  <div className="mt-2 flex gap-3">
+                    <button className="btn-primary flex-1" onClick={confirmPaySeller} disabled={actionLoading === paySellerOrder.id}>
+                      {actionLoading === paySellerOrder.id ? "جاري التنفيذ..." : "تأكيد الدفع للبائع"}
+                    </button>
+                    <button className="btn-secondary flex-1" onClick={() => { setPaySellerOrder(null); setSellerPayInfo(null); }}>
+                      إلغاء
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <p className="mt-4 text-center text-white/50">لا توجد معلومات دفع.</p>
+              )}
+            </div>
+          </div>
+        </>
+      )}
     </div>
   );
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ToastProvider";
 import HeaderNav from "@/components/HeaderNav";
+import AddProductButton from "@/components/AddProductButton";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -18,6 +19,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Nexivo",
   description: "متجر حسابات الألعاب وخدمات الشحن",
+  icons: [{ rel: "icon", url: "/logo.jpeg" }],
 };
 
 export default function RootLayout({
@@ -38,6 +40,7 @@ export default function RootLayout({
           </header>
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-[calc(1.5rem+env(safe-area-inset-bottom))] pt-6 md:py-10"><ToastProvider>{children}</ToastProvider></main>
+          <AddProductButton />
 
           <footer className="border-t border-white/10 py-10 text-white/70">
             <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 md:flex-row md:items-center md:justify-between">

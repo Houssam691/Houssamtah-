@@ -170,7 +170,7 @@ function NewOrderForm() {
               <option value="">اختر منتجاً (اختياري)</option>
               {products.map((p: any) => (
                 <option key={p.id} value={p.id}>
-                  {p.title} — {p.price} {p.currency}
+                  {p.title} — {p.price} {p.currency}{p.seller_name ? ` (${p.seller_name})` : ""}
                 </option>
               ))}
             </select>
@@ -239,9 +239,9 @@ function NewOrderForm() {
           {currency === "DZD" && settings?.payment_email && settings.payment_email !== "—" && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4 text-sm text-white/70">
               <p className="font-bold text-white">أرسل الوصل على الإيميل:</p>
-              <div className="mt-1 flex items-center gap-2">
-                <p className="text-white" dir="ltr">{settings.payment_email}</p>
-                <button type="button" className="btn-primary text-xs px-3 py-1" onClick={() => {
+              <div className="mt-1 flex flex-wrap items-center gap-2">
+                <p className="break-all text-white" dir="ltr">{settings.payment_email}</p>
+                <button type="button" className="btn-primary text-xs px-3 py-1 shrink-0" onClick={() => {
                   copyToClipboard(settings.payment_email);
                   setCopiedEmail(true);
                   setTimeout(() => setCopiedEmail(false), 2000);
