@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { readProducts } from "@/lib/products";
+import AddProductButton from "@/components/AddProductButton";
 
 export const dynamic = "force-dynamic";
 
@@ -44,6 +45,7 @@ export default async function TopupPage() {
           </article>
         ))}
       </section>
+      <AddProductButton />
     </div>
   );
 }

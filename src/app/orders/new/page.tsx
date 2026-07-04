@@ -13,8 +13,6 @@ function NewOrderForm() {
 
   const [user, setUser] = useState<any>(null);
   const [product, setProduct] = useState<any>(null);
-  const [products, setProducts] = useState<any[]>([]);
-  const [selectedProductId, setSelectedProductId] = useState(productIdParam || "");
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
   const [currency, setCurrency] = useState("DZD");
   const [settings, setSettings] = useState<any>(null);
@@ -43,29 +41,19 @@ function NewOrderForm() {
       .then(setSettings)
       .catch(() => {});
 
-    fetch("/api/products", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((data) => {
-        const arr = Array.isArray(data) ? data : [];
-        setProducts(arr);
-        if (productIdParam) {
+    if (productIdParam) {
+      fetch("/api/products", { cache: "no-store" })
+        .then((r) => r.json())
+        .then((data) => {
+          const arr = Array.isArray(data) ? data : [];
           const found = arr.find((p: any) => p.id === productIdParam);
-          if (found) {
-            setSelectedProductId(productIdParam);
-            setProduct(found);
-          }
-        }
-      });
-  }, [router, productIdParam]);
-
-  useEffect(() => {
-    if (selectedProductId) {
-      const found = products.find((p: any) => p.id === selectedProductId);
-      setProduct(found || null);
+          if (found) setProduct(found);
+        })
+        .catch(() => {});
     } else {
-      setProduct(null);
+      router.push("/");
     }
-  }, [selectedProductId, products]);
+  }, [router, productIdParam]);
 
   async function uploadProof(file: File): Promise<string> {
     setUploading(true);
@@ -157,25 +145,9 @@ function NewOrderForm() {
     <div className="mx-auto max-w-lg">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">طلب جديد</h1>
-        <p className="subtitle">اختر المنتج وارفع إثبات الدفع.</p>
+        <p className="subtitle">ارفع إثبات الدفع لإتمام الطلب.</p>
 
         <form className="mt-6 grid gap-4" onSubmit={onSubmit}>
-          <label className="grid gap-2">
-            <span className="text-sm font-bold text-white/80">المنتج</span>
-            <select
-              className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50"
-              value={selectedProductId}
-              onChange={(e) => setSelectedProductId(e.target.value)}
-            >
-              <option value="">اختر منتجاً (اختياري)</option>
-              {products.map((p: any) => (
-                <option key={p.id} value={p.id}>
-                  {p.title} — {p.price} {p.currency}{p.seller_name ? ` (${p.seller_name})` : ""}
-                </option>
-              ))}
-            </select>
-          </label>
-
           {product && (
             <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
               <div className="flex items-center justify-between">
