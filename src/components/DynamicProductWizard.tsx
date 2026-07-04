@@ -12,15 +12,17 @@ const STEPS = ["اختيار اللعبة", "معلومات المنتج", "رف
 
 function StepIndicator({ current, total }: { current: number; total: number }) {
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-1.5">
       {Array.from({ length: total }, (_, i) => (
-        <div key={i} className={`h-1.5 flex-1 rounded-full transition-all duration-300 ${
+        <div key={i} className={`h-1 flex-1 rounded-full transition-all duration-300 ${
           i <= current ? "bg-indigo-500" : "bg-white/10"
         }`} />
       ))}
     </div>
   );
 }
+
+type BtnState = { loading: boolean; success: boolean; error: boolean };
 
 export default function DynamicProductWizard({ onComplete }: Props) {
   const { toast } = useToast();
@@ -37,6 +39,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
   const [draftKey] = useState(() => `product-draft-${Date.now()}`);
+  const [publishBtn, setPublishBtn] = useState<BtnState>({ loading: false, success: false, error: false });
 
   useEffect(() => {
     if (category) {
@@ -137,12 +140,12 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
     if (field.type === "select" && field.options) {
       return (
-        <label key={field.key} className="grid gap-1.5">
-          <span className="text-sm font-bold text-white/80">
+        <label key={field.key} className="grid gap-1">
+          <span className="text-xs font-bold text-white/80">
             {field.label} {field.required && <span className="text-rose-400">*</span>}
           </span>
           <select
-            className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50 transition"
+            className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
             value={String(value)}
             onChange={(e) => handleFieldChange(field.key, e.target.value)}
           >
@@ -157,13 +160,13 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
     if (field.type === "number") {
       return (
-        <label key={field.key} className="grid gap-1.5">
-          <span className="text-sm font-bold text-white/80">
+        <label key={field.key} className="grid gap-1">
+          <span className="text-xs font-bold text-white/80">
             {field.label} {field.required && <span className="text-rose-400">*</span>}
           </span>
           <input
             type="number"
-            className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50 transition"
+            className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
             value={value === "" ? "" : Number(value)}
             onChange={(e) => handleFieldChange(field.key, e.target.value ? Number(e.target.value) : "")}
             placeholder={field.placeholder}
@@ -175,13 +178,13 @@ export default function DynamicProductWizard({ onComplete }: Props) {
     }
 
     return (
-      <label key={field.key} className="grid gap-1.5">
-        <span className="text-sm font-bold text-white/80">
+      <label key={field.key} className="grid gap-1">
+        <span className="text-xs font-bold text-white/80">
           {field.label} {field.required && <span className="text-rose-400">*</span>}
         </span>
         <input
           type="text"
-          className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50 transition"
+          className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
           value={String(value)}
           onChange={(e) => handleFieldChange(field.key, e.target.value)}
           placeholder={field.placeholder}
@@ -192,6 +195,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
   async function publishProduct() {
     setError(null);
+    setPublishBtn({ loading: true, success: false, error: false });
     setSaving(true);
 
     const res = await fetch("/api/products", {
@@ -214,12 +218,17 @@ export default function DynamicProductWizard({ onComplete }: Props) {
     if (res.ok) {
       const product = await res.json();
       try { localStorage.removeItem(draftKey); } catch {}
-      toast("success", "تم نشر المنتج بنجاح!");
-      onComplete?.();
-      window.location.href = `/products/${encodeURIComponent(product.id)}`;
+      setPublishBtn({ loading: false, success: true, error: false });
+      setTimeout(() => {
+        toast("success", "تم نشر المنتج بنجاح!");
+        onComplete?.();
+        window.location.href = `/products/${encodeURIComponent(product.id)}`;
+      }, 600);
     } else {
       const data = await res.json().catch(() => ({ error: "فشل النشر" }));
       setError(data.error || "حدث خطأ أثناء النشر");
+      setPublishBtn({ loading: false, success: false, error: true });
+      setTimeout(() => setPublishBtn({ loading: false, success: false, error: false }), 1500);
       toast("error", data.error || "فشل نشر المنتج");
     }
   }
@@ -237,39 +246,38 @@ export default function DynamicProductWizard({ onComplete }: Props) {
     return true;
   };
 
+  const publishBtnCls = publishBtn.loading ? "loading" : publishBtn.success ? "success" : publishBtn.error ? "error" : "";
+
   return (
-    <div className="glass rounded-3xl p-6 md:p-8">
-      {/* Progress bar */}
+    <div className="glass rounded-2xl p-5">
       <StepIndicator current={step} total={STEPS.length} />
 
-      {/* Step label */}
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-sm font-bold text-white/60">
+      <div className="mt-2 flex items-center justify-between">
+        <span className="text-xs font-bold text-white/60">
           الخطوة {step + 1} من {STEPS.length}
         </span>
-        <span className="text-sm font-bold text-indigo-300">{STEPS[step]}</span>
+        <span className="text-xs font-bold text-indigo-300">{STEPS[step]}</span>
       </div>
 
-      <div className="mt-6 min-h-[300px]">
-        {/* Step 0: Select Game */}
+      <div className="mt-4 min-h-[260px]">
         {step === 0 && (
-          <div className="grid gap-4 animate-fade-in-up">
-            <h2 className="text-lg font-black">اختر نوع المنتج</h2>
-            <p className="text-sm text-white/70">اختر اللعبة أو الخدمة التي تريد بيعها.</p>
-            <div className="grid gap-3 sm:grid-cols-3 mt-4">
+          <div className="grid gap-3 animate-slide-up-fade">
+            <h2 className="text-base font-black">اختر نوع المنتج</h2>
+            <p className="text-xs text-white/70">اختر اللعبة أو الخدمة التي تريد بيعها.</p>
+            <div className="grid gap-2 sm:grid-cols-3 mt-3">
               {Object.values(GAME_SPECS).map((g) => (
                 <button
                   key={g.id}
                   onClick={() => setCategory(g.id)}
-                  className={`relative rounded-3xl border-2 p-6 text-center transition-all duration-200 ${
+                  className={`relative rounded-2xl border-2 p-4 text-center transition-all duration-200 ${
                     category === g.id
-                      ? "border-indigo-500 bg-indigo-500/10 scale-105"
+                      ? "border-indigo-500 bg-indigo-500/10 scale-[1.02]"
                       : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
                   }`}
                 >
-                  <div className="text-3xl">{g.icon}</div>
-                  <div className="mt-2 text-lg font-black text-white">{g.name}</div>
-                  <div className="mt-1 text-xs text-white/60">
+                  <div className="text-2xl">{g.icon}</div>
+                  <div className="mt-1 text-base font-black text-white">{g.name}</div>
+                  <div className="mt-0.5 text-[10px] text-white/60">
                     {g.productType === "account" ? "بيع حسابات" : "خدمات شحن"}
                   </div>
                 </button>
@@ -278,55 +286,53 @@ export default function DynamicProductWizard({ onComplete }: Props) {
           </div>
         )}
 
-        {/* Step 1: Fill Fields */}
         {step === 1 && spec && (
-          <div className="grid gap-4 animate-fade-in-up">
-            <h2 className="text-lg font-black">معلومات {spec.name}</h2>
-            <p className="text-sm text-white/70">أدخل تفاصيل المنتج بدقة. هذه المعلومات سيراها المشتري.</p>
-            <div className="grid gap-4 sm:grid-cols-2 mt-4">
+          <div className="grid gap-3 animate-slide-up-fade">
+            <h2 className="text-base font-black">معلومات {spec.name}</h2>
+            <p className="text-xs text-white/70">أدخل تفاصيل المنتج بدقة.</p>
+            <div className="grid gap-3 sm:grid-cols-2 mt-2">
               {spec.fields.map(renderField)}
             </div>
-            <label className="grid gap-1.5">
-              <span className="text-sm font-bold text-white/80">العنوان</span>
+            <label className="grid gap-1">
+              <span className="text-xs font-bold text-white/80">العنوان</span>
               <input
                 type="text"
-                className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50 transition"
+                className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="عنوان جذاب للمنتج"
               />
             </label>
-            <label className="grid gap-1.5">
-              <span className="text-sm font-bold text-white/80">الوصف (اختياري)</span>
+            <label className="grid gap-1">
+              <span className="text-xs font-bold text-white/80">الوصف (اختياري)</span>
               <textarea
-                className="min-h-[80px] rounded-2xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-indigo-400/50 transition"
+                className="min-h-[60px] rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="وصف إضافي للمنتج..."
+                placeholder="وصف إضافي..."
               />
             </label>
           </div>
         )}
 
-        {/* Step 2: Upload Images */}
         {step === 2 && (
-          <div className="grid gap-4 animate-fade-in-up">
-            <h2 className="text-lg font-black">رفع الصور</h2>
-            <p className="text-sm text-white/70">الصور الجيدة تزيد الثقة. يمكنك رفع عدة صور.</p>
+          <div className="grid gap-3 animate-slide-up-fade">
+            <h2 className="text-base font-black">رفع الصور</h2>
+            <p className="text-xs text-white/70">الصور الجيدة تزيد الثقة.</p>
 
             {images.length > 0 && (
               <div className="grid grid-cols-3 gap-2">
                 {images.map((url, i) => (
-                  <div key={i} className="relative aspect-square overflow-hidden rounded-2xl border border-white/10 group">
+                  <div key={i} className="relative aspect-square overflow-hidden rounded-xl border border-white/10 group">
                     <img src={url} alt="" className="h-full w-full object-cover" />
                     <button
-                      className="absolute left-1 top-1 flex h-7 w-7 items-center justify-center rounded-full bg-black/60 text-xs text-white opacity-0 group-hover:opacity-100 transition"
+                      className="absolute left-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-black/60 text-[10px] text-white opacity-0 group-hover:opacity-100 transition"
                       onClick={() => setImages((prev) => prev.filter((_, j) => j !== i))}
                     >
                       ✕
                     </button>
                     {i === 0 && (
-                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500/80 px-2 py-0.5 text-[10px] font-bold text-white">
+                      <div className="absolute bottom-1 left-1/2 -translate-x-1/2 rounded-full bg-indigo-500/80 px-2 py-0.5 text-[9px] font-bold text-white">
                         الغلاف
                       </div>
                     )}
@@ -336,7 +342,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
             )}
 
             {images.length < 6 && (
-              <label className="flex h-24 cursor-pointer items-center justify-center rounded-2xl border border-dashed border-white/20 bg-white/5 text-sm text-white/60 hover:border-indigo-400/50 transition">
+              <label className="flex h-20 cursor-pointer items-center justify-center rounded-xl border border-dashed border-white/20 bg-white/5 text-xs text-white/60 hover:border-indigo-400/50 transition">
                 <input
                   type="file"
                   accept="image/*"
@@ -360,29 +366,24 @@ export default function DynamicProductWizard({ onComplete }: Props) {
             )}
 
             {uploading && (
-              <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="h-1 overflow-hidden rounded-full bg-white/10">
                 <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
               </div>
-            )}
-
-            {images.length > 1 && (
-              <p className="text-xs text-white/50">الصورة الأولى هي صورة الغلاف. يمكنك الضغط على ✕ لحذف صورة.</p>
             )}
           </div>
         )}
 
-        {/* Step 3: Price */}
         {step === 3 && (
-          <div className="grid gap-4 animate-fade-in-up max-w-sm">
-            <h2 className="text-lg font-black">سعر المنتج</h2>
-            <p className="text-sm text-white/70">حدد سعر المنتج. العمولة تُخصم تلقائياً.</p>
-            <label className="grid gap-1.5">
-              <span className="text-sm font-bold text-white/80">
+          <div className="grid gap-3 animate-slide-up-fade max-w-sm">
+            <h2 className="text-base font-black">سعر المنتج</h2>
+            <p className="text-xs text-white/70">حدد السعر. العمولة تُخصم تلقائياً.</p>
+            <label className="grid gap-1">
+              <span className="text-xs font-bold text-white/80">
                 السعر ({category === "topup" ? "USD" : "دج"})
               </span>
               <input
                 type="number"
-                className="h-14 text-2xl rounded-2xl border border-white/10 bg-white/5 px-4 text-white font-black outline-none focus:border-indigo-400/50 transition"
+                className="h-12 text-xl rounded-xl border border-white/10 bg-white/5 px-3 text-white font-black outline-none focus:border-indigo-400/50 transition"
                 value={price || ""}
                 onChange={(e) => setPrice(Number(e.target.value))}
                 placeholder="0"
@@ -390,113 +391,106 @@ export default function DynamicProductWizard({ onComplete }: Props) {
               />
             </label>
             {price > 0 && (
-              <div className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-4 text-sm">
+              <div className="rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3 text-xs">
                 <div className="flex items-center justify-between text-white/70">
-                  <span>سعر المنتج</span>
+                  <span>السعر</span>
                   <span className="font-bold text-white">{price} {category === "topup" ? "USD" : "دج"}</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-white/70">
-                  <span>عمولة المنصة (5%)</span>
-                  <span className="font-bold text-rose-300">{(price * 0.05).toFixed(2)} {category === "topup" ? "USD" : "دج"}</span>
+                  <span>عمولة (5%)</span>
+                  <span className="font-bold text-rose-300">{(price * 0.05).toFixed(2)}</span>
                 </div>
-                <div className="mt-1 flex items-center justify-between border-t border-white/10 pt-2 text-white/70">
-                  <span>صافي ربحك</span>
-                  <span className="font-bold text-emerald-300">{(price * 0.95).toFixed(2)} {category === "topup" ? "USD" : "دج"}</span>
+                <div className="mt-1 flex items-center justify-between border-t border-white/10 pt-1 text-white/70">
+                  <span>صافي الربح</span>
+                  <span className="font-bold text-emerald-300">{(price * 0.95).toFixed(2)}</span>
                 </div>
               </div>
             )}
           </div>
         )}
 
-        {/* Step 4: Review */}
         {step === 4 && spec && (
-          <div className="grid gap-4 animate-fade-in-up">
-            <h2 className="text-lg font-black">مراجعة المنتج</h2>
-            <p className="text-sm text-white/70">هكذا سيرى المشتري منتجك. تأكد من صحة المعلومات.</p>
+          <div className="grid gap-3 animate-slide-up-fade">
+            <h2 className="text-base font-black">مراجعة المنتج</h2>
+            <p className="text-xs text-white/70">هكذا سيرى المشتري منتجك.</p>
 
-            <div className="rounded-3xl border border-white/10 bg-white/5 p-5">
-              {/* Image preview */}
-              <div className="relative h-48 overflow-hidden rounded-2xl mb-4">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+              <div className="relative h-36 overflow-hidden rounded-xl mb-3">
                 <img src={images[0] || "/uploads/placeholder.svg"} alt="" className="h-full w-full object-cover" />
               </div>
 
-              <h3 className="text-xl font-black text-white">{title || "عنوان المنتج"}</h3>
-              <div className="mt-1 text-sm text-white/50">{spec.name} • {spec.productType === "account" ? "حساب" : "شحن"}</div>
+              <h3 className="text-lg font-black text-white">{title || "عنوان المنتج"}</h3>
+              <div className="mt-0.5 text-xs text-white/50">{spec.name}</div>
 
-              {/* Specs cards */}
-              <div className="mt-4 grid grid-cols-2 gap-2">
+              <div className="mt-3 grid grid-cols-2 gap-1.5">
                 {spec.fields.map((field) => {
                   const val = attributes[field.key];
                   if (val === undefined || val === null || val === "") return null;
                   return (
-                    <div key={field.key} className="rounded-xl border border-white/10 bg-white/[0.04] p-3">
+                    <div key={field.key} className="rounded-lg border border-white/10 bg-white/[0.04] p-2">
                       <div className="text-sm font-black text-white">{String(val)}</div>
-                      <div className="mt-0.5 text-[10px] font-bold text-white/50">{field.label}</div>
+                      <div className="mt-0.5 text-[9px] font-bold text-white/50">{field.label}</div>
                     </div>
                   );
                 })}
               </div>
 
-              {/* Price */}
-              <div className="mt-4 flex items-center justify-between rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-4">
-                <span className="text-sm text-white/70">السعر</span>
-                <span className="text-2xl font-black text-indigo-300">{price} {category === "topup" ? "USD" : "دج"}</span>
+              <div className="mt-3 flex items-center justify-between rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3">
+                <span className="text-xs text-white/70">السعر</span>
+                <span className="text-xl font-black text-indigo-300">{price} {category === "topup" ? "USD" : "دج"}</span>
               </div>
 
-              {/* Trust badge */}
-              <div className="mt-3 rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-4 py-3 text-center text-xs font-bold text-emerald-300">
-                🛡️ أموالك محمية بواسطة نظام الوسيط في Nexivo
+              <div className="mt-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-bold text-emerald-300">
+                🛡️ أموالك محمية بواسطة نظام الوسيط
               </div>
             </div>
           </div>
         )}
 
-        {/* Step 5: Publish */}
         {step === 5 && (
-          <div className="flex flex-col items-center justify-center py-8 animate-fade-in-up text-center">
-            <div className="flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 text-4xl">
+          <div className="flex flex-col items-center justify-center py-6 animate-slide-up-fade text-center">
+            <div className="flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500/20 to-emerald-500/20 text-3xl">
               🚀
             </div>
-            <h2 className="mt-6 text-2xl font-black text-white">المنتج جاهز للنشر</h2>
-            <p className="mt-2 text-sm text-white/70 max-w-sm">
-              بعد النشر، سيظهر المنتج فوراً في القسم المختار ليراه المشترون.
+            <h2 className="mt-4 text-xl font-black text-white">المنتج جاهز للنشر</h2>
+            <p className="mt-1 text-xs text-white/70 max-w-xs">
+              بعد النشر، سيظهر المنتج فوراً في القسم المختار.
             </p>
 
             {error && (
-              <div className="mt-4 w-full max-w-sm rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
+              <div className="mt-3 w-full max-w-xs rounded-xl border border-rose-400/30 bg-rose-500/10 px-3 py-2 text-xs font-bold text-rose-100">
                 {error}
               </div>
             )}
 
-            <div className="mt-8 grid w-full max-w-sm gap-3">
+            <div className="mt-6 grid w-full max-w-xs gap-2">
               <button
-                className="btn-primary w-full py-4 text-base"
+                className={`btn-primary w-full py-3 text-sm ${publishBtnCls}`}
                 onClick={publishProduct}
-                disabled={saving}
+                disabled={publishBtn.loading}
               >
-                {saving ? "جاري النشر..." : "نشر المنتج"}
+                {publishBtn.loading ? "جاري النشر..." : publishBtn.success ? "تم النشر!" : publishBtn.error ? "فشل" : "نشر المنتج"}
               </button>
               <button
-                className="btn-secondary w-full py-3 text-sm"
+                className="btn-secondary w-full py-2.5 text-xs"
                 onClick={() => {
                   try { localStorage.removeItem(draftKey); } catch {}
                   toast("info", "تم حفظ المسودة");
                   onComplete?.();
                 }}
-                disabled={saving}
+                disabled={publishBtn.loading}
               >
-                حفظ كمسودة لاحقاً
+                حفظ كمسودة
               </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Navigation buttons */}
       {step < 5 && (
-        <div className="mt-8 flex items-center justify-between gap-3">
+        <div className="mt-6 flex items-center justify-between gap-2">
           <button
-            className="btn-secondary"
+            className="btn-secondary text-sm"
             onClick={() => setStep((s) => Math.max(0, s - 1))}
             disabled={step === 0}
           >
@@ -504,7 +498,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
           </button>
 
           <button
-            className="btn-primary"
+            className="btn-primary text-sm"
             onClick={() => {
               const err = validateStep();
               if (err) {
