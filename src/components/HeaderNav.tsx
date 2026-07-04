@@ -24,7 +24,7 @@ export default function HeaderNav() {
   return (
     <div className="flex w-full items-center justify-between gap-4">
       <button onClick={() => setOpen(!open)} className="flex items-center gap-3 font-black tracking-tight">
-        <span className="h-9 w-9 rounded-2xl bg-gradient-to-br from-indigo-500 to-emerald-400 shadow-[0_10px_30px_rgba(2,6,23,0.18)]" />
+        <img src="/logo.jpeg" alt="Nexivo" className="h-9 w-9 rounded-2xl object-cover shadow-[0_10px_30px_rgba(2,6,23,0.18)]" />
         <span>Nexivo</span>
       </button>
 

@@ -100,7 +100,7 @@ export default function NavNotificationBell({ className }: { className?: string 
       </button>
 
       {open && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:right-0 max-md:left-auto max-md:translate-x-0 max-md:max-w-[calc(100vw-1rem)] rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)]">
+        <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:left-2 max-md:right-2 max-md:w-auto max-md:translate-x-0 rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)]">
           <div className="flex items-center justify-between">
             <div className="text-sm font-black text-white">الإشعارات</div>
             <div className="flex gap-2">
