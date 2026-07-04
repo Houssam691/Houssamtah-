@@ -18,7 +18,13 @@ type Notification = {
   order_tracking_id: string | null;
 };
 
-export default function NavNotificationBell({ className }: { className?: string }) {
+type Props = {
+  className?: string;
+  userId?: string | null;
+  links?: React.ReactNode;
+};
+
+export default function NavNotificationBell({ className, userId, links }: Props) {
   const router = useRouter();
   const [unread, setUnread] = useState(0);
   const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -100,7 +106,8 @@ export default function NavNotificationBell({ className }: { className?: string 
       </button>
 
       {open && (
-        <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:right-0 max-md:left-auto max-md:translate-x-0 max-md:max-w-[calc(100vw-1rem)] rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)] animate-scale-in">
+        <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:right-2 max-md:left-auto max-md:translate-x-0 max-md:max-w-[calc(100vw-1rem)] rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)] animate-scale-in">
+          {/* Notifications */}
           <div className="flex items-center justify-between">
             <div className="text-sm font-black text-white">الإشعارات</div>
             <div className="flex gap-2">
@@ -112,9 +119,9 @@ export default function NavNotificationBell({ className }: { className?: string 
             </div>
           </div>
 
-          <div className="mt-3 grid max-h-72 gap-2 overflow-y-auto">
+          <div className="mt-3 grid max-h-60 gap-2 overflow-y-auto">
             {notifications.length === 0 && (
-              <div className="py-6 text-center text-sm text-white/50">لا توجد إشعارات</div>
+              <div className="py-4 text-center text-sm text-white/50">لا توجد إشعارات</div>
             )}
             {notifications.map((n) => (
               <Link key={n.id} href={getLink(n)} className={`group relative rounded-2xl p-3 text-sm transition hover:bg-white/5 ${n.read ? "opacity-60" : "border-r-2 border-indigo-400"}`} onClick={() => setOpen(false)}>
@@ -132,9 +139,17 @@ export default function NavNotificationBell({ className }: { className?: string 
           </div>
 
           {notifications.length > 0 && (
-            <Link href="/notifications" className="mt-3 block text-center text-xs font-bold text-indigo-400 hover:text-indigo-300" onClick={() => setOpen(false)}>
+            <Link href="/notifications" className="mt-2 block text-center text-xs font-bold text-indigo-400 hover:text-indigo-300" onClick={() => setOpen(false)}>
               عرض الكل
             </Link>
+          )}
+
+          {/* Nav Links */}
+          {links && (
+            <>
+              <hr className="my-3 border-white/10" />
+              {links}
+            </>
           )}
         </div>
       )}
