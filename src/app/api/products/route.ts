@@ -3,6 +3,7 @@ import { readProducts, createProduct, type ProductCategory } from "@/lib/product
 import { getSessionUser } from "@/lib/auth";
 import { csrfGuard } from "@/lib/csrf";
 import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
+import { validateAttributes } from "@/lib/game-specs";
 
 export const runtime = "nodejs";
 
@@ -42,6 +43,12 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Product category is required" }, { status: 400 });
   }
 
+  const attributes = body.attributes || {};
+  const validationErrors = validateAttributes(body.category, attributes);
+  if (validationErrors.length > 0) {
+    return NextResponse.json({ error: validationErrors.join("، ") }, { status: 400 });
+  }
+
   const product = await createProduct({
     seller_id: user.role === "seller" ? user.id : (body.seller_id || undefined),
     product_type: body.product_type || "account",
@@ -51,6 +58,7 @@ export async function POST(req: Request) {
     price: body.price,
     images: body.images || (body.image ? [body.image] : []),
     currency: body.currency || "DZD",
+    attributes,
   });
 
   return NextResponse.json(product, { status: 201 });

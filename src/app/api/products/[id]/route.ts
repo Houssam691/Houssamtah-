@@ -7,7 +7,7 @@ import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
-const SELLER_ALLOWED_FIELDS = ["title", "description", "price", "images", "status", "currency"];
+const SELLER_ALLOWED_FIELDS = ["title", "description", "price", "images", "status", "currency", "attributes"];
 const ADMIN_ALLOWED_FIELDS = [...SELLER_ALLOWED_FIELDS, "category", "product_type", "delivery_data", "product_secret_code"];
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
