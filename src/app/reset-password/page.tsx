@@ -71,7 +71,7 @@ function ResetPasswordForm() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg page-transition">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">إعادة تعيين كلمة المرور</h1>
         <p className="subtitle">أدخل كلمة المرور الجديدة.</p>
@@ -105,7 +105,7 @@ function ResetPasswordForm() {
             </div>
           ) : null}
 
-          <button className="btn-primary h-12 w-full" type="submit" disabled={loading}>
+          <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading}>
             {loading ? "جاري تغيير كلمة المرور..." : "تغيير كلمة المرور"}
           </button>
         </form>

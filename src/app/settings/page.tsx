@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ToastProvider";
+import SensitiveToggle from "@/components/SensitiveToggle";
 
 type SafeUser = {
   id: string; role: string; email: string;
@@ -147,13 +148,15 @@ export default function SettingsPage() {
   const labelClass = "text-sm font-bold text-white/80";
 
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-2xl page-transition">
       <h1 className="title mb-6">الإعدادات</h1>
 
       {/* Personal Info */}
       <section className="glass rounded-3xl p-6 md:p-8">
         <h2 className="text-lg font-black">المعلومات الشخصية</h2>
-        <p className="mt-1 text-sm text-white/60">{user?.email}</p>
+        <p className="mt-1 text-sm text-white/60">
+          <SensitiveToggle>{user?.email}</SensitiveToggle>
+        </p>
         <form className="mt-4 grid gap-4" onSubmit={handleSaveInfo}>
           <div className="grid gap-4 sm:grid-cols-2">
             <label className="grid gap-2">
@@ -169,7 +172,7 @@ export default function SettingsPage() {
             <span className={labelClass}>تاريخ الميلاد</span>
             <input className={inputClass} type="date" value={dob} onChange={(e) => setDob(e.target.value)} />
           </label>
-          <button className="btn-primary h-12 w-full sm:w-auto sm:px-8" type="submit" disabled={savingInfo}>
+          <button className={`btn-primary h-12 w-full sm:w-auto sm:px-8 ${savingInfo ? "loading" : ""}`} type="submit" disabled={savingInfo}>
             {savingInfo ? "جاري الحفظ..." : "حفظ المعلومات"}
           </button>
         </form>
@@ -213,7 +216,7 @@ export default function SettingsPage() {
               <input className={inputClass} value={payUsdt} onChange={(e) => setPayUsdt(e.target.value)} dir="ltr" />
             </label>
           </div>
-          <button className="btn-primary h-12 w-full sm:w-auto sm:px-8" type="submit" disabled={savingPay}>
+          <button className={`btn-primary h-12 w-full sm:w-auto sm:px-8 ${savingPay ? "loading" : ""}`} type="submit" disabled={savingPay}>
             {savingPay ? "جاري الحفظ..." : "حفظ طريقة الدفع"}
           </button>
         </form>
@@ -231,7 +234,7 @@ export default function SettingsPage() {
             <span className={labelClass}>كلمة المرور الجديدة</span>
             <input className={inputClass} type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
           </label>
-          <button className="btn-primary h-12 w-full sm:w-auto sm:px-8" type="submit" disabled={changingPassword}>
+          <button className={`btn-primary h-12 w-full sm:w-auto sm:px-8 ${changingPassword ? "loading" : ""}`} type="submit" disabled={changingPassword}>
             {changingPassword ? "جاري التغيير..." : "تغيير كلمة المرور"}
           </button>
         </form>

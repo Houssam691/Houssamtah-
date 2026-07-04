@@ -113,7 +113,7 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg">
+    <div className="mx-auto max-w-lg page-transition">
       <section className="glass rounded-3xl p-6 md:p-10">
         <h1 className="title">إنشاء حساب جديد</h1>
         <p className="subtitle">سجّل للوصول إلى الطلبات والمتجر.</p>
@@ -228,7 +228,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <button className="btn-primary h-12 w-full" type="submit" disabled={loading || step === "uploading"}>
+          <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading || step === "uploading"}>
             {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
           </button>
 

@@ -1,6 +1,4 @@
-import Image from "next/image";
 import Link from "next/link";
-import { readProducts } from "@/lib/products";
 import { getDb } from "@/lib/db";
 import EscrowFlow from "@/components/EscrowFlow";
 import TrustBadge from "@/components/TrustBadge";
@@ -8,8 +6,6 @@ import TrustBadge from "@/components/TrustBadge";
 export const dynamic = "force-dynamic";
 
 export default async function Home() {
-  const products = await readProducts();
-  const featured = products.filter((p) => p.status === "active").slice(0, 6);
   const { queryOne } = await getDb();
   const userCount = await queryOne<{ c: number }>("SELECT COUNT(*) as c FROM users");
   const orderCount = await queryOne<{ c: number }>("SELECT COUNT(*) as c FROM orders WHERE status IN ('delivered','seller_paid')");
@@ -95,58 +91,6 @@ export default async function Home() {
       <section id="how-it-works" className="animate-fade-in-up stagger-3">
         <EscrowFlow />
       </section>
-
-      {/* Featured Products */}
-      {featured.length > 0 && (
-        <section className="animate-fade-in-up stagger-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-xl font-black">منتجات مميزة</h2>
-            <Link href="/pubg" className="text-sm font-bold text-indigo-300 hover:text-indigo-200">عرض الكل ←</Link>
-          </div>
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 md:grid-cols-3">
-            {featured.map((p, i) => {
-              const images = (() => {
-                try { const parsed = JSON.parse(p.image || "[]"); return Array.isArray(parsed) ? parsed : []; }
-                catch { return []; }
-              })();
-              return (
-                <Link key={p.id} href={`/products/${encodeURIComponent(p.id)}`} className={`product-card glass flex flex-col rounded-3xl animate-fade-in-up`} style={{ animationDelay: `${(i + 1) * 100}ms` }}>
-                  <div className="relative h-44 shrink-0 overflow-hidden rounded-t-3xl product-card-image">
-                    <Image src={images[0] || "/uploads/placeholder.svg"} alt={p.title} fill className="object-cover" />
-                    {p.status === "sold" && (
-                      <div className="absolute left-2 top-2 z-10 rounded-full bg-rose-500 px-3 py-1 text-xs font-bold text-white shadow-lg">تم البيع</div>
-                    )}
-                    {p.status !== "sold" && (
-                      <div className="quick-actions absolute inset-x-0 bottom-0 z-10 flex gap-2 p-3 bg-gradient-to-t from-black/60 to-transparent">
-                        <span className="flex-1 rounded-full bg-white/20 backdrop-blur-md px-3 py-2 text-center text-xs font-bold text-white">
-                          عرض المنتج
-                        </span>
-                        <span className="flex-1 rounded-full bg-indigo-500/80 backdrop-blur-md px-3 py-2 text-center text-xs font-bold text-white">
-                          شراء
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex flex-1 flex-col p-5">
-                    <div className="flex items-center gap-2 text-xs text-white/50">
-                      <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-indigo-300">{p.category === "pubg" ? "PUBG" : p.category === "free-fire" ? "Free Fire" : "Top-up"}</span>
-                    </div>
-                    <div className="mt-2 text-lg font-black text-white group-hover:text-indigo-200 transition">{p.title}</div>
-                    {p.seller_name && (
-                      <span className="mt-1 text-xs text-indigo-300/70">{p.seller_name}</span>
-                    )}
-                    <div className="mt-2 flex-1 line-clamp-2 text-sm leading-7 text-white/60">{p.description}</div>
-                    <div className="mt-4 flex items-center justify-between">
-                      <div className="text-xl font-black text-white">{p.price} {p.currency}</div>
-                      <span className="btn-primary text-sm px-4 py-2">شراء</span>
-                    </div>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
-        </section>
-      )}
 
       {/* Trust Signals */}
       <section className="animate-fade-in-up stagger-5 glass rounded-3xl p-6 md:p-10">
