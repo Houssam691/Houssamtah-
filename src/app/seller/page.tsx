@@ -116,32 +116,6 @@ export default function SellerPage() {
         </div>
       </section>
 
-      {/* Stats */}
-      {stats && (
-        <section className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-xl">📦</div>
-            <div className="mt-1 text-xl font-black text-white">{stats.products}</div>
-            <div className="text-xs text-white/60">المنتجات</div>
-          </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-xl">📋</div>
-            <div className="mt-1 text-xl font-black text-white">{stats.orders}</div>
-            <div className="text-xs text-white/60">الطلبات</div>
-          </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-xl">💰</div>
-            <div className="mt-1 text-xl font-black text-emerald-300">{stats.earnings.toFixed(2)}</div>
-            <div className="text-xs text-white/60">أرباح معلقة</div>
-          </div>
-          <div className="glass rounded-2xl p-4 text-center">
-            <div className="text-xl">🏆</div>
-            <div className="mt-1 text-xl font-black text-indigo-300">{stats.revenue.toFixed(2)}</div>
-            <div className="text-xs text-white/60">إجمالي الإيرادات</div>
-          </div>
-        </section>
-      )}
-
       {/* Quick Tools */}
       <section>
         <h2 className="mb-2 text-sm font-black text-white/80">أدوات سريعة</h2>
@@ -174,6 +148,32 @@ export default function SellerPage() {
           </button>
         </div>
       </section>
+
+      {/* Stats */}
+      {stats && (
+        <section className="grid gap-2 sm:grid-cols-2 md:grid-cols-4">
+          <div className="glass rounded-2xl p-4 text-center">
+            <div className="text-xl">📦</div>
+            <div className="mt-1 text-xl font-black text-white">{stats.products}</div>
+            <div className="text-xs text-white/60">المنتجات</div>
+          </div>
+          <div className="glass rounded-2xl p-4 text-center">
+            <div className="text-xl">📋</div>
+            <div className="mt-1 text-xl font-black text-white">{stats.orders}</div>
+            <div className="text-xs text-white/60">الطلبات</div>
+          </div>
+          <div className="glass rounded-2xl p-4 text-center">
+            <div className="text-xl">💰</div>
+            <div className="mt-1 text-xl font-black text-emerald-300">{stats.earnings.toFixed(2)}</div>
+            <div className="text-xs text-white/60">أرباح معلقة</div>
+          </div>
+          <div className="glass rounded-2xl p-4 text-center">
+            <div className="text-xl">🏆</div>
+            <div className="mt-1 text-xl font-black text-indigo-300">{stats.revenue.toFixed(2)}</div>
+            <div className="text-xs text-white/60">إجمالي الإيرادات</div>
+          </div>
+        </section>
+      )}
 
       {/* Recent Orders + Notifications */}
       <div className="grid gap-4 md:grid-cols-2">

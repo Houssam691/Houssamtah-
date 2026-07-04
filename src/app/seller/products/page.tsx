@@ -136,12 +136,12 @@ export default function SellerProductsPage() {
   return (
     <div>
       <section className="glass rounded-3xl p-6 md:p-8">
-        <div className="flex items-center justify-between gap-4">
+        <div className="flex items-start justify-between gap-4 max-md:flex-col">
           <div>
             <h1 className="title">إدارة المنتجات</h1>
             <p className="subtitle">أضف أو عدّل أو احذف منتجاتك.</p>
           </div>
-          <div className="flex gap-2">
+          <div className="flex gap-2 max-md:w-full max-md:flex-col">
             <button className="btn-secondary" onClick={() => router.push("/seller")}>العودة</button>
             <button className="btn-primary" onClick={() => setShowWizard(true)}>
               + إضافة منتج
@@ -151,7 +151,7 @@ export default function SellerProductsPage() {
       </section>
 
       {showWizard && (
-        <div className="fixed inset-0 z-[999] flex items-start justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 pt-10">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 py-10">
           <div className="w-full max-w-2xl animate-scale-in">
             <DynamicProductWizard onComplete={() => { setShowWizard(false); loadProducts(); }} />
             <div className="mt-4 text-center">

@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ToastProvider";
 import SensitiveToggle from "@/components/SensitiveToggle";
+import PasswordInput from "@/components/PasswordInput";
 
 type SafeUser = {
   id: string; role: string; email: string;
@@ -228,11 +229,11 @@ export default function SettingsPage() {
         <form className="mt-4 grid gap-4" onSubmit={handleChangePassword}>
           <label className="grid gap-2">
             <span className={labelClass}>كلمة المرور الحالية</span>
-            <input className={inputClass} type="password" value={curPassword} onChange={(e) => setCurPassword(e.target.value)} required />
+            <PasswordInput className={inputClass} value={curPassword} onChange={(e) => setCurPassword(e.target.value)} required />
           </label>
           <label className="grid gap-2">
             <span className={labelClass}>كلمة المرور الجديدة</span>
-            <input className={inputClass} type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
+            <PasswordInput className={inputClass} value={newPassword} onChange={(e) => setNewPassword(e.target.value)} required minLength={6} />
           </label>
           <button className={`btn-primary h-12 w-full sm:w-auto sm:px-8 ${changingPassword ? "loading" : ""}`} type="submit" disabled={changingPassword}>
             {changingPassword ? "جاري التغيير..." : "تغيير كلمة المرور"}
