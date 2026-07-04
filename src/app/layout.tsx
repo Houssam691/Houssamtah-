@@ -18,7 +18,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Nexivo",
   description: "متجر حسابات الألعاب وخدمات الشحن",
-  icons: [{ rel: "icon", url: "/logo.jpeg" }],
+  icons: [{ rel: "icon", url: "https://aisndkhxmhgtnfu9.public.blob.vercel-storage.com/WhatsApp%20Image%202026-07-04%20at%2011.25.00%20AM.jpeg" }],
 };
 
 export default function RootLayout({
