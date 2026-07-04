@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useToast } from "@/components/ToastProvider";
+import PasswordInput from "@/components/PasswordInput";
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -55,9 +56,8 @@ export default function AdminLoginPage() {
 
           <label className="grid gap-2">
             <span className="text-sm font-bold text-white/80">كلمة المرور</span>
-            <input
-              className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50"
-              type="password"
+            <PasswordInput
+              className="h-12 w-full rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
