@@ -19,8 +19,14 @@ export default function AddProductButton() {
   if (!canAdd) return null;
 
   return (
-    <Link href="/seller/products" className="fixed bottom-6 left-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-indigo-500 to-emerald-400 text-2xl font-black text-white shadow-lg shadow-indigo-500/25 transition hover:scale-110 active:scale-95">
-      +
+    <Link
+      href="/seller/products"
+      className="group fixed bottom-6 left-1/2 z-40 -translate-x-1/2 md:bottom-10 md:left-auto md:right-10 md:translate-x-0
+        flex h-14 items-center gap-2 rounded-full bg-gradient-to-br from-indigo-500 to-emerald-400
+        px-6 shadow-xl shadow-indigo-500/30 transition-all duration-200 hover:scale-110 hover:shadow-indigo-500/40 active:scale-95"
+    >
+      <span className="text-xl font-black leading-none">+</span>
+      <span className="text-sm font-bold leading-none max-md:hidden">إضافة منتج</span>
     </Link>
   );
 }
