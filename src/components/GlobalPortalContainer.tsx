@@ -74,26 +74,31 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
   const [userId, setUserId] = useState<string | null>(null);
   const notificationButtonRef = useRef<HTMLButtonElement>(null);
 
-  const openSideNav = useCallback(() => {
-    setSideNavOpen(true);
-    setNotificationOpen(false);
-  }, []);
+  const openSideNav = useCallback(() => setSideNavOpen(true), []);
   const closeSideNav = useCallback(() => setSideNavOpen(false), []);
-  const toggleSideNav = useCallback(() => {
-    setSideNavOpen((v) => {
-      if (!v) setNotificationOpen(false);
-      return !v;
-    });
-  }, []);
-  const openNotification = useCallback(() => {
-    setNotificationOpen(true);
-    setSideNavOpen(false);
-  }, []);
+  const toggleSideNav = useCallback(() => setSideNavOpen((v) => !v), []);
+  const openNotification = useCallback(() => setNotificationOpen(true), []);
   const closeNotification = useCallback(() => setNotificationOpen(false), []);
 
   const setNotificationDataCallback = useCallback((callback: (prev: GlobalPortalContextType['notificationData']) => GlobalPortalContextType['notificationData']) => {
     setNotificationData(callback);
   }, []);
+
+  // Close notification when side nav opens
+  useEffect(() => {
+    if (sideNavOpen) {
+      const timer = setTimeout(() => setNotificationOpen(false), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [sideNavOpen]);
+
+  // Close side nav when notification opens
+  useEffect(() => {
+    if (notificationOpen) {
+      const timer = setTimeout(() => setSideNavOpen(false), 0);
+      return () => clearTimeout(timer);
+    }
+  }, [notificationOpen]);
 
   return (
     <GlobalPortalContext.Provider
