@@ -22,15 +22,13 @@ export async function POST(req: Request) {
   if (csrfResponse) return csrfResponse;
 
   const user = await getSessionUser();
-  if (!user) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
-  if (user.seller_status === "approved") {
+  if (user && user.seller_status === "approved") {
     return NextResponse.json({ error: "Your identity has already been verified. Contact admin to upload a new ID." }, { status: 403 });
   }
 
-  const rlKey = getRateLimitKey(req, `upload-id:${user.id}`);
+  const uploadId = user ? user.id : "anonymous";
+  const rlKey = getRateLimitKey(req, `upload-id:${uploadId}`);
   const rl = await checkRateLimit(rlKey, 5, 60000);
   if (!rl.allowed) {
     return NextResponse.json({ error: "Upload limit reached. Try again later." }, { status: 429 });
@@ -61,7 +59,8 @@ export async function POST(req: Request) {
     }
 
     const ext = EXT_MAP[realMime] || "jpg";
-    const safeName = `id_${user.id}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
+    const userIdStr = user ? user.id : `reg_${Math.random().toString(36).slice(2, 10)}`;
+    const safeName = `id_${userIdStr}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
     const blob = await put(safeName, buf, {
       access: "public",
