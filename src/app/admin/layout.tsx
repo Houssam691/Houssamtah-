@@ -53,7 +53,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const totalAlerts = notifications.pending_review + notifications.open_disputes + notifications.pending_sellers;
 
   return (
-    <div className="min-h-screen">
+    <div className="flex min-h-screen flex-col">
       {/* Mobile header */}
       <div className="lg:hidden fixed top-0 left-0 right-0 z-10 flex h-14 items-center justify-between border-b border-white/10 bg-zinc-950/90 backdrop-blur-xl px-4">
         <button onClick={() => setSidebarOpen(!sidebarOpen)} className="text-white text-xl">
@@ -72,11 +72,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
       {/* Sidebar overlay */}
       {sidebarOpen && (
-        <div className="lg:hidden fixed inset-0 z-30 bg-black/60" onClick={() => setSidebarOpen(false)} />
+        <div className="lg:hidden fixed inset-0 z-40 bg-black/60" onClick={() => setSidebarOpen(false)} />
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 right-0 z-[31] h-full w-64 max-w-[calc(100vw-1.5rem)] border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
+      <aside className={`fixed top-0 right-0 z-50 h-full w-64 max-w-[calc(100vw-1.5rem)] border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
         <div className="flex h-full flex-col p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
