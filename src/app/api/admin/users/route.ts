@@ -111,8 +111,9 @@ export async function POST(request: Request) {
       await client.query("DELETE FROM users WHERE id = $1", [user_id]);
       await client.query("COMMIT");
     } catch (e) {
-      await client.query("ROLLBACK");
-      return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+      await client.query("ROLLBACK").catch(() => {});
+      console.error("Delete user error:", e);
+      return NextResponse.json({ error: e instanceof Error ? e.message : String(e) }, { status: 500 });
     } finally {
       client.release();
     }
