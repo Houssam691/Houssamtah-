@@ -4,6 +4,7 @@ import { ToastProvider } from "@/components/ToastProvider";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
+import { GlobalPortalProvider } from "@/components/GlobalPortalContainer";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -32,13 +33,15 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <div className="flex min-h-screen flex-col">
-          <Header />
+        <GlobalPortalProvider>
+          <div className="flex min-h-screen flex-col">
+            <Header />
 
-          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-4 pt-6 md:pb-8 md:pt-10"><ToastProvider><PageTransition>{children}</PageTransition></ToastProvider></main>
+            <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-4 pt-6 md:pb-8 md:pt-10"><ToastProvider><PageTransition>{children}</PageTransition></ToastProvider></main>
 
-          <Footer />
-        </div>
+            <Footer />
+          </div>
+        </GlobalPortalProvider>
       </body>
     </html>
   );
