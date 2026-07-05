@@ -48,8 +48,6 @@
       radial-gradient(1100px circle at 15% 0%, rgba(99, 102, 241, 0.28), transparent 55%),
       radial-gradient(1100px circle at 85% 20%, rgba(236, 72, 153, 0.18), transparent 55%),
       radial-gradient(1100px circle at 50% 100%, rgba(16, 185, 129, 0.20), transparent 55%);
-    position: relative;
-    transform-style: preserve-3d;
   }
 
   body::before {
