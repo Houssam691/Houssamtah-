@@ -140,21 +140,18 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
     if (field.type === "select" && field.options) {
       return (
-        <label key={field.key} className="grid gap-1 relative z-30">
+        <label key={field.key} className="grid gap-1">
           <span className="text-xs font-bold text-white/80">
             {field.label} {field.required && <span className="text-rose-400">*</span>}
           </span>
-          {/* ✅ تم تعديل ستايل الـ select والـ options لضمان عدم الاختفاء وتغيير لون الخلفية المنسدلة */}
           <select
-            className="h-10 rounded-xl border border-white/10 bg-zinc-900 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition cursor-pointer relative z-30"
+            className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none focus:border-indigo-400/50 transition"
             value={String(value)}
             onChange={(e) => handleFieldChange(field.key, e.target.value)}
           >
-            <option value="" className="bg-zinc-950 text-white">اختر {field.label}</option>
+            <option value="">اختر {field.label}</option>
             {field.options.map((o) => (
-              <option key={o.value} value={o.value} className="bg-zinc-950 text-white py-2">
-                {o.label}
-              </option>
+              <option key={o.value} value={o.value}>{o.label}</option>
             ))}
           </select>
         </label>
@@ -252,8 +249,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
   const publishBtnCls = publishBtn.loading ? "loading" : publishBtn.success ? "success" : publishBtn.error ? "error" : "";
 
   return (
-    /* ✅ تم إضافة كلاس overflow-visible هنا لمنع انقطاع القائمة المنسدلة داخل نظام التصميم الزجاجي */
-    <div className="glass rounded-2xl p-5 flex min-h-[75vh] flex-col md:min-h-[70vh] overflow-visible relative z-10">
+    <div className="glass rounded-2xl p-5">
       <StepIndicator current={step} total={STEPS.length} />
 
       <div className="mt-2 flex items-center justify-between">
@@ -263,25 +259,27 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         <span className="text-xs font-bold text-indigo-300">{STEPS[step]}</span>
       </div>
 
-      <div className="mt-4 flex-1 min-h-[200px] md:min-h-[260px] overflow-visible">
+      <div className="mt-4 min-h-[200px] md:min-h-[260px]">
         {step === 0 && (
-          <div className="grid gap-3 animate-slide-up-fade">
-            <h2 className="text-base font-black">اختر نوع المنتج</h2>
-            <p className="text-xs text-white/70">اختر اللعبة أو الخدمة التي تريد بيعها.</p>
-            <div className="grid gap-2 sm:grid-cols-3 mt-3">
+          <div className="grid gap-4 animate-slide-up-fade">
+            <div>
+              <h2 className="text-lg font-black">اختر نوع المنتج</h2>
+              <p className="mt-1 text-sm text-white/60">اختر اللعبة أو الخدمة التي تريد بيعها.</p>
+            </div>
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
               {Object.values(GAME_SPECS).map((g) => (
                 <button
                   key={g.id}
                   onClick={() => setCategory(g.id)}
-                  className={`relative rounded-2xl border-2 p-4 text-center transition-all duration-200 ${
+                  className={`group relative rounded-2xl border-2 p-5 text-center transition-all duration-200 ${
                     category === g.id
-                      ? "border-indigo-500 bg-indigo-500/10 scale-[1.02]"
-                      : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10"
+                      ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_-4px_rgba(99,102,241,0.15)]"
+                      : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:shadow-[0_0_20px_-4px_rgba(255,255,255,0.05)]"
                   }`}
                 >
-                  <div className="text-2xl">{g.icon}</div>
-                  <div className="mt-1 text-base font-black text-white">{g.name}</div>
-                  <div className="mt-0.5 text-[10px] text-white/60">
+                  <div className="text-4xl">{g.icon}</div>
+                  <div className="mt-2 text-base font-black text-white">{g.name}</div>
+                  <div className="mt-1 text-[11px] text-white/50">
                     {g.productType === "account" ? "بيع حسابات" : "خدمات شحن"}
                   </div>
                 </button>
@@ -291,11 +289,10 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         )}
 
         {step === 1 && spec && (
-          /* ✅ تم التأكد من بقاء الحاوية مرئية تماماً عبر overflow-visible */
-          <div className="grid gap-3 animate-slide-up-fade overflow-visible relative z-20">
+          <div className="grid gap-3 animate-slide-up-fade">
             <h2 className="text-base font-black">معلومات {spec.name}</h2>
             <p className="text-xs text-white/70">أدخل تفاصيل المنتج بدقة.</p>
-            <div className="grid gap-3 sm:grid-cols-2 mt-2 overflow-visible">
+            <div className="grid gap-3 sm:grid-cols-2 mt-2">
               {spec.fields.map(renderField)}
             </div>
             <label className="grid gap-1">
@@ -493,7 +490,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
       </div>
 
       {step < 5 && (
-        <div className="mt-6 flex items-center justify-between gap-2 relative z-10">
+        <div className="mt-6 flex items-center justify-between gap-2">
           <button
             className="btn-secondary text-sm"
             onClick={() => setStep((s) => Math.max(0, s - 1))}

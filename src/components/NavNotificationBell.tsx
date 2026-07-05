@@ -105,7 +105,7 @@ export default function NavNotificationBell({ className, userId }: Props) {
       </button>
 
       {open && (
-        <div className="fixed left-2 right-2 top-[calc(4rem+env(safe-area-inset-top))] z-50 mx-auto w-auto max-w-sm sm:absolute sm:left-auto sm:right-0 sm:top-full sm:mt-2 sm:w-80 sm:max-w-none rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)] animate-scale-in">
+        <div className="absolute left-1/2 top-full z-50 mt-2 w-80 -translate-x-1/2 max-md:right-2 max-md:left-auto max-md:translate-x-0 max-md:max-w-[calc(100vw-1rem)] rounded-3xl border border-white/10 bg-zinc-900 p-4 shadow-[0_20px_60px_rgba(2,6,23,0.4)] animate-scale-in">
           {/* Notifications */}
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center gap-2">
