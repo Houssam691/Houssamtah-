@@ -33,15 +33,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <GlobalPortalProvider>
-          <div className="flex min-h-screen flex-col">
-            <Header />
+        <div className="flex min-h-screen flex-col">
+          <Header />
 
-            <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-4 pt-6 md:pb-8 md:pt-10"><ToastProvider><PageTransition>{children}</PageTransition></ToastProvider></main>
+          <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-4 pt-6 md:pb-8 md:pt-10"><ToastProvider><PageTransition>{children}</PageTransition></ToastProvider></main>
 
-            <Footer />
-          </div>
-        </GlobalPortalProvider>
+          <Footer />
+        </div>
       </body>
     </html>
   );
