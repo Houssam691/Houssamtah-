@@ -35,13 +35,13 @@ export default function SideNav({ userId }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-40 bg-black/60 animate-fade-in" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-[55] bg-black/60 animate-fade-in" onClick={() => setOpen(false)} />
       )}
 
       <div
-        className={`fixed inset-y-0 right-0 z-50 flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 overflow-y-auto ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-y-0 right-0 z-[60] flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 overflow-y-auto ${open ? "translate-x-0" : "translate-x-full"}`}
       >
-        <div className="flex items-center justify-between shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3">
+        <div className="flex items-center justify-between shrink-0 px-5 pt-4 pb-3">
           <span className="text-sm font-black text-white">القائمة</span>
           <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white text-lg leading-none transition">✕</button>
         </div>
