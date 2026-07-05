@@ -112,8 +112,8 @@ export default function AdminDisputesPage() {
         {[
           { key: "all", label: "الكل", count: disputes.length },
           { key: "open", label: "مفتوح", count: disputes.filter(d => d.status === "open").length },
-          { key: "resolved", label: "تم الحل", count: disputes.filter(d => d.status === "resolved").length },
-          { key: "dismissed", label: "مرفوض", count: disputes.filter(d => d.status === "dismissed").length },
+          { key: "resolved", label: "تم الحل", count: disputes.filter(d => d.status.startsWith("resolved")).length },
+          { key: "closed", label: "مرفوض", count: disputes.filter(d => d.status === "closed").length },
         ].map(f => (
           <button key={f.key} className={filter === f.key ? "btn-primary" : "btn-secondary"} onClick={() => setFilter(f.key)}>
             {f.label} ({f.count})
@@ -147,10 +147,10 @@ export default function AdminDisputesPage() {
                     <span className="text-xs font-bold text-white/50">{dispute.order_tracking_id}</span>
                     <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                       dispute.status === "open" ? "bg-rose-500/20 text-rose-300" :
-                      dispute.status === "resolved" ? "bg-emerald-500/20 text-emerald-300" :
+                      dispute.status.startsWith("resolved") ? "bg-emerald-500/20 text-emerald-300" :
                       "bg-white/10 text-white/50"
                     }`}>
-                      {dispute.status === "open" ? "⚖️ مفتوح" : dispute.status === "resolved" ? "✅ تم الحل" : "❌ مرفوض"}
+                      {dispute.status === "open" ? "⚖️ مفتوح" : dispute.status.startsWith("resolved") ? "✅ تم الحل" : "❌ مرفوض"}
                     </span>
                   </div>
                   <div className="mt-2 text-sm font-bold text-white">{dispute.product_title || "منتج"}</div>
@@ -231,16 +231,16 @@ export default function AdminDisputesPage() {
                     onChange={e => setResolutionNote(e.target.value)}
                     placeholder="اكتب ملاحظة عن القرار..."
                   />
-                  <button className="btn-primary" onClick={() => resolveDispute(selectedDispute.id, "resolved", resolutionNote)} disabled={actionLoading === selectedDispute.id}>
+                  <button className="btn-primary" onClick={() => resolveDispute(selectedDispute.id, "resolved_buyer", resolutionNote)} disabled={actionLoading === selectedDispute.id}>
                     ⚖️ الحكم للمشتري (استرداد)
                   </button>
                   <button className="btn-primary bg-emerald-600 hover:bg-emerald-500" onClick={() => {
                     if (!resolutionNote.trim()) { toast("error", "اكتب ملاحظة القرار"); return; }
-                    resolveDispute(selectedDispute.id, "resolved", resolutionNote);
+                    resolveDispute(selectedDispute.id, "resolved_seller", resolutionNote);
                   }} disabled={actionLoading === selectedDispute.id}>
                     ✅ الحكم للبائع (تحرير الدفع)
                   </button>
-                  <button className="btn-secondary" onClick={() => resolveDispute(selectedDispute.id, "dismissed", resolutionNote)} disabled={actionLoading === selectedDispute.id}>
+                  <button className="btn-secondary" onClick={() => resolveDispute(selectedDispute.id, "closed", resolutionNote)} disabled={actionLoading === selectedDispute.id}>
                     ❌ رفض النزاع
                   </button>
                   <button className="btn-secondary" onClick={() => setSelectedDispute(null)}>
