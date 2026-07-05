@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { Geist, Geist_Mono } from "next/font/google";
 import { ToastProvider } from "@/components/ToastProvider";
-import HeaderNav from "@/components/HeaderNav";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 import PageTransition from "@/components/PageTransition";
 import "./globals.css";
 
@@ -33,20 +33,11 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <div className="flex min-h-screen flex-col">
-          <header className="sticky top-0 z-50 border-b border-white/10 bg-zinc-950/50 backdrop-blur-xl">
-            <div className="mx-auto flex max-w-6xl flex-col gap-3 px-4 pb-3 pt-[calc(0.75rem+env(safe-area-inset-top))] md:flex-row md:items-center md:justify-between md:gap-4 md:py-4">
-              <HeaderNav />
-            </div>
-          </header>
+          <Header />
 
           <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-4 pt-6 md:pb-8 md:pt-10"><ToastProvider><PageTransition>{children}</PageTransition></ToastProvider></main>
 
-          <footer className="border-t border-white/10 py-10 text-white/70">
-            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 md:flex-row md:items-center md:justify-between">
-              <div>© {new Date().getFullYear()} Nexivo</div>
-
-            </div>
-          </footer>
+          <Footer />
         </div>
       </body>
     </html>
