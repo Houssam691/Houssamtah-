@@ -12,12 +12,23 @@ type Props = {
   onClose: () => void;
 };
 
-export default function SideNavPortal({ userId, open, onClose }: Props) {
+export default function SideNavPortal({ userId: propUserId, open, onClose }: Props) {
   const [mounted, setMounted] = useState(false);
+  const [fetchedUserId, setFetchedUserId] = useState<string | null>(null);
+
+  const userId = propUserId ?? fetchedUserId;
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (propUserId) return;
+    fetch("/api/auth/me", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => setFetchedUserId(data?.user?.id ?? null))
+      .catch(() => setFetchedUserId(null));
+  }, [propUserId]);
 
   useEffect(() => {
     function handleKey(e: KeyboardEvent) {
