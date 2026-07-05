@@ -25,7 +25,7 @@ type Props = {
   unread: number;
   onMarkAllRead: () => void;
   onDeleteNotif: (id: string, e: React.MouseEvent) => void;
-  triggerRef: React.RefObject<HTMLButtonElement | null>;
+  triggerRef: React.RefObject<HTMLButtonElement>;
 };
 
 export default function NotificationDropdownPortal({
@@ -41,7 +41,8 @@ export default function NotificationDropdownPortal({
   const [position, setPosition] = useState({ top: 0, left: 0, right: 0, isMobile: false });
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

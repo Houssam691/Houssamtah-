@@ -19,7 +19,8 @@ export default function SideNavPortal({ userId: propUserId, open, onClose }: Pro
   const userId = propUserId ?? fetchedUserId;
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {

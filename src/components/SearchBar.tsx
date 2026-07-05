@@ -12,6 +12,7 @@ type Product = {
   status?: string;
   seller_name?: string;
   category?: string;
+  created_at?: string;
 };
 
 export default function SearchBar({
@@ -42,7 +43,7 @@ export default function SearchBar({
 
     if (sortBy === "price_asc") result.sort((a, b) => a.price - b.price);
     else if (sortBy === "price_desc") result.sort((a, b) => b.price - a.price);
-    else if (sortBy === "newest") result.sort((a, b) => (b as any).created_at?.localeCompare?.((a as any).created_at) || 0);
+    else if (sortBy === "newest") result.sort((a, b) => (b.created_at || "").localeCompare(a.created_at || ""));
 
     return result;
   }, [products, query, sortBy]);
@@ -83,7 +84,7 @@ export default function SearchBar({
         <select
           className="h-12 rounded-2xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none transition focus:border-indigo-400/50"
           value={sortBy}
-          onChange={(e) => setSortBy(e.target.value as any)}
+          onChange={(e) => setSortBy(e.target.value as "default" | "price_asc" | "price_desc" | "newest")}
         >
           <option value="default">ترتيب</option>
           <option value="price_asc">السعر: الأقل</option>

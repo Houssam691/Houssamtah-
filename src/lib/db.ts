@@ -1,4 +1,5 @@
 import { Pool, QueryResultRow } from "pg";
+import bcrypt from "bcryptjs";
 
 let pool: Pool | null = null;
 let initialized = false;
@@ -24,7 +25,7 @@ function getPool(): Pool {
   return pool;
 }
 
-export async function query<T extends QueryResultRow = any>(sql: string, params?: any[]): Promise<T[]> {
+export async function query<T extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[]): Promise<T[]> {
   const client = await getPool().connect();
   try {
     const result = await client.query<T>(sql, params);
@@ -34,12 +35,12 @@ export async function query<T extends QueryResultRow = any>(sql: string, params?
   }
 }
 
-export async function queryOne<T extends QueryResultRow = any>(sql: string, params?: any[]): Promise<T | null> {
+export async function queryOne<T extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[]): Promise<T | null> {
   const rows = await query<T>(sql, params);
   return rows[0] || null;
 }
 
-export async function execute(sql: string, params?: any[]): Promise<number> {
+export async function execute(sql: string, params?: unknown[]): Promise<number> {
   const client = await getPool().connect();
   try {
     const result = await client.query(sql, params);
@@ -263,7 +264,6 @@ async function initializeSchema(): Promise<void> {
 
     const { rows } = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
     if (rows.length === 0 && process.env.ADMIN_INIT_PASSWORD) {
-      const bcrypt = require("bcryptjs");
       const hash = bcrypt.hashSync(process.env.ADMIN_INIT_PASSWORD, 10);
       await client.query(
         "INSERT INTO users (id, role, email, password_hash, first_name) VALUES ($1, 'admin', $2, $3, 'Admin') ON CONFLICT (id) DO NOTHING",

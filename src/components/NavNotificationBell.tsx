@@ -1,17 +1,62 @@
 "use client";
 
+import { useEffect, useRef, useState } from "react";
 import { useGlobalPortals } from "@/components/GlobalPortalContainer";
+
+type Notification = {
+  id: string;
+  user_id: string;
+  order_id: string | null;
+  type: string;
+  title: string;
+  message: string;
+  icon: string;
+  link: string;
+  read: number;
+  created_at: string;
+  order_tracking_id: string | null;
+};
 
 type Props = {
   className?: string;
+  userId?: string | null;
 };
 
-export default function NavNotificationBell({ className }: Props) {
+export default function NavNotificationBell({ className, userId }: Props) {
+  const [unread, setUnread] = useState(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
   const { notificationButtonRef, openNotification, notificationData } = useGlobalPortals();
+
+  useEffect(() => {
+    if (buttonRef.current) {
+      notificationButtonRef.current = buttonRef.current;
+    }
+  }, [notificationButtonRef]);
+
+  async function loadNotifs() {
+    const res = await fetch("/api/notifications", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      setUnread(data.unread_count || 0);
+    }
+  }
+
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.user) {
+          loadNotifs();
+          const interval = setInterval(loadNotifs, 15000);
+          return () => clearInterval(interval);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   return (
     <button
-      ref={notificationButtonRef}
+      ref={buttonRef}
       className={`relative ${className || ""}`}
       onClick={openNotification}
       aria-label="الإشعارات"

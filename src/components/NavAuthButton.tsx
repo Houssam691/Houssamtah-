@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 
 export default function NavAuthButton({ className: linkClass }: { className?: string }) {
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<Record<string, unknown> | null>(null);
   const pathname = usePathname();
 
   useEffect(() => {
