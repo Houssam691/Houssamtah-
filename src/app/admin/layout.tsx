@@ -76,8 +76,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed top-0 right-0 z-50 h-full w-64 max-w-[calc(100vw-1.5rem)] border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"} overflow-y-auto overflow-x-hidden`}>
-        <div className="flex h-full flex-col p-5 pt-[calc(1.25rem+env(safe-area-inset-top))]">
+      <aside className={`fixed top-0 right-0 z-50 h-full w-64 max-w-[calc(100vw-1.5rem)] border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 lg:translate-x-0 ${sidebarOpen ? "translate-x-0" : "translate-x-full"}`}>
+        <div className="flex h-full flex-col p-5 pt-[calc(1.25rem+env(safe-area-inset-top))] overflow-y-auto">
           <div className="flex items-center justify-between mb-6">
             <div>
               <div className="text-lg font-black text-white">Nexivo</div>
