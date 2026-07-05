@@ -59,7 +59,7 @@ export default function SideNavPortal({ userId: propUserId, open, onClose }: Pro
   return createPortal(
     <>
       <div className="fixed inset-0 z-[299] bg-black/60 animate-fade-in" onClick={onClose} />
-      <div className="fixed inset-y-0 right-0 z-[300] flex h-[100dvh] w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 translate-x-0">
+      <div className="fixed top-0 bottom-0 right-0 z-[300] flex h-dvh w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl">
         <div className="flex items-center justify-between shrink-0 px-5 pt-4 pb-3">
           <span className="text-sm font-black text-white">القائمة</span>
           <button onClick={onClose} className="text-white/60 hover:text-white text-lg leading-none transition">✕</button>
