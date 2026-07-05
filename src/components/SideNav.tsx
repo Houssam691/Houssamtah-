@@ -18,11 +18,21 @@ export default function SideNav({ userId }: Props) {
     }
     if (open) {
       document.addEventListener("keydown", handleKey);
+      const prev = document.body.style.overflow;
+      const prevPadding = document.body.style.paddingRight;
+      const scrollbarWidth = window.innerWidth - document.documentElement.clientWidth;
       document.body.style.overflow = "hidden";
+      if (scrollbarWidth > 0) {
+        document.body.style.paddingRight = `${scrollbarWidth}px`;
+      }
+      return () => {
+        document.removeEventListener("keydown", handleKey);
+        document.body.style.overflow = prev;
+        document.body.style.paddingRight = prevPadding;
+      };
     }
     return () => {
       document.removeEventListener("keydown", handleKey);
-      document.body.style.overflow = "";
     };
   }, [open]);
 
@@ -35,11 +45,11 @@ export default function SideNav({ userId }: Props) {
       </button>
 
       {open && (
-        <div className="fixed inset-0 z-[1000] bg-black/60 animate-fade-in" onClick={() => setOpen(false)} />
+        <div className="fixed inset-0 z-[299] bg-black/60 animate-fade-in" onClick={() => setOpen(false)} />
       )}
 
       <div
-        className={`fixed inset-y-0 right-0 z-[1001] flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-y-0 right-0 z-[300] flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between shrink-0 px-5 pt-4 pb-3">
           <span className="text-sm font-black text-white">القائمة</span>
