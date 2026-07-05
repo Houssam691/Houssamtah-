@@ -34,7 +34,7 @@ type GlobalPortalContextType = {
     deleteNotif: (id: string, e: React.MouseEvent) => void;
   };
   setNotificationData: (callback: (prev: GlobalPortalContextType['notificationData']) => GlobalPortalContextType['notificationData']) => void;
-  notificationButtonRef: React.RefObject<HTMLButtonElement | null>;
+  notificationButtonRef: React.RefObject<HTMLButtonElement>;
   userId: string | null;
   setUserId: (userId: string | null) => void;
 };
@@ -44,7 +44,20 @@ const GlobalPortalContext = createContext<GlobalPortalContextType | null>(null);
 export function useGlobalPortals() {
   const context = useContext(GlobalPortalContext);
   if (!context) {
-    throw new Error("useGlobalPortals must be used within GlobalPortalProvider");
+    return {
+      sideNavOpen: false,
+      openSideNav: () => {},
+      closeSideNav: () => {},
+      toggleSideNav: () => {},
+      notificationOpen: false,
+      openNotification: () => {},
+      closeNotification: () => {},
+      notificationData: { notifications: [], unread: 0, markAllRead: () => {}, deleteNotif: () => {} },
+      setNotificationData: () => {},
+      notificationButtonRef: { current: null } as unknown as React.RefObject<HTMLButtonElement>,
+      userId: null,
+      setUserId: () => {},
+    };
   }
   return context;
 }
@@ -59,7 +72,7 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
     deleteNotif: () => {},
   });
   const [userId, setUserId] = useState<string | null>(null);
-  const notificationButtonRef = useRef<HTMLButtonElement | null>(null);
+  const notificationButtonRef = useRef<HTMLButtonElement>(null);
 
   const openSideNav = useCallback(() => setSideNavOpen(true), []);
   const closeSideNav = useCallback(() => setSideNavOpen(false), []);
@@ -97,7 +110,7 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
         closeNotification,
         notificationData,
         setNotificationData: setNotificationDataCallback,
-        notificationButtonRef,
+        notificationButtonRef: notificationButtonRef as React.RefObject<HTMLButtonElement>,
         userId,
         setUserId,
       }}
@@ -115,7 +128,7 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
         unread={notificationData.unread}
         onMarkAllRead={notificationData.markAllRead}
         onDeleteNotif={notificationData.deleteNotif}
-        triggerRef={notificationButtonRef}
+        triggerRef={notificationButtonRef as React.RefObject<HTMLButtonElement>}
       />
     </GlobalPortalContext.Provider>
   );
