@@ -23,6 +23,7 @@ type GlobalPortalContextType = {
   sideNavOpen: boolean;
   openSideNav: () => void;
   closeSideNav: () => void;
+  toggleSideNav: () => void;
   notificationOpen: boolean;
   openNotification: () => void;
   closeNotification: () => void;
@@ -62,6 +63,7 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
 
   const openSideNav = useCallback(() => setSideNavOpen(true), []);
   const closeSideNav = useCallback(() => setSideNavOpen(false), []);
+  const toggleSideNav = useCallback(() => setSideNavOpen((v) => !v), []);
   const openNotification = useCallback(() => setNotificationOpen(true), []);
   const closeNotification = useCallback(() => setNotificationOpen(false), []);
 
@@ -89,6 +91,7 @@ export function GlobalPortalProvider({ children }: { children: React.ReactNode }
         sideNavOpen,
         openSideNav,
         closeSideNav,
+        toggleSideNav,
         notificationOpen,
         openNotification,
         closeNotification,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useRef } from "react";
 import { useGlobalPortals } from "@/components/GlobalPortalContainer";
 
 type Props = {
@@ -8,16 +7,11 @@ type Props = {
 };
 
 export default function NavNotificationBell({ className }: Props) {
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const { notificationButtonRef, openNotification, notificationData } = useGlobalPortals();
-
-  if (buttonRef.current) {
-    notificationButtonRef.current = buttonRef.current;
-  }
 
   return (
     <button
-      ref={buttonRef}
+      ref={notificationButtonRef}
       className={`relative ${className || ""}`}
       onClick={openNotification}
       aria-label="الإشعارات"
