@@ -99,7 +99,7 @@ export default function ProductImageGallery({ images }: { images: string[] }) {
       {/* Fullscreen overlay */}
       {fullscreen && (
         <div
-          className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/90 backdrop-blur-xl"
+          className="fixed inset-0 z-[102] flex items-center justify-center bg-black/90 backdrop-blur-xl"
           onClick={() => setFullscreen(false)}
         >
           <button
