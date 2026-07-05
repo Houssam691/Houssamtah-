@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import DynamicProductWizard from "@/components/DynamicProductWizard";
+import ModalPortal from "@/components/ModalPortal";
 import { getGameSpec } from "@/lib/game-specs";
 
 type SafeUser = {
@@ -150,16 +151,12 @@ export default function SellerProductsPage() {
         </div>
       </section>
 
-      {showWizard && (
-        <div className="fixed inset-0 z-[999] flex items-start justify-center bg-black/80 backdrop-blur-sm px-4 py-8 overflow-hidden">
-          <div className="w-full max-w-2xl animate-scale-in max-h-[calc(100vh-4rem)] overflow-y-auto">
-            <DynamicProductWizard onComplete={() => { setShowWizard(false); loadProducts(); }} />
-            <div className="mt-4 text-center">
-              <button className="btn-secondary text-sm" onClick={() => setShowWizard(false)}>إغلاق</button>
-            </div>
-          </div>
+      <ModalPortal open={showWizard} onClose={() => setShowWizard(false)}>
+        <DynamicProductWizard onComplete={() => { setShowWizard(false); loadProducts(); }} />
+        <div className="mt-4 text-center">
+          <button className="btn-secondary text-sm" onClick={() => setShowWizard(false)}>إغلاق</button>
         </div>
-      )}
+      </ModalPortal>
 
       {!showWizard && (
         <div className="mt-6 grid gap-4">

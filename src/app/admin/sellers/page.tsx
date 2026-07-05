@@ -6,6 +6,7 @@ import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import { downloadCSV } from "@/lib/export";
 import SensitiveToggle from "@/components/SensitiveToggle";
+import ModalPortal from "@/components/ModalPortal";
 
 type Seller = {
   id: string;
@@ -225,8 +226,8 @@ export default function AdminVerificationCenter() {
 
       {/* Decision Reason Modal */}
       {showDecisionModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowDecisionModal(null)}>
-          <div className="w-full max-w-md rounded-3xl border border-white/10 bg-zinc-950 p-6" onClick={e => e.stopPropagation()}>
+        <ModalPortal open onClose={() => setShowDecisionModal(null)} maxWidth="max-w-md">
+          <div className="rounded-3xl border border-white/10 bg-zinc-950 p-6" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-black text-white">سبب الرفض</h3>
             <p className="mt-1 text-sm text-white/60">سيتم إرسال هذا السبب للبائع.</p>
             <textarea
@@ -243,7 +244,7 @@ export default function AdminVerificationCenter() {
               <button className="btn-secondary flex-1" onClick={() => setShowDecisionModal(null)}>إلغاء</button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   );
