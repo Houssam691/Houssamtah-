@@ -259,27 +259,27 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         <span className="text-xs font-bold text-indigo-300">{STEPS[step]}</span>
       </div>
 
-      <div className="mt-4 min-h-[200px] md:min-h-[260px]">
+      <div className="mt-4 min-h-[300px] md:min-h-[400px]">
         {step === 0 && (
-          <div className="grid gap-4 animate-slide-up-fade">
+          <div className="grid gap-6 animate-slide-up-fade">
             <div>
               <h2 className="text-lg font-black">اختر نوع المنتج</h2>
               <p className="mt-1 text-sm text-white/60">اختر اللعبة أو الخدمة التي تريد بيعها.</p>
             </div>
-            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 md:grid-cols-3">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {Object.values(GAME_SPECS).map((g) => (
                 <button
                   key={g.id}
                   onClick={() => setCategory(g.id)}
-                  className={`group relative rounded-2xl border-2 p-5 text-center transition-all duration-200 ${
+                  className={`group relative rounded-2xl border-2 p-6 text-center transition-all duration-200 ${
                     category === g.id
                       ? "border-indigo-500 bg-indigo-500/10 shadow-[0_0_20px_-4px_rgba(99,102,241,0.15)]"
                       : "border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 hover:shadow-[0_0_20px_-4px_rgba(255,255,255,0.05)]"
                   }`}
                 >
-                  <div className="text-4xl">{g.icon}</div>
-                  <div className="mt-2 text-base font-black text-white">{g.name}</div>
-                  <div className="mt-1 text-[11px] text-white/50">
+                  <div className="text-5xl">{g.icon}</div>
+                  <div className="mt-3 text-lg font-black text-white">{g.name}</div>
+                  <div className="mt-2 text-xs text-white/50">
                     {g.productType === "account" ? "بيع حسابات" : "خدمات شحن"}
                   </div>
                 </button>

@@ -39,7 +39,7 @@ export default function SideNav({ userId }: Props) {
       )}
 
       <div
-        className={`fixed inset-y-0 right-0 z-50 flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-y-0 right-0 z-50 flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 overflow-y-auto ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between shrink-0 px-5 pt-[calc(1.25rem+env(safe-area-inset-top))] pb-3">
           <span className="text-sm font-black text-white">القائمة</span>
