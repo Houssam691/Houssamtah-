@@ -151,8 +151,8 @@ export default function SellerProductsPage() {
       </section>
 
       {showWizard && (
-        <div className="fixed inset-0 z-[999] overflow-y-auto bg-black/80 backdrop-blur-sm p-4 py-10">
-          <div className="mx-auto w-full max-w-2xl animate-scale-in">
+        <div className="fixed inset-0 z-[999] flex items-center justify-center overflow-y-auto bg-black/80 backdrop-blur-sm p-4 py-10">
+          <div className="w-full max-w-2xl animate-scale-in">
             <DynamicProductWizard onComplete={() => { setShowWizard(false); loadProducts(); }} />
             <div className="mt-4 text-center">
               <button className="btn-secondary text-sm" onClick={() => setShowWizard(false)}>إغلاق</button>
