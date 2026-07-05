@@ -96,16 +96,17 @@ export async function POST(request: Request) {
     const client = await pool.connect();
     try {
       await client.query("BEGIN");
-      await client.query("DELETE FROM email_verification_tokens WHERE user_id = $1", [user_id]);
-      await client.query("DELETE FROM sessions WHERE user_id = $1", [user_id]);
-      await client.query("DELETE FROM notifications WHERE user_id = $1", [user_id]);
-      await client.query("DELETE FROM order_chat_messages WHERE sender_id = $1", [user_id]);
-      await client.query("DELETE FROM disputes WHERE buyer_id = $1 OR seller_id = $1", [user_id]);
+      await client.query("DELETE FROM disputes WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
+      await client.query("DELETE FROM order_chat_messages WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
+      await client.query("DELETE FROM reviews WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
       await client.query("DELETE FROM orders WHERE buyer_id = $1", [user_id]);
+      await client.query("DELETE FROM disputes WHERE buyer_id = $1 OR seller_id = $1", [user_id]);
+      await client.query("DELETE FROM order_chat_messages WHERE sender_id = $1", [user_id]);
+      await client.query("DELETE FROM reviews WHERE seller_id = $1 OR buyer_id = $1", [user_id]);
+      await client.query("DELETE FROM reports WHERE reporter_id = $1 OR reported_user_id = $1", [user_id]);
+      await client.query("DELETE FROM price_history WHERE changed_by = $1", [user_id]);
       await client.query("UPDATE orders SET seller_id = NULL WHERE seller_id = $1", [user_id]);
       await client.query("UPDATE products SET seller_id = NULL WHERE seller_id = $1", [user_id]);
-      await client.query("DELETE FROM reviews WHERE seller_id = $1 OR buyer_id = $1", [user_id]);
-      await client.query("DELETE FROM price_history WHERE changed_by = $1", [user_id]);
       await client.query("DELETE FROM audit_log WHERE user_id = $1", [user_id]);
       await client.query("DELETE FROM users WHERE id = $1", [user_id]);
       await client.query("COMMIT");
