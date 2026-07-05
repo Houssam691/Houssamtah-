@@ -99,6 +99,7 @@ export async function POST(request: Request) {
       await client.query("DELETE FROM disputes WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
       await client.query("DELETE FROM order_chat_messages WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
       await client.query("DELETE FROM reviews WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
+      await client.query("DELETE FROM notifications WHERE order_id IN (SELECT id FROM orders WHERE buyer_id = $1)", [user_id]);
       await client.query("DELETE FROM orders WHERE buyer_id = $1", [user_id]);
       await client.query("DELETE FROM disputes WHERE buyer_id = $1 OR seller_id = $1", [user_id]);
       await client.query("DELETE FROM order_chat_messages WHERE sender_id = $1", [user_id]);
