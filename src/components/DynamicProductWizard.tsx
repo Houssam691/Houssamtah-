@@ -259,7 +259,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         <span className="text-xs font-bold text-indigo-300">{STEPS[step]}</span>
       </div>
 
-      <div className="mt-4 min-h-[300px] md:min-h-[400px]">
+      <div className="mt-4">
         {step === 0 && (
           <div className="grid gap-6 animate-slide-up-fade">
             <div>
