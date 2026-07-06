@@ -56,6 +56,9 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   delivered: { label: "تم التسليم", color: "text-emerald-300" },
   disputed: { label: "نزاع مفتوح", color: "text-rose-300" },
   seller_paid: { label: "تم الدفع للبائع", color: "text-emerald-300" },
+  waiting_for_payment: { label: "بانتظار الدفع", color: "text-yellow-300" },
+  waiting_payment_verification: { label: "بانتظار التحقق من الدفع", color: "text-orange-300" },
+  paid: { label: "تم الدفع", color: "text-emerald-300" },
 };
 
 export default function OrderDetailPage() {
@@ -82,6 +85,10 @@ export default function OrderDetailPage() {
   const [reviewComment, setReviewComment] = useState("");
   const [existingReview, setExistingReview] = useState<any>(null);
   const [sendingReview, setSendingReview] = useState(false);
+  const [paymentTransactionId, setPaymentTransactionId] = useState("");
+  const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
+  const [paymentSubmitting, setPaymentSubmitting] = useState(false);
+  const [paymentSubmitError, setPaymentSubmitError] = useState("");
 
   useEffect(() => {
     if (order?.status === "disputed" || order?.status === "payment_confirmed_waiting_code") {
@@ -206,6 +213,55 @@ export default function OrderDetailPage() {
     setTimeout(() => setCopiedDelivery(false), 2000);
   }
 
+  async function submitPaymentProof() {
+    if (!paymentTransactionId.trim() || !paymentProofFile) {
+      setPaymentSubmitError("يرجى إدخال Transaction ID ورفع صورة الإيصال");
+      return;
+    }
+    setPaymentSubmitting(true);
+    setPaymentSubmitError("");
+
+    let proofUrl = "";
+    try {
+      const formData = new FormData();
+      formData.append("file", paymentProofFile);
+      const uploadRes = await fetch("/api/upload-proof", {
+        method: "POST",
+        body: formData,
+      });
+      if (!uploadRes.ok) {
+        const errData = await uploadRes.json().catch(() => ({}));
+        setPaymentSubmitError(errData.error || "فشل رفع الصورة");
+        setPaymentSubmitting(false);
+        return;
+      }
+      const uploadData = await uploadRes.json();
+      proofUrl = uploadData.url;
+    } catch {
+      setPaymentSubmitError("فشل رفع الصورة. تحقق من الاتصال.");
+      setPaymentSubmitting(false);
+      return;
+    }
+
+    const res = await fetch(`/api/orders/${params.id}/submit-payment`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ transaction_id: paymentTransactionId.trim(), payment_proof_file: proofUrl }),
+    });
+
+    setPaymentSubmitting(false);
+    if (res.ok) {
+      toast("success", "تم إرسال معلومات الدفع. في انتظار التحقق.");
+      setPaymentTransactionId("");
+      setPaymentProofFile(null);
+      const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
+      if (orderRes.ok) setOrder(await orderRes.json());
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      setPaymentSubmitError(errData.error || "فشل إرسال معلومات الدفع");
+    }
+  }
+
   async function submitReview() {
     if (sendingReview) return;
     setSendingReview(true);
@@ -308,7 +364,7 @@ export default function OrderDetailPage() {
             <OrderTrust status={order.status} />
           </div>
 
-          {order.status === "payment_confirmed_waiting_code" && isBuyer && order.order_secret_code && (
+          {(order.status === "payment_confirmed_waiting_code" || order.status === "paid") && isBuyer && order.order_secret_code && (
             <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
               <div className="text-xs font-bold text-white/50">الكود السري (أرسله للبائع)</div>
               <div className="mt-1 text-2xl font-black tracking-widest text-emerald-300" dir="ltr">
@@ -336,6 +392,68 @@ export default function OrderDetailPage() {
               <button className="btn-secondary" onClick={() => router.push("/seller/orders")}>
                 انتقل للطلبات
               </button>
+            </div>
+          )}
+
+          {order.status === "waiting_for_payment" && isBuyer && (
+            <div className="mt-6 rounded-2xl border border-indigo-400/30 bg-indigo-500/10 p-4">
+              <h3 className="text-sm font-black text-white">تأكيد الدفع</h3>
+              <p className="mt-1 text-xs text-white/60">بعد تحويل الأموال، قم برفع صورة الإيصال وإدخال Transaction ID</p>
+              <div className="mt-4 grid gap-3">
+                <label className="grid gap-1">
+                  <span className="text-xs font-bold text-white/70">Transaction ID (رقم المعاملة)</span>
+                  <input
+                    className="h-11 rounded-2xl border border-white/10 bg-white/5 px-4 text-white outline-none focus:border-indigo-400/50"
+                    value={paymentTransactionId}
+                    onChange={(e) => setPaymentTransactionId(e.target.value)}
+                    placeholder="أدخل Transaction ID من الإيصال"
+                    dir="ltr"
+                  />
+                </label>
+                <label className="grid gap-1">
+                  <span className="text-xs font-bold text-white/70">صورة الإيصال</span>
+                  <div className="flex items-center gap-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="block w-full text-sm text-white/70 file:mr-3 file:py-2 file:px-4 file:rounded-2xl file:border-0 file:bg-indigo-500/20 file:text-indigo-200 file:font-bold file:text-sm"
+                      onChange={(e) => setPaymentProofFile(e.target.files?.[0] || null)}
+                    />
+                    {paymentProofFile && (
+                      <span className="text-xs text-white/50 truncate max-w-[120px]">{paymentProofFile.name}</span>
+                    )}
+                  </div>
+                </label>
+                {paymentSubmitError && (
+                  <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
+                    {paymentSubmitError}
+                  </div>
+                )}
+                <button
+                  className="btn-primary h-12"
+                  onClick={submitPaymentProof}
+                  disabled={paymentSubmitting}
+                >
+                  {paymentSubmitting ? "جاري الإرسال..." : "لقد قمت بالدفع"}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {order.status === "waiting_payment_verification" && isBuyer && (
+            <div className="mt-4 rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-4">
+              <div className="text-sm font-bold text-yellow-200">في انتظار التحقق من الدفع</div>
+              <p className="mt-1 text-xs text-white/60">سيتم التحقق من معلومات الدفع تلقائياً. يرجى الانتظار.</p>
+            </div>
+          )}
+
+          {order.status === "paid" && isBuyer && (
+            <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">✅</span>
+                <div className="text-sm font-bold text-emerald-200">تم تأكيد الدفع بنجاح</div>
+              </div>
+              <p className="mt-1 text-xs text-white/60">يمكنك الآن الاطلاع على الكود السري لإرساله للبائع.</p>
             </div>
           )}
 
