@@ -53,6 +53,9 @@ const statusLabels: Record<string, string> = {
   delivered: "تم التسليم",
   disputed: "نزاع",
   seller_paid: "تم الدفع للبائع",
+  waiting_for_payment: "بانتظار الدفع",
+  waiting_payment_verification: "بانتظار التحقق",
+  paid: "تم الدفع",
 };
 
 export default function AdminOrdersPage() {
@@ -172,7 +175,7 @@ export default function AdminOrdersPage() {
       </section>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {["all", "payment_under_review", "payment_confirmed_waiting_code", "delivered", "disputed", "seller_paid"].map((f) => (
+          {["all", "payment_under_review", "waiting_payment_verification", "payment_confirmed_waiting_code", "paid", "delivered", "disputed", "seller_paid"].map((f) => (
           <button
             key={f}
             className={filter === f ? "btn-primary" : "btn-secondary"}

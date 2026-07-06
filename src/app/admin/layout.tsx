@@ -10,6 +10,8 @@ const navItems = [
   { href: "/admin/sellers", label: "التحقق", icon: "✅" },
   { href: "/admin/users", label: "المستخدمين", icon: "👥" },
   { href: "/admin/products", label: "المنتجات", icon: "📦" },
+  { href: "/admin/manual-review", label: "مراجعة يدوية", icon: "🔍" },
+  { href: "/admin/unmatched-payments", label: "مدفوعات غير مطابقة", icon: "⚠️" },
   { href: "/admin/pending-payments", label: "المدفوعات", icon: "💰" },
   { href: "/admin/reports", label: "البلاغات", icon: "🚨" },
   { href: "/admin/security", label: "الأمان", icon: "🔒" },
@@ -26,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [notifications, setNotifications] = useState({ pending_review: 0, open_disputes: 0, pending_sellers: 0, total: 0 });
+  const [notifications, setNotifications] = useState({ pending_review: 0, open_disputes: 0, pending_sellers: 0, manual_review: 0, unmatched_payments: 0, total: 0 });
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -102,7 +104,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
               const alertCount =
                 item.href === "/admin/orders" ? notifications.pending_review :
                 item.href === "/admin/disputes" ? notifications.open_disputes :
-                item.href === "/admin/sellers" ? notifications.pending_sellers : 0;
+                item.href === "/admin/sellers" ? notifications.pending_sellers :
+                item.href === "/admin/manual-review" ? notifications.manual_review :
+                item.href === "/admin/unmatched-payments" ? notifications.unmatched_payments : 0;
               return (
                 <a
                   key={item.href}

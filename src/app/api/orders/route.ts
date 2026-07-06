@@ -45,13 +45,15 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { product_id, payment_proof_file } = body;
+  const { product_id, payment_proof_file, payment_flow } = body;
 
   if (!product_id) {
     return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
   }
 
-  if (!payment_proof_file) {
+  const useNewFlow = payment_flow === "new";
+
+  if (!useNewFlow && !payment_proof_file) {
     return NextResponse.json({ error: "Payment proof is required" }, { status: 400 });
   }
 
@@ -70,14 +72,15 @@ export async function POST(req: Request) {
     product_type: product.product_type,
     currency: product.currency,
     product_price: product.price,
-    payment_proof_file,
+    payment_proof_file: payment_proof_file || "",
+    initial_status: useNewFlow ? "waiting_for_payment" : undefined,
   });
 
   await logAuditEvent({
     event_type: "order.created",
     user_id: user.id,
     order_id: order.id,
-    details: `New order created for product ${product.title}`,
+    details: `New order created for product ${product.title} (flow: ${useNewFlow ? "new" : "legacy"})`,
   });
 
   if (product.seller_id) {
