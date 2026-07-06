@@ -31,6 +31,10 @@ type Order = {
   buyer_name: string;
   seller_name: string | null;
   product_title: string | null;
+  transaction_id?: string;
+  payment_proof_submitted_at?: string;
+  matched_via_email?: number;
+  auto_confirmed_at?: string;
 };
 
 type ChatMessage = {
@@ -443,7 +447,16 @@ export default function OrderDetailPage() {
           {order.status === "waiting_payment_verification" && isBuyer && (
             <div className="mt-4 rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-4">
               <div className="text-sm font-bold text-yellow-200">في انتظار التحقق من الدفع</div>
-              <p className="mt-1 text-xs text-white/60">سيتم التحقق من معلومات الدفع تلقائياً. يرجى الانتظار.</p>
+              <p className="mt-1 text-xs text-white/60">
+                سيتم التحقق من معلومات الدفع تلقائياً فور وصول إشعار التحويل عبر البريد الإلكتروني.
+                يتم فحص البريد كل 5 دقائق. بمجرد تأكيد الدفع، سيتم إعلامك فوراً.
+              </p>
+              {order.transaction_id && (
+                <div className="mt-2 rounded-xl bg-white/5 px-3 py-2 text-xs">
+                  <span className="text-white/50">Transaction ID: </span>
+                  <span className="text-white font-bold" dir="ltr">{order.transaction_id}</span>
+                </div>
+              )}
             </div>
           )}
 

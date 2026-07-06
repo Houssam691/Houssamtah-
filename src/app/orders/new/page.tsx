@@ -18,6 +18,7 @@ function NewOrderForm() {
   const [user, setUser] = useState<any>(null);
   const [product, setProduct] = useState<any>(null);
   const [paymentProof, setPaymentProof] = useState<File | null>(null);
+  const [transactionId, setTransactionId] = useState("");
   const [currency, setCurrency] = useState("DZD");
   const [settings, setSettings] = useState<any>(null);
   const [error, setError] = useState<string | null>(null);
@@ -79,12 +80,28 @@ function NewOrderForm() {
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
-    if (!paymentProof) { setError("يرجى رفع إثبات الدفع"); return; }
+
+    const useNewFlow = !!transactionId.trim();
+
+    if (!useNewFlow && !paymentProof) {
+      setError("يرجى رفع إثبات الدفع أو إدخال Transaction ID للتحقق التلقائي");
+      return;
+    }
 
     setLoading(true);
     try {
-      const proofUrl = await uploadProof(paymentProof);
-      const orderData: any = { payment_proof_file: proofUrl, currency };
+      let proofUrl = "";
+      if (paymentProof) {
+        proofUrl = await uploadProof(paymentProof);
+      }
+      const orderData: any = { currency };
+      if (useNewFlow) {
+        orderData.transaction_id = transactionId.trim();
+        orderData.payment_proof_file = proofUrl;
+        orderData.payment_flow = "new";
+      } else {
+        orderData.payment_proof_file = proofUrl;
+      }
       if (product) {
         orderData.product_id = product.id;
         orderData.product_type = product.product_type;
@@ -101,7 +118,7 @@ function NewOrderForm() {
         throw new Error(data.error || "فشل إنشاء الطلب");
       }
       const order = await res.json();
-      toast("success", "تم إنشاء الطلب بنجاح.");
+      toast("success", useNewFlow ? "تم إنشاء الطلب. سيتم التحقق من الدفع تلقائياً." : "تم إنشاء الطلب بنجاح.");
       setCreated(order.id);
     } catch (e) {
       setError(e instanceof Error ? e.message : "فشل إنشاء الطلب");
@@ -250,8 +267,29 @@ function NewOrderForm() {
             </div>
           )}
 
+          <div className="rounded-2xl border border-indigo-400/30 bg-indigo-500/10 p-4 text-sm text-white/80">
+            <p className="font-bold text-indigo-200">🔄 التحقق التلقائي من الدفع</p>
+            <p className="mt-1 text-xs text-white/60">
+              بعد التحويل، سيتم التحقق من الدفع تلقائياً عبر البريد الإلكتروني دون الحاجة لمراجعة الإدارة.
+            </p>
+          </div>
+
           <label className="grid gap-2">
-            <span className="text-sm font-bold text-white/80">إثبات الدفع (إلزامي)</span>
+            <span className="text-sm font-bold text-white/80">Transaction ID (رقم المعاملة)</span>
+            <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3">
+              <input
+                className="w-full bg-transparent text-white outline-none text-sm"
+                value={transactionId}
+                onChange={(e) => setTransactionId(e.target.value)}
+                placeholder="أدخل Transaction ID الموجود في الإيصال (للتحقق التلقائي)"
+                dir="ltr"
+              />
+            </div>
+            <span className="text-xs text-white/40">إذا أدخلت Transaction ID، سيتم التحقق من الدفع تلقائياً. يمكنك أيضاً رفع صورة الإيصال كدعم إضافي.</span>
+          </label>
+
+          <label className="grid gap-2">
+            <span className="text-sm font-bold text-white/80">صورة الإيصال (اختياري مع Transaction ID)</span>
             <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3">
               <span className="text-sm text-white/70">
                 {paymentProof ? paymentProof.name : "PDF, JPG, PNG"}
@@ -278,7 +316,7 @@ function NewOrderForm() {
             </div>
           )}
 
-          <button className="btn-primary h-12 w-full" type="submit" disabled={loading || uploading || !paymentProof}>
+          <button className="btn-primary h-12 w-full" type="submit" disabled={loading || uploading || (!paymentProof && !transactionId.trim())}>
             {loading ? "جاري إنشاء الطلب..." : "✅ تأكيد الطلب"}
           </button>
         </form>
