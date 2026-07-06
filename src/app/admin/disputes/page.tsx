@@ -66,7 +66,7 @@ export default function AdminDisputesPage() {
       body: JSON.stringify({ status, resolution_note: note }),
     });
     setActionLoading(null);
-    if (res.ok) toast("success", `تم ${status === "resolved" ? "حل النزاع" : "رفض النزاع"}.`);
+    if (res.ok) toast("success", `تم ${status.startsWith("resolved") ? "حل النزاع" : "رفض النزاع"}.`);
     else toast("error", "فشل");
     setSelectedDispute(null);
     setResolutionNote("");
@@ -80,7 +80,11 @@ export default function AdminDisputesPage() {
     setResolutionNote(dispute.resolution_note || "");
   }
 
-  const filtered = filter === "all" ? disputes : disputes.filter(d => d.status === filter);
+    const filtered = filter === "all"
+    ? disputes
+    : filter === "resolved"
+    ? disputes.filter(d => d.status.startsWith("resolved"))
+    : disputes.filter(d => d.status === filter);
 
   if (loading) {
     return (
