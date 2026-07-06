@@ -23,6 +23,10 @@ type Order = {
   order_secret_code: string;
   status: string;
   created_at: string;
+  transaction_id?: string;
+  payment_proof_submitted_at?: string;
+  matched_via_email?: number;
+  auto_confirmed_at?: string;
 };
 
 type ChatMessage = {
@@ -231,7 +235,7 @@ export default function AdminOrdersPage() {
                   </a>
                 )}
 
-                {order.status === "payment_under_review" && (
+                {(order.status === "payment_under_review" || order.status === "waiting_payment_verification") && (
                   <>
                     <button
                       className="btn-primary"
@@ -306,6 +310,18 @@ export default function AdminOrdersPage() {
                 )}
               </div>
             </div>
+
+            {order.status === "waiting_payment_verification" && order.transaction_id && (
+              <div className="mt-4 rounded-2xl border border-yellow-400/30 bg-yellow-500/10 p-4">
+                <div className="text-xs font-bold text-white/50">Transaction ID المقدم من المشتري</div>
+                <div className="mt-1 font-bold text-white" dir="ltr">{order.transaction_id}</div>
+                {order.payment_proof_submitted_at && (
+                  <div className="mt-1 text-xs text-white/50">
+                    تاريخ الإرسال: {new Date(order.payment_proof_submitted_at).toLocaleString("ar-DZ")}
+                  </div>
+                )}
+              </div>
+            )}
 
             {showSecret === order.id && order.order_secret_code && (
               <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
