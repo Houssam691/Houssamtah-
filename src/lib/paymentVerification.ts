@@ -3,6 +3,21 @@ import { updateOrderStatus, Order } from "./orders";
 import { createNotification, logAuditEvent } from "./auth";
 import crypto from "crypto";
 
+export type WebhookPayload = {
+  id: string;
+  from: string;
+  text: string;
+  created_at: string;
+  message_id: string;
+  last_event: string;
+  headers: {
+    received: string;
+    "authentication-results": string;
+    "x-ses-spam-verdict": string;
+    "x-ses-virus-verdict": string;
+  };
+};
+
 export type EmailLog = {
   id: string;
   sender: string;
@@ -18,6 +33,17 @@ export type EmailLog = {
   received_at: string;
   processed: number;
   created_at: string;
+  webhook_id: string;
+  webhook_created_at: string;
+  webhook_message_id: string;
+  webhook_last_event: string;
+  headers_received: string;
+  headers_authentication_results: string;
+  security_spf: string;
+  security_dkim: string;
+  security_dmarc: string;
+  security_spam_verdict: string;
+  security_virus_verdict: string;
 };
 
 export type UnmatchedPayment = {
@@ -52,13 +78,37 @@ export async function saveEmailLog(params: {
   targetAccount: string;
   currency: string;
   messageId: string;
+  webhookId: string;
+  webhookCreatedAt: string;
+  webhookMessageId: string;
+  webhookLastEvent: string;
+  headersReceived: string;
+  headersAuthResults: string;
+  securitySpf: string;
+  securityDkim: string;
+  securityDmarc: string;
+  securitySpamVerdict: string;
+  securityVirusVerdict: string;
 }): Promise<EmailLog> {
   const { queryOne } = await getDb();
   const id = generateId("eml");
   await queryOne(
-    `INSERT INTO email_logs (id, sender, subject, body_text, body_html, raw_from, extracted_amount, extracted_transaction_id, extracted_target_account, extracted_currency, message_id)
-     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11) RETURNING id`,
-    [id, params.sender, params.subject, params.bodyText, params.bodyHtml, params.rawFrom, params.amount, params.transactionId, params.targetAccount, params.currency, params.messageId]
+    `INSERT INTO email_logs
+      (id, sender, subject, body_text, body_html, raw_from,
+       extracted_amount, extracted_transaction_id, extracted_target_account, extracted_currency,
+       message_id,
+       webhook_id, webhook_created_at, webhook_message_id, webhook_last_event,
+       headers_received, headers_authentication_results,
+       security_spf, security_dkim, security_dmarc,
+       security_spam_verdict, security_virus_verdict)
+     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16,$17,$18,$19,$20,$21,$22) RETURNING id`,
+    [id, params.sender, params.subject, params.bodyText, params.bodyHtml, params.rawFrom,
+     params.amount, params.transactionId, params.targetAccount, params.currency,
+     params.messageId,
+     params.webhookId, params.webhookCreatedAt, params.webhookMessageId, params.webhookLastEvent,
+     params.headersReceived, params.headersAuthResults,
+     params.securitySpf, params.securityDkim, params.securityDmarc,
+     params.securitySpamVerdict, params.securityVirusVerdict]
   );
   return (await queryOne<EmailLog>("SELECT * FROM email_logs WHERE id = $1", [id]))!;
 }
@@ -144,18 +194,134 @@ export function parseBaridiMobEmail(bodyText: string): {
   return { amount, transactionId, targetAccount, currency };
 }
 
-export async function autoMatchPayment(emailLog: EmailLog): Promise<{
-  matched: "exact" | "multiple" | "none";
-  order?: Order | null;
-  orders?: Order[];
-}> {
-  const db = await getDb();
-  const txId = emailLog.extracted_transaction_id?.trim();
-  if (!txId) {
-    return { matched: "none" };
+export function extractSecurityVerdict(authResults: string, mechanism: string): string {
+  const regex = new RegExp(`${mechanism}=([a-zA-Z]+)`, "i");
+  const match = authResults.match(regex);
+  return match ? match[1].toLowerCase() : "";
+}
+
+export function validateWebhookSecurity(payload: WebhookPayload): {
+  valid: boolean;
+  reason?: string;
+} {
+  if (payload.from?.toLowerCase() !== "baridimob@poste.dz") {
+    return { valid: false, reason: "Invalid sender" };
   }
 
-  const matchingOrders = await db.query<Order>(
+  const authResults = payload.headers?.["authentication-results"] || "";
+  const spf = extractSecurityVerdict(authResults, "spf");
+  const dkim = extractSecurityVerdict(authResults, "dkim");
+  const dmarc = extractSecurityVerdict(authResults, "dmarc");
+
+  if (spf !== "pass") {
+    return { valid: false, reason: "SPF verification failed" };
+  }
+  if (dkim !== "pass") {
+    return { valid: false, reason: "DKIM verification failed" };
+  }
+  if (dmarc !== "pass") {
+    return { valid: false, reason: "DMARC verification failed" };
+  }
+
+  const spamVerdict = payload.headers?.["x-ses-spam-verdict"] || "";
+  if (spamVerdict !== "PASS") {
+    return { valid: false, reason: "Spam verdict not PASS" };
+  }
+
+  const virusVerdict = payload.headers?.["x-ses-virus-verdict"] || "";
+  if (virusVerdict !== "PASS") {
+    return { valid: false, reason: "Virus verdict not PASS" };
+  }
+
+  return { valid: true };
+}
+
+export async function processWebhookEmail(payload: WebhookPayload): Promise<{
+  status: "rejected_security" | "rejected_duplicate" | "accepted" | "manual_review";
+  emailLog?: EmailLog;
+  order?: Order;
+  reason?: string;
+}> {
+  const db = await getDb();
+
+  const security = validateWebhookSecurity(payload);
+  if (!security.valid) {
+    return { status: "rejected_security", reason: security.reason };
+  }
+
+  const extracted = parseBaridiMobEmail(payload.text || "");
+
+  const authResults = payload.headers?.["authentication-results"] || "";
+  const spf = extractSecurityVerdict(authResults, "spf");
+  const dkim = extractSecurityVerdict(authResults, "dkim");
+  const dmarc = extractSecurityVerdict(authResults, "dmarc");
+
+  const emailLog = await saveEmailLog({
+    sender: payload.from?.toLowerCase() || "",
+    subject: "",
+    bodyText: payload.text || "",
+    bodyHtml: "",
+    rawFrom: payload.from || "",
+    amount: extracted.amount,
+    transactionId: extracted.transactionId,
+    targetAccount: extracted.targetAccount,
+    currency: extracted.currency,
+    messageId: payload.message_id || "",
+    webhookId: payload.id || "",
+    webhookCreatedAt: payload.created_at || "",
+    webhookMessageId: payload.message_id || "",
+    webhookLastEvent: payload.last_event || "",
+    headersReceived: payload.headers?.received || "",
+    headersAuthResults: authResults,
+    securitySpf: spf,
+    securityDkim: dkim,
+    securityDmarc: dmarc,
+    securitySpamVerdict: payload.headers?.["x-ses-spam-verdict"] || "",
+    securityVirusVerdict: payload.headers?.["x-ses-virus-verdict"] || "",
+  });
+
+  const txId = extracted.transactionId?.trim();
+  if (!txId) {
+    await markEmailProcessed(emailLog.id);
+    await saveUnmatchedPayment({
+      emailLogId: emailLog.id,
+      transactionId: "",
+      amount: extracted.amount,
+      currency: extracted.currency,
+      targetAccount: extracted.targetAccount,
+      emailSender: payload.from || "",
+      emailSubject: "",
+      emailBody: (payload.text || "").slice(0, 2000),
+    });
+    return { status: "manual_review", emailLog, reason: "No transaction ID found in email" };
+  }
+
+  const existingTx = await db.queryOne(
+    "SELECT id, status FROM orders WHERE transaction_id = $1 AND status IN ('paid', 'waiting_payment_verification')",
+    [txId]
+  );
+  if (existingTx) {
+    await markEmailProcessed(emailLog.id);
+    return { status: "rejected_duplicate", emailLog, reason: `Transaction ID ${txId} already used by order ${existingTx.id}` };
+  }
+
+  const amount = extracted.amount;
+  if (amount === null) {
+    await markEmailProcessed(emailLog.id);
+    await saveUnmatchedPayment({
+      emailLogId: emailLog.id,
+      transactionId: txId,
+      amount: null,
+      currency: extracted.currency,
+      targetAccount: extracted.targetAccount,
+      emailSender: payload.from || "",
+      emailSubject: "",
+      emailBody: (payload.text || "").slice(0, 2000),
+    });
+    return { status: "manual_review", emailLog, reason: "Could not extract amount from email" };
+  }
+
+  const pendingOrders = await db.query<Order>(
     `SELECT o.*,
       b.first_name || ' ' || b.last_name as buyer_name,
       s.first_name || ' ' || s.last_name as seller_name,
@@ -165,64 +331,109 @@ export async function autoMatchPayment(emailLog: EmailLog): Promise<{
     LEFT JOIN users s ON o.seller_id = s.id
     LEFT JOIN products p ON o.product_id = p.id
     WHERE o.status = 'waiting_payment_verification'
-      AND o.transaction_id = $1`,
-    [txId]
+      AND o.total_amount = $1`,
+    [amount]
   );
+
+  if (pendingOrders.length === 0) {
+    await markEmailProcessed(emailLog.id);
+    await saveUnmatchedPayment({
+      emailLogId: emailLog.id,
+      transactionId: txId,
+      amount,
+      currency: extracted.currency,
+      targetAccount: extracted.targetAccount,
+      emailSender: payload.from || "",
+      emailSubject: "",
+      emailBody: (payload.text || "").slice(0, 2000),
+    });
+    return { status: "manual_review", emailLog, reason: "No pending orders found with matching amount" };
+  }
+
+  if (pendingOrders.length === 1) {
+    const order = pendingOrders[0];
+    await confirmPayment(order, emailLog, txId);
+    return { status: "accepted", emailLog, order };
+  }
+
+  const matchingOrders = pendingOrders.filter((o) => o.transaction_id === txId);
 
   if (matchingOrders.length === 1) {
     const order = matchingOrders[0];
-    const secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
+    await confirmPayment(order, emailLog, txId);
+    return { status: "accepted", emailLog, order };
+  }
 
-    await updateOrderStatus(order.id, "paid", {
-      order_secret_code: secretCode,
-      matched_via_email: 1,
-      auto_confirmed_at: new Date().toISOString(),
-    });
+  await markEmailProcessed(emailLog.id);
+  await saveUnmatchedPayment({
+    emailLogId: emailLog.id,
+    transactionId: txId,
+    amount,
+    currency: extracted.currency,
+    targetAccount: extracted.targetAccount,
+    emailSender: payload.from || "",
+    emailSubject: "",
+    emailBody: (payload.text || "").slice(0, 2000),
+  });
 
-    await logAuditEvent({
-      event_type: "order.payment_auto_confirmed",
-      order_id: order.id,
-      details: `Payment auto-confirmed via email match for transaction ${txId}`,
-    });
+  return {
+    status: "manual_review",
+    emailLog,
+    reason: `Multiple pending orders (${pendingOrders.length}) with amount ${amount}. ${matchingOrders.length} matched transaction_id. Manual review required.`,
+  };
+}
 
+async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: string): Promise<void> {
+  const secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
+
+  await updateOrderStatus(order.id, "paid", {
+    order_secret_code: secretCode,
+    transaction_id: order.transaction_id || transactionId,
+    matched_via_email: 1,
+    auto_confirmed_at: new Date().toISOString(),
+    confirmed_message_id: emailLog.message_id,
+    confirmed_webhook_id: emailLog.webhook_id,
+  });
+
+  await markEmailProcessed(emailLog.id);
+
+  await logAuditEvent({
+    event_type: "order.payment_webhook_confirmed",
+    order_id: order.id,
+    details: `Payment confirmed via webhook. Transaction: ${transactionId}, Message: ${emailLog.message_id}`,
+  });
+
+  const db = await getDb();
+
+  await createNotification({
+    userId: order.buyer_id,
+    orderId: order.id,
+    type: "payment_confirmed",
+    title: "تم تأكيد الدفع",
+    message: "تم تأكيد دفع طلبك تلقائياً. يمكنك الآن الاطلاع على الكود السري.",
+    link: `/orders/${order.id}`,
+  });
+
+  if (order.seller_id) {
     await createNotification({
-      userId: order.buyer_id,
+      userId: order.seller_id,
       orderId: order.id,
       type: "payment_confirmed",
-      title: "تم تأكيد الدفع",
-      message: "تم تأكيد دفع طلبك تلقائياً. يمكنك الآن الاطلاع على الكود السري.",
-      link: `/orders/${order.id}`,
+      title: "تم تأكيد دفع طلب",
+      message: `تم تأكيد دفع الطلب ${order.order_tracking_id}. يرجى انتظار الكود السري من المشتري.`,
+      link: `/seller/orders`,
     });
-
-    if (order.seller_id) {
-      await createNotification({
-        userId: order.seller_id,
-        orderId: order.id,
-        type: "payment_confirmed",
-        title: "تم تأكيد دفع طلب",
-        message: `تم تأكيد دفع الطلب ${order.order_tracking_id}. يرجى انتظار الكود السري من المشتري.`,
-        link: `/seller/orders`,
-      });
-    }
-
-    const admins = await db.query<{ id: string }>("SELECT id FROM users WHERE role = 'admin'");
-    for (const a of admins) {
-      await createNotification({
-        userId: a.id,
-        orderId: order.id,
-        type: "payment_confirmed",
-        title: "تم تأكيد الدفع تلقائياً",
-        message: `تم تأكيد دفع الطلب ${order.order_tracking_id} تلقائياً.`,
-        link: `/admin/orders`,
-      });
-    }
-
-    return { matched: "exact", order };
   }
 
-  if (matchingOrders.length > 1) {
-    return { matched: "multiple", orders: matchingOrders };
+  const admins = await db.query<{ id: string }>("SELECT id FROM users WHERE role = 'admin'");
+  for (const a of admins) {
+    await createNotification({
+      userId: a.id,
+      orderId: order.id,
+      type: "payment_confirmed",
+      title: "تم تأكيد الدفع تلقائياً",
+      message: `تم تأكيد دفع الطلب ${order.order_tracking_id} تلقائياً عبر Webhook.`,
+      link: `/admin/orders`,
+    });
   }
-
-  return { matched: "none" };
 }

@@ -341,6 +341,110 @@ async function initializeSchema(): Promise<void> {
       END $$;
     `);
 
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='confirmed_message_id') THEN
+          ALTER TABLE orders ADD COLUMN confirmed_message_id TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='confirmed_webhook_id') THEN
+          ALTER TABLE orders ADD COLUMN confirmed_webhook_id TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='webhook_id') THEN
+          ALTER TABLE email_logs ADD COLUMN webhook_id TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='webhook_created_at') THEN
+          ALTER TABLE email_logs ADD COLUMN webhook_created_at TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='webhook_message_id') THEN
+          ALTER TABLE email_logs ADD COLUMN webhook_message_id TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='webhook_last_event') THEN
+          ALTER TABLE email_logs ADD COLUMN webhook_last_event TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='headers_received') THEN
+          ALTER TABLE email_logs ADD COLUMN headers_received TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='headers_authentication_results') THEN
+          ALTER TABLE email_logs ADD COLUMN headers_authentication_results TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='security_spf') THEN
+          ALTER TABLE email_logs ADD COLUMN security_spf TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='security_dkim') THEN
+          ALTER TABLE email_logs ADD COLUMN security_dkim TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='security_dmarc') THEN
+          ALTER TABLE email_logs ADD COLUMN security_dmarc TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='security_spam_verdict') THEN
+          ALTER TABLE email_logs ADD COLUMN security_spam_verdict TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='email_logs' AND column_name='security_virus_verdict') THEN
+          ALTER TABLE email_logs ADD COLUMN security_virus_verdict TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
     const { rows } = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
     if (rows.length === 0 && process.env.ADMIN_INIT_PASSWORD) {
       const hash = bcrypt.hashSync(process.env.ADMIN_INIT_PASSWORD, 10);

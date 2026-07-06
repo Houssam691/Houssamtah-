@@ -42,6 +42,8 @@ export type Order = {
   payment_proof_submitted_at?: string;
   matched_via_email?: number;
   auto_confirmed_at?: string;
+  confirmed_message_id?: string;
+  confirmed_webhook_id?: string;
 };
 
 export function generateTrackingId(): string {
@@ -59,6 +61,7 @@ export async function createOrder(params: {
   product_price: number;
   payment_proof_file: string;
   initial_status?: OrderStatus;
+  transaction_id?: string;
 }): Promise<Order> {
   const { queryOne } = await getDb();
   const settings = await getSettings();
@@ -71,8 +74,8 @@ export async function createOrder(params: {
   const initialStatus = params.initial_status || "payment_under_review";
 
   await queryOne(`
-    INSERT INTO orders (id, order_tracking_id, buyer_id, seller_id, product_id, product_type, currency, product_price, tax_rate, tax_amount, total_amount, payment_proof_file, status)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    INSERT INTO orders (id, order_tracking_id, buyer_id, seller_id, product_id, product_type, currency, product_price, tax_rate, tax_amount, total_amount, payment_proof_file, status, transaction_id)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
   `, [
     id, trackingId,
     params.buyer_id,
@@ -86,6 +89,7 @@ export async function createOrder(params: {
     totalAmount,
     params.payment_proof_file,
     initialStatus,
+    params.transaction_id || null,
   ]);
 
   return (await queryOne<Order>("SELECT * FROM orders WHERE id = $1", [id]))!;
@@ -244,6 +248,14 @@ export async function updateOrderStatus(
   if (extra?.auto_confirmed_at !== undefined) {
     sets.push(`auto_confirmed_at = $${idx++}`);
     vals.push(extra.auto_confirmed_at);
+  }
+  if (extra?.confirmed_message_id !== undefined) {
+    sets.push(`confirmed_message_id = $${idx++}`);
+    vals.push(extra.confirmed_message_id);
+  }
+  if (extra?.confirmed_webhook_id !== undefined) {
+    sets.push(`confirmed_webhook_id = $${idx++}`);
+    vals.push(extra.confirmed_webhook_id);
   }
 
   vals.push(id);
