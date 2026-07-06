@@ -24,7 +24,7 @@ export async function GET() {
   );
 
   const manualReview = await db.queryOne<{ count: number }>(
-    "SELECT COUNT(*)::int as count FROM unmatched_payments WHERE reviewed = 0 AND (SELECT COUNT(*) FROM orders WHERE status = 'waiting_payment_verification' AND transaction_id = unmatched_payments.transaction_id) > 1"
+    "SELECT COUNT(*)::int as count FROM unmatched_payments WHERE reviewed = 0 AND amount IS NOT NULL AND (SELECT COUNT(*) FROM orders WHERE status = 'waiting_payment_verification' AND total_amount = unmatched_payments.amount) > 1"
   );
 
   const unmatchedPayments = await db.queryOne<{ count: number }>(

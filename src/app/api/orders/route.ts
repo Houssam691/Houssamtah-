@@ -45,16 +45,31 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json();
-  const { product_id, payment_proof_file, payment_flow } = body;
+  const { product_id, payment_proof_file, payment_flow, transaction_id } = body;
 
   if (!product_id) {
     return NextResponse.json({ error: "Product ID is required" }, { status: 400 });
   }
 
-  const useNewFlow = payment_flow === "new";
+  const useNewFlow = payment_flow === "new" || !!transaction_id;
 
   if (!useNewFlow && !payment_proof_file) {
     return NextResponse.json({ error: "Payment proof is required" }, { status: 400 });
+  }
+
+  if (useNewFlow && !transaction_id) {
+    return NextResponse.json({ error: "Transaction ID is required for auto-verification" }, { status: 400 });
+  }
+
+  if (transaction_id) {
+    const db = await getDb();
+    const existingTx = await db.queryOne(
+      "SELECT id FROM orders WHERE transaction_id = $1 AND status IN ('waiting_payment_verification', 'paid')",
+      [transaction_id.trim()]
+    );
+    if (existingTx) {
+      return NextResponse.json({ error: "Transaction ID already used for another order" }, { status: 409 });
+    }
   }
 
   const product = await getProductById(product_id);
@@ -65,6 +80,8 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Product is not available" }, { status: 400 });
   }
 
+  const initialStatus = useNewFlow ? "waiting_payment_verification" : undefined;
+
   const order = await createOrder({
     buyer_id: user.id,
     seller_id: product.seller_id,
@@ -73,14 +90,15 @@ export async function POST(req: Request) {
     currency: product.currency,
     product_price: product.price,
     payment_proof_file: payment_proof_file || "",
-    initial_status: useNewFlow ? "waiting_for_payment" : undefined,
+    initial_status: useNewFlow ? "waiting_payment_verification" : undefined,
+    transaction_id: transaction_id?.trim() || undefined,
   });
 
   await logAuditEvent({
     event_type: "order.created",
     user_id: user.id,
     order_id: order.id,
-    details: `New order created for product ${product.title} (flow: ${useNewFlow ? "new" : "legacy"})`,
+    details: `New order created for product ${product.title} (flow: ${useNewFlow ? "auto-verify" : "legacy"})`,
   });
 
   if (product.seller_id) {

@@ -26,10 +26,11 @@ export async function GET() {
     FROM unmatched_payments u
     LEFT JOIN orders o ON u.resolved_order_id = o.id
     WHERE u.reviewed = 0
+      AND u.amount IS NOT NULL
       AND (
         SELECT COUNT(*) FROM orders
         WHERE status = 'waiting_payment_verification'
-          AND transaction_id = u.transaction_id
+          AND total_amount = u.amount
       ) > 1
     ORDER BY u.created_at DESC
   `);
@@ -44,8 +45,8 @@ export async function GET() {
       LEFT JOIN users b ON o.buyer_id = b.id
       LEFT JOIN products p ON o.product_id = p.id
       WHERE o.status = 'waiting_payment_verification'
-        AND o.transaction_id = $1
-    `, [item.transaction_id as string]);
+        AND o.total_amount = $1
+    `, [item.amount as number]);
 
     manualReviewItems.push({ ...item, potential_orders: potentialOrders });
   }
@@ -89,8 +90,11 @@ export async function POST(req: Request) {
 
   await updateOrderStatus(selected_order_id, "paid", {
     order_secret_code: secretCode,
+    transaction_id: unmatched.transaction_id as string || "",
     matched_via_email: 1,
     auto_confirmed_at: new Date().toISOString(),
+    confirmed_message_id: "",
+    confirmed_webhook_id: "",
   });
 
   await db.execute(

@@ -27,31 +27,32 @@ export async function GET() {
     LEFT JOIN orders o ON u.resolved_order_id = o.id
     WHERE u.reviewed = 0
       AND (
-        SELECT COUNT(*) FROM orders
-        WHERE status = 'waiting_payment_verification'
-          AND transaction_id = u.transaction_id
-      ) <= 1
-      AND (
-        SELECT COUNT(*) FROM orders
-        WHERE status = 'waiting_payment_verification'
-          AND transaction_id = u.transaction_id
-      ) > 0
+        (u.amount IS NOT NULL AND (
+          SELECT COUNT(*) FROM orders
+          WHERE status = 'waiting_payment_verification'
+            AND total_amount = u.amount
+        ) = 0)
+        OR
+        (u.amount IS NULL)
+      )
     ORDER BY u.created_at DESC
   `);
 
   const unmatchedItems: Record<string, unknown>[] = [];
   for (const item of rawItems) {
-    const potentialOrders = await db.query(`
-      SELECT o.*,
-        b.first_name || ' ' || b.last_name as buyer_name,
-        p.title as product_title
-      FROM orders o
-      LEFT JOIN users b ON o.buyer_id = b.id
-      LEFT JOIN products p ON o.product_id = p.id
-      WHERE o.status = 'waiting_payment_verification'
-        AND o.transaction_id = $1
-    `, [item.transaction_id as string]);
-
+    let potentialOrders: unknown[] = [];
+    if (item.amount !== null) {
+      potentialOrders = await db.query(`
+        SELECT o.*,
+          b.first_name || ' ' || b.last_name as buyer_name,
+          p.title as product_title
+        FROM orders o
+        LEFT JOIN users b ON o.buyer_id = b.id
+        LEFT JOIN products p ON o.product_id = p.id
+        WHERE o.status = 'waiting_payment_verification'
+          AND o.total_amount = $1
+      `, [item.amount as number]);
+    }
     unmatchedItems.push({ ...item, potential_orders: potentialOrders });
   }
 
@@ -94,8 +95,11 @@ export async function POST(req: Request) {
 
     await updateOrderStatus(selected_order_id, "paid", {
       order_secret_code: secretCode,
+      transaction_id: unmatched.transaction_id as string || "",
       matched_via_email: 1,
       auto_confirmed_at: new Date().toISOString(),
+      confirmed_message_id: "",
+      confirmed_webhook_id: "",
     });
 
     await logAuditEvent({
