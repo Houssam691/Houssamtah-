@@ -439,13 +439,11 @@ export default function DynamicProductWizard({ onComplete }: Props) {
               <button
                 className="btn-secondary w-full py-2.5 text-xs"
                 onClick={() => {
-                  try { localStorage.removeItem(draftKey); } catch {}
-                  toast("info", "تم حفظ المسودة");
                   onComplete?.();
                 }}
                 disabled={publishBtn.loading}
               >
-                حفظ كمسودة
+                إلغاء
               </button>
             </div>
           </div>
