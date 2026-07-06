@@ -194,7 +194,7 @@ export async function updateOrderStatus(
     disputed: ["delivered", "seller_paid"],
     seller_paid: [],
     waiting_for_payment: ["waiting_payment_verification", "payment_rejected"],
-    waiting_payment_verification: ["paid", "payment_rejected", "waiting_for_payment"],
+    waiting_payment_verification: ["payment_confirmed_waiting_code", "payment_rejected", "waiting_for_payment"],
     paid: [],
   };
 
