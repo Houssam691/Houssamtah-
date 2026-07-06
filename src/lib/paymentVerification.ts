@@ -3,6 +3,12 @@ import { updateOrderStatus, Order } from "./orders";
 import { createNotification, logAuditEvent } from "./auth";
 import crypto from "crypto";
 
+function debugLog(step: string, data?: Record<string, unknown>): void {
+  if (process.env.DEBUG_PAYMENT || process.env.NODE_ENV === "development") {
+    console.log(`[PAYMENT_DEBUG] [${new Date().toISOString()}] [${step}]`, data ? JSON.stringify(data, null, 2) : "");
+  }
+}
+
 export type WebhookPayload = {
   id: string;
   from: string;
@@ -110,12 +116,15 @@ export async function saveEmailLog(params: {
      params.securitySpf, params.securityDkim, params.securityDmarc,
      params.securitySpamVerdict, params.securityVirusVerdict]
   );
-  return (await queryOne<EmailLog>("SELECT * FROM email_logs WHERE id = $1", [id]))!;
+  const log = await queryOne<EmailLog>("SELECT * FROM email_logs WHERE id = $1", [id]);
+  debugLog("EMAIL_LOG_SAVED", { id, transactionId: params.transactionId, amount: params.amount, sender: params.sender });
+  return log!;
 }
 
 export async function markEmailProcessed(id: string): Promise<void> {
   const { execute } = await getDb();
   await execute("UPDATE email_logs SET processed = 1 WHERE id = $1", [id]);
+  debugLog("EMAIL_MARKED_PROCESSED", { id });
 }
 
 export async function saveUnmatchedPayment(params: {
@@ -135,7 +144,9 @@ export async function saveUnmatchedPayment(params: {
      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9) RETURNING id`,
     [id, params.emailLogId, params.transactionId, params.amount, params.currency, params.targetAccount, params.emailSender, params.emailSubject, params.emailBody]
   );
-  return (await queryOne<UnmatchedPayment>("SELECT * FROM unmatched_payments WHERE id = $1", [id]))!;
+  const saved = await queryOne<UnmatchedPayment>("SELECT * FROM unmatched_payments WHERE id = $1", [id]);
+  debugLog("UNMATCHED_PAYMENT_SAVED", { id, transactionId: params.transactionId, amount: params.amount });
+  return saved!;
 }
 
 function findNumberInText(text: string, label: string): string | null {
@@ -172,6 +183,8 @@ export function parseBaridiMobEmail(bodyText: string): {
   targetAccount: string;
   currency: string;
 } {
+  debugLog("PARSING_EMAIL_TEXT", { textLength: bodyText.length, preview: bodyText.slice(0, 300) });
+
   let amount: number | null = null;
   let transactionId = "";
   let targetAccount = "";
@@ -180,17 +193,29 @@ export function parseBaridiMobEmail(bodyText: string): {
   const amountStr = findNumberInText(bodyText, "Amount") || findNumberInText(bodyText, "Montant") || findNumberInText(bodyText, "المبلغ");
   if (amountStr) {
     amount = parseFloat(amountStr);
+    debugLog("AMOUNT_EXTRACTED", { raw: amountStr, parsed: amount });
+  } else {
+    debugLog("AMOUNT_NOT_FOUND", {});
   }
 
   const txId = findValueAfterLabel(bodyText, "Transaction ID") || findValueAfterLabel(bodyText, "Transaction") || findValueAfterLabel(bodyText, "Identifiant") || findValueAfterLabel(bodyText, "رقم المعاملة");
-  if (txId) transactionId = txId;
+  if (txId) {
+    transactionId = txId;
+    debugLog("TRANSACTION_ID_EXTRACTED", { transactionId });
+  } else {
+    debugLog("TRANSACTION_ID_NOT_FOUND", {});
+  }
 
   const account = findValueAfterLabel(bodyText, "Target account") || findValueAfterLabel(bodyText, "Account") || findValueAfterLabel(bodyText, "Compte") || findValueAfterLabel(bodyText, "Compte cible") || findValueAfterLabel(bodyText, "رقم الحساب") || findValueAfterLabel(bodyText, "حساب");
-  if (account) targetAccount = account;
+  if (account) {
+    targetAccount = account;
+    debugLog("TARGET_ACCOUNT_EXTRACTED", { targetAccount });
+  }
 
   const curr = findValueAfterLabel(bodyText, "Currency") || findValueAfterLabel(bodyText, "Devise") || findValueAfterLabel(bodyText, "العملة");
   if (curr) currency = curr;
 
+  debugLog("PARSE_RESULT", { amount, transactionId, targetAccount, currency });
   return { amount, transactionId, targetAccount, currency };
 }
 
@@ -204,36 +229,62 @@ export function validateWebhookSecurity(payload: WebhookPayload): {
   valid: boolean;
   reason?: string;
 } {
+  debugLog("VALIDATING_SECURITY", {
+    from: payload.from,
+    authResults: payload.headers?.["authentication-results"],
+    spamVerdict: payload.headers?.["x-ses-spam-verdict"],
+    virusVerdict: payload.headers?.["x-ses-virus-verdict"],
+  });
+
   if (payload.from?.toLowerCase() !== "baridimob@poste.dz") {
-    return { valid: false, reason: "Invalid sender" };
+    const reason = `Invalid sender: ${payload.from}`;
+    debugLog("SECURITY_FAILED", { reason });
+    return { valid: false, reason };
   }
+  debugLog("SENDER_VERIFIED", {});
 
   const authResults = payload.headers?.["authentication-results"] || "";
   const spf = extractSecurityVerdict(authResults, "spf");
   const dkim = extractSecurityVerdict(authResults, "dkim");
   const dmarc = extractSecurityVerdict(authResults, "dmarc");
 
+  debugLog("AUTH_RESULTS_PARSED", { spf, dkim, dmarc, raw: authResults.slice(0, 200) });
+
   if (spf !== "pass") {
-    return { valid: false, reason: "SPF verification failed" };
+    return { valid: false, reason: `SPF verification failed: ${spf}` };
   }
   if (dkim !== "pass") {
-    return { valid: false, reason: "DKIM verification failed" };
+    return { valid: false, reason: `DKIM verification failed: ${dkim}` };
   }
   if (dmarc !== "pass") {
-    return { valid: false, reason: "DMARC verification failed" };
+    return { valid: false, reason: `DMARC verification failed: ${dmarc}` };
   }
 
   const spamVerdict = payload.headers?.["x-ses-spam-verdict"] || "";
   if (spamVerdict !== "PASS") {
-    return { valid: false, reason: "Spam verdict not PASS" };
+    return { valid: false, reason: `Spam verdict: ${spamVerdict}` };
   }
 
   const virusVerdict = payload.headers?.["x-ses-virus-verdict"] || "";
   if (virusVerdict !== "PASS") {
-    return { valid: false, reason: "Virus verdict not PASS" };
+    return { valid: false, reason: `Virus verdict: ${virusVerdict}` };
   }
 
+  debugLog("SECURITY_PASSED", {});
   return { valid: true };
+}
+
+async function logProcessingStep(emailLogId: string, step: string, details: Record<string, unknown>): Promise<void> {
+  try {
+    const db = await getDb();
+    const id = generateId("psl");
+    await db.execute(
+      `INSERT INTO processing_logs (id, email_log_id, step, details, created_at) VALUES ($1, $2, $3, $4, NOW())`,
+      [id, emailLogId, step, JSON.stringify(details)]
+    );
+  } catch {
+    // Log failure shouldn't break the pipeline
+  }
 }
 
 export async function processWebhookEmail(payload: WebhookPayload): Promise<{
@@ -242,10 +293,19 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
   order?: Order;
   reason?: string;
 }> {
+  debugLog("WEBHOOK_RECEIVED", {
+    webhookId: payload.id,
+    from: payload.from,
+    messageId: payload.message_id,
+    textLength: payload.text?.length,
+    hasHeaders: !!payload.headers,
+  });
+
   const db = await getDb();
 
   const security = validateWebhookSecurity(payload);
   if (!security.valid) {
+    debugLog("WEBHOOK_REJECTED_SECURITY", { reason: security.reason });
     return { status: "rejected_security", reason: security.reason };
   }
 
@@ -280,8 +340,15 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
     securityVirusVerdict: payload.headers?.["x-ses-virus-verdict"] || "",
   });
 
+  await logProcessingStep(emailLog.id, "email_saved", {
+    webhookId: payload.id,
+    extracted: extracted,
+  });
+
   const txId = extracted.transactionId?.trim();
   if (!txId) {
+    debugLog("NO_TRANSACTION_ID", { emailLogId: emailLog.id });
+    await logProcessingStep(emailLog.id, "no_transaction_id", {});
     await markEmailProcessed(emailLog.id);
     await saveUnmatchedPayment({
       emailLogId: emailLog.id,
@@ -296,17 +363,27 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
     return { status: "manual_review", emailLog, reason: "No transaction ID found in email" };
   }
 
+  debugLog("CHECKING_DUPLICATE_TX", { transactionId: txId, emailLogId: emailLog.id });
+  await logProcessingStep(emailLog.id, "checking_duplicate", { transactionId: txId });
+
   const existingTx = await db.queryOne(
     "SELECT id, status FROM orders WHERE transaction_id = $1 AND status IN ('paid', 'waiting_payment_verification')",
     [txId]
   );
   if (existingTx) {
+    debugLog("DUPLICATE_TRANSACTION_ID", { transactionId: txId, existingOrderId: existingTx.id, existingStatus: existingTx.status });
+    await logProcessingStep(emailLog.id, "duplicate_transaction_id", {
+      transactionId: txId,
+      existingOrderId: existingTx.id,
+    });
     await markEmailProcessed(emailLog.id);
     return { status: "rejected_duplicate", emailLog, reason: `Transaction ID ${txId} already used by order ${existingTx.id}` };
   }
 
   const amount = extracted.amount;
   if (amount === null) {
+    debugLog("NO_AMOUNT_EXTRACTED", { emailLogId: emailLog.id });
+    await logProcessingStep(emailLog.id, "no_amount", {});
     await markEmailProcessed(emailLog.id);
     await saveUnmatchedPayment({
       emailLogId: emailLog.id,
@@ -320,6 +397,9 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
     });
     return { status: "manual_review", emailLog, reason: "Could not extract amount from email" };
   }
+
+  debugLog("SEARCHING_PENDING_ORDERS", { amount, emailLogId: emailLog.id });
+  await logProcessingStep(emailLog.id, "searching_orders", { amount });
 
   const pendingOrders = await db.query<Order>(
     `SELECT o.*,
@@ -335,7 +415,11 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
     [amount]
   );
 
+  debugLog("PENDING_ORDERS_FOUND", { count: pendingOrders.length, emailLogId: emailLog.id });
+
   if (pendingOrders.length === 0) {
+    debugLog("NO_MATCHING_ORDERS", { amount });
+    await logProcessingStep(emailLog.id, "no_matching_orders", { amount });
     await markEmailProcessed(emailLog.id);
     await saveUnmatchedPayment({
       emailLogId: emailLog.id,
@@ -352,17 +436,50 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
 
   if (pendingOrders.length === 1) {
     const order = pendingOrders[0];
+    debugLog("SINGLE_ORDER_MATCH", { orderId: order.id, trackingId: order.order_tracking_id, amount, transactionId: txId });
+    await logProcessingStep(emailLog.id, "single_order_match", {
+      orderId: order.id,
+      trackingId: order.order_tracking_id,
+      amount,
+    });
     await confirmPayment(order, emailLog, txId);
     return { status: "accepted", emailLog, order };
   }
 
+  debugLog("MULTIPLE_ORDERS_SAME_AMOUNT", { orderCount: pendingOrders.length, amount, emailLogId: emailLog.id });
+  await logProcessingStep(emailLog.id, "multiple_orders_amount", {
+    count: pendingOrders.length,
+    amount,
+    orderIds: pendingOrders.map((o) => ({ id: o.id, txId: o.transaction_id })),
+  });
+
   const matchingOrders = pendingOrders.filter((o) => o.transaction_id === txId);
+  debugLog("FILTERED_BY_TRANSACTION_ID", { matchedCount: matchingOrders.length, totalCount: pendingOrders.length });
 
   if (matchingOrders.length === 1) {
     const order = matchingOrders[0];
+    debugLog("SINGLE_ORDER_MATCH_BY_TX", { orderId: order.id, trackingId: order.order_tracking_id });
+    await logProcessingStep(emailLog.id, "single_order_match_by_tx", {
+      orderId: order.id,
+      trackingId: order.order_tracking_id,
+      transactionId: txId,
+    });
     await confirmPayment(order, emailLog, txId);
     return { status: "accepted", emailLog, order };
   }
+
+  debugLog("MANUAL_REVIEW_REQUIRED", {
+    pendingCount: pendingOrders.length,
+    matchingTxCount: matchingOrders.length,
+    amount,
+    transactionId: txId,
+  });
+  await logProcessingStep(emailLog.id, "manual_review", {
+    pendingCount: pendingOrders.length,
+    matchingTxCount: matchingOrders.length,
+    amount,
+    transactionId: txId,
+  });
 
   await markEmailProcessed(emailLog.id);
   await saveUnmatchedPayment({
@@ -384,6 +501,13 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
 }
 
 async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: string): Promise<void> {
+  debugLog("CONFIRMING_PAYMENT", {
+    orderId: order.id,
+    trackingId: order.order_tracking_id,
+    transactionId,
+    emailLogId: emailLog.id,
+  });
+
   const secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
 
   await updateOrderStatus(order.id, "paid", {
@@ -395,7 +519,15 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
     confirmed_webhook_id: emailLog.webhook_id,
   });
 
+  debugLog("ORDER_STATUS_UPDATED_TO_PAID", { orderId: order.id, secretCode });
+
   await markEmailProcessed(emailLog.id);
+
+  await logProcessingStep(emailLog.id, "payment_confirmed", {
+    orderId: order.id,
+    trackingId: order.order_tracking_id,
+    transactionId,
+  });
 
   await logAuditEvent({
     event_type: "order.payment_webhook_confirmed",
@@ -413,6 +545,7 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
     message: "تم تأكيد دفع طلبك تلقائياً. يمكنك الآن الاطلاع على الكود السري.",
     link: `/orders/${order.id}`,
   });
+  debugLog("NOTIFICATION_SENT_TO_BUYER", { userId: order.buyer_id });
 
   if (order.seller_id) {
     await createNotification({
@@ -423,6 +556,7 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
       message: `تم تأكيد دفع الطلب ${order.order_tracking_id}. يرجى انتظار الكود السري من المشتري.`,
       link: `/seller/orders`,
     });
+    debugLog("NOTIFICATION_SENT_TO_SELLER", { userId: order.seller_id });
   }
 
   const admins = await db.query<{ id: string }>("SELECT id FROM users WHERE role = 'admin'");
@@ -436,4 +570,7 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
       link: `/admin/orders`,
     });
   }
+  debugLog("NOTIFICATIONS_SENT_TO_ADMINS", { count: admins.length });
+
+  debugLog("PAYMENT_CONFIRMED_SUCCESS", { orderId: order.id, trackingId: order.order_tracking_id });
 }

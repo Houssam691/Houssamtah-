@@ -274,6 +274,14 @@ async function initializeSchema(): Promise<void> {
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       reviewed_at TIMESTAMPTZ
     );
+
+    CREATE TABLE IF NOT EXISTS processing_logs (
+      id TEXT PRIMARY KEY,
+      email_log_id TEXT REFERENCES email_logs(id),
+      step TEXT NOT NULL,
+      details TEXT NOT NULL DEFAULT '{}',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
   `;
 
   const client = await getPool().connect();
@@ -443,6 +451,16 @@ async function initializeSchema(): Promise<void> {
           ALTER TABLE email_logs ADD COLUMN security_virus_verdict TEXT DEFAULT '';
         END IF;
       END $$;
+    `);
+
+    await client.query(`
+      CREATE TABLE IF NOT EXISTS processing_logs (
+        id TEXT PRIMARY KEY,
+        email_log_id TEXT REFERENCES email_logs(id),
+        step TEXT NOT NULL,
+        details TEXT NOT NULL DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
     `);
 
     const { rows } = await client.query("SELECT id FROM users WHERE role = 'admin' LIMIT 1");
