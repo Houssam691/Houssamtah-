@@ -17,7 +17,7 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (order.status !== "payment_under_review") {
+  if (order.status !== "payment_under_review" && order.status !== "waiting_payment_verification") {
     return NextResponse.json({ error: "Invalid order status" }, { status: 400 });
   }
 
