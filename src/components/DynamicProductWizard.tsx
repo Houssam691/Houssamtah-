@@ -38,6 +38,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [draftKey] = useState(() => `product-draft-${Date.now()}`);
   const [publishBtn, setPublishBtn] = useState<BtnState>({ loading: false, success: false, error: false });
 
   useEffect(() => {
@@ -48,7 +49,42 @@ export default function DynamicProductWizard({ onComplete }: Props) {
     }
   }, [category]);
 
+  // Auto-save draft
+  useEffect(() => {
+    const draft = { step, category, attributes, title, description, images, price };
+    try {
+      localStorage.setItem(draftKey, JSON.stringify(draft));
+    } catch {}
+  }, [step, category, attributes, title, description, images, price, draftKey]);
 
+  // Check for drafts on mount
+  useEffect(() => {
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith("product-draft-")) {
+          const saved = localStorage.getItem(key);
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.category && parsed.step > 0) {
+              const resume = window.confirm(`وجدنا مسودة غير منشورة (${parsed.title || "بدون عنوان"}). هل تريد استكمالها؟`);
+              if (resume) {
+                setCategory(parsed.category || "");
+                setAttributes(parsed.attributes || {});
+                setTitle(parsed.title || "");
+                setDescription(parsed.description || "");
+                setImages(parsed.images || []);
+                setPrice(parsed.price || 0);
+                setStep(parsed.step || 0);
+              } else {
+                localStorage.removeItem(key);
+              }
+            }
+          }
+        }
+      }
+    } catch {}
+  }, []);
 
   const handleFieldChange = useCallback((key: string, value: unknown) => {
     setAttributes((prev) => ({ ...prev, [key]: value }));
@@ -181,6 +217,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
     if (res.ok) {
       const product = await res.json();
+      try { localStorage.removeItem(draftKey); } catch {}
       setPublishBtn({ loading: false, success: true, error: false });
       setTimeout(() => {
         toast("success", "تم نشر المنتج بنجاح!");
@@ -439,11 +476,13 @@ export default function DynamicProductWizard({ onComplete }: Props) {
               <button
                 className="btn-secondary w-full py-2.5 text-xs"
                 onClick={() => {
+                  try { localStorage.removeItem(draftKey); } catch {}
+                  toast("info", "تم حفظ المسودة");
                   onComplete?.();
                 }}
                 disabled={publishBtn.loading}
               >
-                إلغاء
+                حفظ كمسودة
               </button>
             </div>
           </div>
