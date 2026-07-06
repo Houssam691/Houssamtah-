@@ -10,7 +10,10 @@ export type OrderStatus =
   | "code_verified_deliver_now"
   | "delivered"
   | "disputed"
-  | "seller_paid";
+  | "seller_paid"
+  | "waiting_for_payment"
+  | "waiting_payment_verification"
+  | "paid";
 
 export type Order = {
   id: string;
@@ -35,6 +38,10 @@ export type Order = {
   buyer_name?: string;
   seller_name?: string;
   product_title?: string;
+  transaction_id?: string;
+  payment_proof_submitted_at?: string;
+  matched_via_email?: number;
+  auto_confirmed_at?: string;
 };
 
 export function generateTrackingId(): string {
@@ -51,6 +58,7 @@ export async function createOrder(params: {
   currency?: string;
   product_price: number;
   payment_proof_file: string;
+  initial_status?: OrderStatus;
 }): Promise<Order> {
   const { queryOne } = await getDb();
   const settings = await getSettings();
@@ -60,10 +68,11 @@ export async function createOrder(params: {
 
   const id = `ord-${crypto.randomBytes(12).toString("hex")}`;
   const trackingId = generateTrackingId();
+  const initialStatus = params.initial_status || "payment_under_review";
 
   await queryOne(`
     INSERT INTO orders (id, order_tracking_id, buyer_id, seller_id, product_id, product_type, currency, product_price, tax_rate, tax_amount, total_amount, payment_proof_file, status)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, 'payment_under_review')
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
   `, [
     id, trackingId,
     params.buyer_id,
@@ -76,6 +85,7 @@ export async function createOrder(params: {
     taxAmount,
     totalAmount,
     params.payment_proof_file,
+    initialStatus,
   ]);
 
   return (await queryOne<Order>("SELECT * FROM orders WHERE id = $1", [id]))!;
@@ -171,14 +181,17 @@ export async function updateOrderStatus(
   if (!existing) return null;
 
   const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
-    awaiting_payment_proof: ["payment_under_review"],
+    awaiting_payment_proof: ["payment_under_review", "waiting_for_payment"],
     payment_under_review: ["payment_rejected", "payment_confirmed_waiting_code"],
     payment_rejected: [],
-    payment_confirmed_waiting_code: ["code_verified_deliver_now"],
+    payment_confirmed_waiting_code: ["code_verified_deliver_now", "paid"],
     code_verified_deliver_now: ["delivered"],
     delivered: ["disputed", "seller_paid"],
     disputed: ["delivered", "seller_paid"],
     seller_paid: [],
+    waiting_for_payment: ["waiting_payment_verification", "payment_rejected"],
+    waiting_payment_verification: ["paid", "payment_rejected", "waiting_for_payment"],
+    paid: [],
   };
 
   const allowed = allowedTransitions[existing.status] || [];
@@ -211,6 +224,26 @@ export async function updateOrderStatus(
   if (extra?.warranty_end_date !== undefined) {
     sets.push(`warranty_end_date = $${idx++}`);
     vals.push(extra.warranty_end_date);
+  }
+  if (extra?.transaction_id !== undefined) {
+    sets.push(`transaction_id = $${idx++}`);
+    vals.push(extra.transaction_id);
+  }
+  if (extra?.payment_proof_file !== undefined) {
+    sets.push(`payment_proof_file = $${idx++}`);
+    vals.push(extra.payment_proof_file);
+  }
+  if (extra?.payment_proof_submitted_at !== undefined) {
+    sets.push(`payment_proof_submitted_at = $${idx++}`);
+    vals.push(extra.payment_proof_submitted_at);
+  }
+  if (extra?.matched_via_email !== undefined) {
+    sets.push(`matched_via_email = $${idx++}`);
+    vals.push(extra.matched_via_email);
+  }
+  if (extra?.auto_confirmed_at !== undefined) {
+    sets.push(`auto_confirmed_at = $${idx++}`);
+    vals.push(extra.auto_confirmed_at);
   }
 
   vals.push(id);

@@ -240,6 +240,40 @@ async function initializeSchema(): Promise<void> {
       used SMALLINT NOT NULL DEFAULT 0,
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     );
+
+    CREATE TABLE IF NOT EXISTS email_logs (
+      id TEXT PRIMARY KEY,
+      sender TEXT NOT NULL DEFAULT '',
+      subject TEXT NOT NULL DEFAULT '',
+      body_text TEXT NOT NULL DEFAULT '',
+      body_html TEXT NOT NULL DEFAULT '',
+      raw_from TEXT NOT NULL DEFAULT '',
+      extracted_amount DOUBLE PRECISION,
+      extracted_transaction_id TEXT DEFAULT '',
+      extracted_target_account TEXT DEFAULT '',
+      extracted_currency TEXT DEFAULT '',
+      message_id TEXT DEFAULT '',
+      received_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      processed SMALLINT NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    );
+
+    CREATE TABLE IF NOT EXISTS unmatched_payments (
+      id TEXT PRIMARY KEY,
+      email_log_id TEXT REFERENCES email_logs(id),
+      transaction_id TEXT NOT NULL DEFAULT '',
+      amount DOUBLE PRECISION,
+      currency TEXT DEFAULT '',
+      target_account TEXT DEFAULT '',
+      email_sender TEXT DEFAULT '',
+      email_subject TEXT DEFAULT '',
+      email_body TEXT DEFAULT '',
+      reviewed SMALLINT NOT NULL DEFAULT 0,
+      resolved_order_id TEXT REFERENCES orders(id),
+      notes TEXT DEFAULT '',
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      reviewed_at TIMESTAMPTZ
+    );
   `;
 
   const client = await getPool().connect();
@@ -258,6 +292,51 @@ async function initializeSchema(): Promise<void> {
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='products' AND column_name='attributes') THEN
           ALTER TABLE products ADD COLUMN attributes JSONB DEFAULT '{}'::jsonb;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='transaction_id') THEN
+          ALTER TABLE orders ADD COLUMN transaction_id TEXT DEFAULT '';
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='payment_proof_submitted_at') THEN
+          ALTER TABLE orders ADD COLUMN payment_proof_submitted_at TIMESTAMPTZ;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      ALTER TABLE orders DROP CONSTRAINT IF EXISTS orders_status_check;
+    `);
+
+    await client.query(`
+      ALTER TABLE orders ADD CONSTRAINT orders_status_check CHECK (status IN (
+        'awaiting_payment_proof','payment_under_review','payment_rejected',
+        'payment_confirmed_waiting_code','code_verified_deliver_now',
+        'delivered','disputed','seller_paid',
+        'waiting_for_payment','waiting_payment_verification','paid'
+      ))
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='matched_via_email') THEN
+          ALTER TABLE orders ADD COLUMN matched_via_email SMALLINT NOT NULL DEFAULT 0;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='orders' AND column_name='auto_confirmed_at') THEN
+          ALTER TABLE orders ADD COLUMN auto_confirmed_at TIMESTAMPTZ;
         END IF;
       END $$;
     `);
