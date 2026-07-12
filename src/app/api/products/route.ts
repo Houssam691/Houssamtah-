@@ -22,11 +22,8 @@ export async function POST(req: Request) {
   if (csrfResponse) return csrfResponse;
 
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "seller")) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-  if (user.role === "seller" && user.seller_status !== "approved") {
-    return NextResponse.json({ error: "Seller not approved" }, { status: 403 });
   }
 
   const body = await req.json();
@@ -50,9 +47,9 @@ export async function POST(req: Request) {
   }
 
   const product = await createProduct({
-    seller_id: user.role === "seller" ? user.id : (body.seller_id || undefined),
+    seller_id: body.seller_id || undefined,
     product_type: body.product_type || "account",
-    category: body.category || "pubg",
+    category: body.category || "clothing",
     title: sanitizeText(body.title || "منتج جديد", MAX_LENGTHS.TITLE),
     description: sanitizeText(body.description || "", MAX_LENGTHS.DESCRIPTION),
     price: body.price,

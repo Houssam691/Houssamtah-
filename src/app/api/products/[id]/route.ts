@@ -7,15 +7,14 @@ import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
 
 export const runtime = "nodejs";
 
-const SELLER_ALLOWED_FIELDS = ["title", "description", "price", "images", "status", "currency", "attributes"];
-const ADMIN_ALLOWED_FIELDS = [...SELLER_ALLOWED_FIELDS, "category", "product_type", "delivery_data", "product_secret_code"];
+const ADMIN_ALLOWED_FIELDS = ["title", "description", "price", "images", "status", "currency", "attributes", "category", "product_type", "delivery_data", "product_secret_code"];
 
 export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }) {
   const csrfResponse = csrfGuard(req);
   if (csrfResponse) return csrfResponse;
 
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "seller")) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -28,11 +27,7 @@ export async function PUT(req: Request, ctx: { params: Promise<{ id: string }> }
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  if (user.role === "seller" && product.seller_id !== user.id) {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-  }
-
-  const allowedFields = user.role === "admin" ? ADMIN_ALLOWED_FIELDS : SELLER_ALLOWED_FIELDS;
+  const allowedFields = ADMIN_ALLOWED_FIELDS;
   const filteredBody: Record<string, unknown> = {};
   for (const field of allowedFields) {
     if (field in body) {
@@ -63,7 +58,7 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
   if (csrfResponse) return csrfResponse;
 
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "seller")) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -74,10 +69,6 @@ export async function DELETE(req: Request, ctx: { params: Promise<{ id: string }
     const product = products.find((p) => p.id === id);
     if (!product) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    if (user.role === "seller" && product.seller_id !== user.id) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     const deleted = await deleteProduct(id);

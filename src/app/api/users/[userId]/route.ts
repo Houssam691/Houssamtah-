@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { getDb } from "@/lib/db";
-import { getSellerStats } from "@/lib/reviews";
 
 export async function GET(_req: Request, props: { params: Promise<{ userId: string }> }) {
   try {
@@ -9,9 +8,9 @@ export async function GET(_req: Request, props: { params: Promise<{ userId: stri
 
     const user = await queryOne<{
       id: string; first_name: string; last_name: string;
-      role: string; seller_status: string | null; created_at: string;
+      role: string; created_at: string;
     }>(
-      "SELECT id, first_name, last_name, role, seller_status, created_at FROM users WHERE id = $1",
+      "SELECT id, first_name, last_name, role, created_at FROM users WHERE id = $1",
       [userId]
     );
     if (!user) {
@@ -26,9 +25,7 @@ export async function GET(_req: Request, props: { params: Promise<{ userId: stri
       [userId]
     );
 
-    const stats = user.role === "seller" ? await getSellerStats(userId).catch(() => null) : null;
-
-    return NextResponse.json({ user, products, stats });
+    return NextResponse.json({ user, products });
   } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }

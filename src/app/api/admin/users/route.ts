@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
 
   const db = await getDb();
   let sql = `
-    SELECT id, email, first_name, last_name, role, seller_status, email_verified,
+    SELECT id, email, first_name, last_name, role, email_verified,
       banned, created_at,
       (SELECT COUNT(*)::int FROM products WHERE seller_id = u.id) as product_count,
       (SELECT COUNT(*)::int FROM orders WHERE buyer_id = u.id OR seller_id = u.id) as order_count,

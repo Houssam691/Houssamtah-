@@ -22,7 +22,7 @@ export async function POST(req: Request) {
   if (csrfResponse) return csrfResponse;
 
   const user = await getSessionUser();
-  if (!user || (user.role !== "admin" && user.role !== "seller")) {
+  if (!user || user.role !== "admin") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

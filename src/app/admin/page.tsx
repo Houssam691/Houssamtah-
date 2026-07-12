@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 
 type Stats = {
   total_users: number;
-  total_sellers: number;
   total_buyers: number;
   total_products: number;
   total_sales: number;
@@ -24,7 +23,6 @@ type Activity = {
 };
 
 const quickActions = [
-  { href: "/admin/sellers", label: "مراجعة طلبات التحقق", icon: "✅", desc: "بائعون جدد ينتظرون الموافقة", color: "from-emerald-500/20 to-emerald-600/10 border-emerald-400/20" },
   { href: "/admin/disputes", label: "مراجعة النزاعات", icon: "⚖️", desc: "نزاعات مفتوحة تحتاج لحل", color: "from-rose-500/20 to-rose-600/10 border-rose-400/20" },
   { href: "/admin/orders", label: "الطلبات المعلقة", icon: "⏳", desc: "مدفوعات بانتظار المراجعة", color: "from-amber-500/20 to-amber-600/10 border-amber-400/20" },
   { href: "/admin/reports", label: "البلاغات", icon: "🚨", desc: "بلاغات المستخدمين", color: "from-red-500/20 to-red-600/10 border-red-400/20" },
@@ -49,14 +47,13 @@ export default function AdminDashboard() {
         ]).then(([statsData, activityData]) => {
           const c = statsData.cards || {};
           setStats({
-            total_users: (c.buyers || 0) + (c.sellers || 0),
-            total_sellers: c.sellers || 0,
+            total_users: c.total || 0,
             total_buyers: c.buyers || 0,
-            total_products: c.products || 0,
-            total_sales: c.total_sales || 0,
-            total_profit: c.total_profit || 0,
-            active_orders: (c.total_orders || 0) - (c.completed_orders || 0) - (c.cancelled_orders || 0),
-            open_disputes: c.disputes || 0,
+            total_products: 0,
+            total_sales: 0,
+            total_profit: 0,
+            active_orders: 0,
+            open_disputes: 0,
             pending_verifications: 0,
           });
           setActivities(Array.isArray(activityData) ? activityData.slice(0, 10) : []);
@@ -82,7 +79,6 @@ export default function AdminDashboard() {
 
   const statCards = stats ? [
     { label: "إجمالي المستخدمين", value: stats.total_users, icon: "👥", color: "text-indigo-300" },
-    { label: "البائعين", value: stats.total_sellers, icon: "🏪", color: "text-emerald-300" },
     { label: "المشترين", value: stats.total_buyers, icon: "🛒", color: "text-cyan-300" },
     { label: "المنتجات", value: stats.total_products, icon: "📦", color: "text-amber-300" },
     { label: "حجم المبيعات", value: stats.total_sales, icon: "💰", color: "text-emerald-300", isCurrency: true },

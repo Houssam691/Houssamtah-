@@ -155,9 +155,11 @@ export default function AdminProductsPage() {
         </div>
         <select className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}>
           <option value="">كل الأقسام</option>
-          <option value="pubg">PUBG</option>
-          <option value="free-fire">Free Fire</option>
-          <option value="topup">Top-up</option>
+          <option value="clothing">ملابس</option>
+          <option value="makeup">مكياج</option>
+          <option value="bags">حقائب</option>
+          <option value="shoes">أحذية</option>
+          <option value="skincare">العناية بالبشرة</option>
         </select>
         <select className="h-10 rounded-xl border border-white/10 bg-white/5 px-3 text-sm text-white outline-none" value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
           <option value="">كل الحالات</option>

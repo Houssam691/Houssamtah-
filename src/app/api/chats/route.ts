@@ -45,7 +45,7 @@ export async function POST(req: Request) {
   let product:
     | {
         id: string;
-        category: "pubg" | "free-fire" | "topup";
+        category: string;
         title: string;
         price: number;
         description: string;
