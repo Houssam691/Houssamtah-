@@ -9,7 +9,6 @@ import PasswordInput from "@/components/PasswordInput";
 type SafeUser = {
   id: string; role: string; email: string;
   first_name: string; last_name: string; date_of_birth: string;
-  seller_status: string | null;
   payment_full_name: string; payment_surname: string;
   payment_dob: string; payment_rip: string;
   payment_currency: string; payment_usdt_address: string;

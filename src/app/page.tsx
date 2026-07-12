@@ -20,16 +20,17 @@ export default async function Home() {
 
 
   const categories = [
-    { href: "/pubg", name: "PUBG", title: "حسابات ببجي", desc: "حسابات وسكنات ومستويات نادرة", gradient: "from-amber-500/20 to-orange-600/10", icon: "🎯" },
-    { href: "/free-fire", name: "Free Fire", title: "حسابات فري فاير", desc: "حسابات نادرة وعروض مميزة", gradient: "from-rose-500/20 to-pink-600/10", icon: "🔥" },
-    { href: "/topup", name: "Top-up", title: "خدمات الشحن", desc: "شحن شدات وجواهر وعملات بسرعة", gradient: "from-emerald-500/20 to-teal-600/10", icon: "⚡" },
+    { href: "/clothing", name: "ملابس", title: "ملابس", desc: "أحدث صيحات الموضة والملابس العصرية", gradient: "from-amber-500/20 to-orange-600/10", icon: "👗" },
+    { href: "/makeup", name: "مكياج", title: "مكياج", desc: "أفضل ماركات المكياج والتجميل", gradient: "from-rose-500/20 to-pink-600/10", icon: "💄" },
+    { href: "/bags", name: "حقائب", title: "حقائب", desc: "حقائب يد وإكسسوارات أصلية", gradient: "from-emerald-500/20 to-teal-600/10", icon: "👜" },
+    { href: "/shoes", name: "أحذية", title: "أحذية", desc: "أحذية رياضية وكلاسيكية لمختلف الأذواق", gradient: "from-blue-500/20 to-indigo-600/10", icon: "👟" },
+    { href: "/skincare", name: "العناية بالبشرة", title: "العناية بالبشرة", desc: "منتجات العناية بالبشرة الفاخرة", gradient: "from-violet-500/20 to-purple-600/10", icon: "🧴" },
   ];
 
   const faq = [
     { q: "ما هي الوساطة الرقمية؟", a: "نظام يضمن حق البائع والمشتري. المشتري يدفع للمنصة، المنصة تحتفظ بالمبلغ لحين تأكيد الاستلام، ثم تصرفه للبائع." },
     { q: "كم تستغرق عملية الشراء؟", a: "متوسط وقت التسليم أقل من 24 ساعة من تاريخ تأكيد الدفع." },
     { q: "ماذا لو واجهت مشكلة مع البائع؟", a: "فريق Nexivo للدعم يتدخل فوراً. يمكنك فتح نزاع من لوحة الطلبات، ونقوم بالتحقيق خلال 24 ساعة." },
-    { q: "كيف أصبح بائعاً في المنصة؟", a: "بعد التسجيل، يمكنك رفع طلب توثيق من لوحة التحكم. فريق الإدارة يراجع طلبك ويؤهلك للنشر." },
   ];
 
   return (
@@ -51,7 +52,7 @@ export default async function Home() {
           </p>
 
           <div className="mt-8 grid gap-3 sm:flex sm:flex-wrap">
-            <Link className="btn-primary px-8 py-3 text-base animate-pulse-glow" href="/pubg">
+            <Link className="btn-primary px-8 py-3 text-base animate-pulse-glow" href="/clothing">
               تسوق الآن
             </Link>
             <Link className="btn-secondary px-8 py-3 text-base" href="#how-it-works">

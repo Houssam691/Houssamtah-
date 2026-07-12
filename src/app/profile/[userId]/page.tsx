@@ -1,13 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { getDb } from "@/lib/db";
-import { getSellerStats, getSellerReviews } from "@/lib/reviews";
-import RatingStars from "@/components/RatingStars";
 import { type ProductCategory } from "@/lib/products";
 
 type PublicUser = {
   id: string; first_name: string; last_name: string;
-  role: string; seller_status: string | null; created_at: string;
+  role: string; created_at: string;
 };
 
 type ProfileProduct = {
@@ -21,7 +19,7 @@ export default async function ProfilePage(props: { params: Promise<{ userId: str
   const { queryOne, query } = await getDb();
 
   const user = await queryOne<PublicUser>(
-    "SELECT id, first_name, last_name, role, seller_status, created_at FROM users WHERE id = $1",
+    "SELECT id, first_name, last_name, role, created_at FROM users WHERE id = $1",
     [userId]
   );
   if (!user) {
@@ -34,9 +32,6 @@ export default async function ProfilePage(props: { params: Promise<{ userId: str
      ORDER BY created_at DESC`,
     [userId]
   );
-
-  const stats = user.role === "seller" ? await getSellerStats(userId).catch(() => null) : null;
-  const reviews = user.role === "seller" ? await getSellerReviews(userId, 5).catch(() => []) : [];
 
   const productCount = products.length;
   const fullName = `${user.first_name} ${user.last_name}`;
@@ -53,27 +48,13 @@ export default async function ProfilePage(props: { params: Promise<{ userId: str
           <div>
             <h1 className="title">{fullName}</h1>
             <p className="subtitle">
-              {user.role === "seller" ? "بائع" : user.role === "admin" ? "إدارة" : "مشتري"}
-              {user.role === "seller" && user.seller_status === "approved" && " • موثق"}
+              {user.role === "admin" ? "إدارة" : "مشتري"}
             </p>
             <p className="mt-1 text-sm text-white/50">
               {productCount} منتج{productCount !== 1 ? "ات" : ""}
             </p>
           </div>
         </div>
-
-        {stats && stats.count > 0 && (
-          <div className="mt-6 flex items-center gap-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="text-center">
-              <div className="text-3xl font-black text-yellow-300">{stats.average}</div>
-              <div className="text-xs text-white/50">من 5</div>
-            </div>
-            <div>
-              <RatingStars rating={Math.round(stats.average)} size="sm" />
-              <div className="mt-1 text-xs text-white/50">{stats.count} تقييم | {stats.satisfaction}% رضا</div>
-            </div>
-          </div>
-        )}
       </section>
 
       {products.length > 0 && (
@@ -106,25 +87,6 @@ export default async function ProfilePage(props: { params: Promise<{ userId: str
         </section>
       )}
 
-      {reviews.length > 0 && (
-        <section className="mt-6">
-          <h2 className="mb-4 text-xl font-black">آخر التقييمات</h2>
-          <div className="grid gap-3">
-            {reviews.map((r: any) => (
-              <div key={r.id} className="glass rounded-3xl p-4">
-                <div className="flex items-center justify-between gap-4">
-                  <div>
-                    <span className="font-bold text-white">{r.buyer_name}</span>
-                    <RatingStars rating={r.rating} size="sm" />
-                  </div>
-                  <span className="text-xs text-white/50">{new Date(r.created_at).toLocaleDateString("ar-DZ")}</span>
-                </div>
-                {r.comment && <p className="mt-2 text-sm text-white/70">{r.comment}</p>}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
     </div>
   );
 }

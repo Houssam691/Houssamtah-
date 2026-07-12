@@ -17,7 +17,7 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"buyer" | "seller">("buyer");
+  const [role, setRole] = useState<"buyer">("buyer");
   const [dateOfBirth, setDateOfBirth] = useState("");
   const [idFile, setIdFile] = useState<File | null>(null);
   const [uploadProgress, setUploadProgress] = useState(0);
@@ -36,38 +36,7 @@ export default function RegisterPage() {
       return;
     }
 
-    let idFilePath = "";
-
-    if (role === "seller") {
-      if (!idFile) {
-        setError("يرجى رفع بطاقة الهوية (مطلوب للبائعين)");
-        return;
-      }
-      setStep("uploading");
-      setUploadProgress(0);
-      const formData = new FormData();
-      formData.append("file", idFile);
-      const xhr = new XMLHttpRequest();
-      xhr.upload.onprogress = (e) => {
-        if (e.lengthComputable) setUploadProgress(Math.round((e.loaded / e.total) * 100));
-      };
-      const uploadRes = await new Promise<Response>((resolve, reject) => {
-        xhr.onload = () => resolve(new Response(xhr.responseText, { status: xhr.status }));
-        xhr.onerror = () => reject(new Error("Network error"));
-        xhr.open("POST", "/api/upload-id");
-        xhr.send(formData);
-      });
-      if (!uploadRes.ok) {
-        setError("فشل رفع بطاقة الهوية");
-        setStep("form");
-        return;
-      }
-      const uploadData = JSON.parse(xhr.responseText);
-      idFilePath = uploadData.url || "";
-    }
-
     setLoading(true);
-    setStep("form");
 
     const res = await fetch("/api/auth/register", {
       method: "POST",
@@ -79,7 +48,6 @@ export default function RegisterPage() {
         last_name: lastName,
         role,
         date_of_birth: dateOfBirth,
-        id_file_path: idFilePath,
       }),
     });
 
@@ -174,44 +142,10 @@ export default function RegisterPage() {
 
           <div className="grid gap-2">
             <span className="text-sm font-bold text-white/80">نوع الحساب</span>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                className={role === "buyer" ? "btn-primary flex-1" : "btn-secondary flex-1"}
-                onClick={() => setRole("buyer")}
-              >
-                مشتري
-              </button>
-              <button
-                type="button"
-                className={role === "seller" ? "btn-primary flex-1" : "btn-secondary flex-1"}
-                onClick={() => setRole("seller")}
-              >
-                بائع
-              </button>
+            <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/70">
+              مشتري
             </div>
           </div>
-
-          {role === "seller" && (
-            <label className="grid gap-2">
-              <span className="text-sm font-bold text-white/80">بطاقة الهوية (إلزامي للبائعين)</span>
-              <div className="flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-3">
-                <span className="text-sm text-white/70">{idFile ? idFile.name : "اختر ملف"}</span>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  className="hidden"
-                  onChange={(e) => setIdFile(e.target.files?.[0] || null)}
-                />
-                <button type="button" className="btn-secondary text-sm" onClick={() => {
-                  const input = document.querySelector<HTMLInputElement>('input[type="file"]');
-                  input?.click();
-                }}>
-                  تصفّح
-                </button>
-              </div>
-            </label>
-          )}
 
           {error && (
             <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">

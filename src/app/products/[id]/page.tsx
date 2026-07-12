@@ -1,11 +1,8 @@
 import Link from "next/link";
 import { getProductById } from "@/lib/products";
-import { getSellerReviews, getSellerStats } from "@/lib/reviews";
 import { getGameSpec } from "@/lib/game-specs";
 import ProductImageGallery from "@/components/ProductImageGallery";
 import ProductSpecDisplay from "@/components/ProductSpecDisplay";
-import TrustBadge from "@/components/TrustBadge";
-import SellerReputation from "@/components/SellerReputation";
 import EscrowFlow from "@/components/EscrowFlow";
 
 export default async function ProductDetailPage(props: { params: Promise<{ id: string }> }) {
@@ -14,15 +11,6 @@ export default async function ProductDetailPage(props: { params: Promise<{ id: s
   if (!product) return <div className="mx-auto max-w-2xl pt-12"><section className="glass rounded-3xl p-6 text-center md:p-10"><h1 className="title">المنتج غير موجود</h1><Link href="/" className="btn-secondary mt-4 inline-block">الرئيسية</Link></section></div>;
 
   const spec = getGameSpec(product.category);
-
-  let stats = null;
-  let reviews: any[] = [];
-  if (product.seller_id) {
-    [stats, reviews] = await Promise.all([
-      getSellerStats(product.seller_id).catch(() => null),
-      getSellerReviews(product.seller_id, 5).catch(() => []),
-    ]);
-  }
 
   const allImages = product.images && product.images.length > 0 ? product.images : (product.image ? [product.image] : []);
 
@@ -74,10 +62,22 @@ export default async function ProductDetailPage(props: { params: Promise<{ id: s
 
         {/* Trust Badges */}
         <div className="mt-4 grid grid-cols-2 gap-2">
-          <TrustBadge variant="shield" />
-          <TrustBadge variant="dispute" />
-          <TrustBadge variant="secure" />
-          <TrustBadge variant="guaranteed" />
+          <div className="rounded-2xl border border-indigo-400/20 bg-indigo-500/10 p-3 text-center">
+            <div className="text-lg">🛡️</div>
+            <div className="text-xs font-bold text-indigo-200">ضمان الأمان</div>
+          </div>
+          <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-3 text-center">
+            <div className="text-lg">⚖️</div>
+            <div className="text-xs font-bold text-amber-200">حل النزاعات</div>
+          </div>
+          <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-center">
+            <div className="text-lg">🔒</div>
+            <div className="text-xs font-bold text-emerald-200">دفع آمن</div>
+          </div>
+          <div className="rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3 text-center">
+            <div className="text-lg">✅</div>
+            <div className="text-xs font-bold text-sky-200">مضمون 100%</div>
+          </div>
         </div>
       </section>
 
@@ -120,33 +120,9 @@ export default async function ProductDetailPage(props: { params: Promise<{ id: s
             <div className="h-px flex-1 bg-white/10" />
           </div>
           <div className="glass rounded-3xl p-5">
-            <SellerReputation
-              sellerName={product.seller_name}
-              sellerId={product.seller_id}
-              stats={{
-                average: stats?.average || 0,
-                count: stats?.count || 0,
-                satisfaction: stats?.satisfaction || 0,
-              }}
-            />
-
-            {reviews.length > 0 && (
-              <div className="mt-4 space-y-3">
-                {reviews.slice(0, 3).map((review) => (
-                  <div key={review.id} className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="text-xs font-bold text-white/70">{review.buyer_name || "مشتري"}</div>
-                      <div className="flex items-center gap-1">
-                        <span className="text-yellow-300 text-xs">{"★".repeat(review.rating)}{"☆".repeat(5 - review.rating)}</span>
-                      </div>
-                    </div>
-                    {review.comment && (
-                      <div className="mt-2 text-sm leading-7 text-white/60">{review.comment}</div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
+            <Link href={`/profile/${encodeURIComponent(product.seller_id)}`} className="font-bold text-indigo-300 hover:text-indigo-200">
+              {product.seller_name}
+            </Link>
           </div>
         </section>
       )}
