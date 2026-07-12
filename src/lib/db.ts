@@ -62,15 +62,13 @@ async function initializeSchema(): Promise<void> {
   const sql = `
     CREATE TABLE IF NOT EXISTS users (
       id TEXT PRIMARY KEY,
-      role TEXT NOT NULL DEFAULT 'buyer' CHECK(role IN ('buyer','seller','admin')),
+      role TEXT NOT NULL DEFAULT 'buyer' CHECK(role IN ('buyer','admin')),
       email TEXT UNIQUE NOT NULL,
       password_hash TEXT NOT NULL,
       first_name TEXT NOT NULL DEFAULT '',
       last_name TEXT NOT NULL DEFAULT '',
       date_of_birth TEXT DEFAULT '',
       banned SMALLINT NOT NULL DEFAULT 0,
-      seller_status TEXT DEFAULT NULL CHECK(seller_status IN (NULL,'pending','approved','rejected')),
-      id_file_path TEXT DEFAULT '',
       email_verified SMALLINT NOT NULL DEFAULT 0,
       payment_full_name TEXT DEFAULT '',
       payment_surname TEXT DEFAULT '',
@@ -292,6 +290,34 @@ async function initializeSchema(): Promise<void> {
       DO $$ BEGIN
         IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='email_verified') THEN
           ALTER TABLE users ADD COLUMN email_verified SMALLINT NOT NULL DEFAULT 0;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      UPDATE users SET role = 'buyer' WHERE role = 'seller';
+    `);
+
+    await client.query(`
+      ALTER TABLE users DROP CONSTRAINT IF EXISTS users_role_check;
+    `);
+
+    await client.query(`
+      ALTER TABLE users ADD CONSTRAINT users_role_check CHECK(role IN ('buyer','admin'));
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='seller_status') THEN
+          ALTER TABLE users DROP COLUMN seller_status;
+        END IF;
+      END $$;
+    `);
+
+    await client.query(`
+      DO $$ BEGIN
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name='users' AND column_name='id_file_path') THEN
+          ALTER TABLE users DROP COLUMN id_file_path;
         END IF;
       END $$;
     `);

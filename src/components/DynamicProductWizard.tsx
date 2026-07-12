@@ -209,7 +209,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
         price,
         images,
         attributes,
-        currency: category === "topup" ? "USD" : "DZD",
+        currency: "DZD",
       }),
     });
 
@@ -381,7 +381,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
             <p className="text-xs text-white/70">حدد السعر. العمولة تُخصم تلقائياً.</p>
             <label className="grid gap-1">
               <span className="text-xs font-bold text-white/80">
-                السعر ({category === "topup" ? "USD" : "دج"})
+                السعر (دج)
               </span>
               <input
                 type="number"
@@ -396,7 +396,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
               <div className="rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3 text-xs">
                 <div className="flex items-center justify-between text-white/70">
                   <span>السعر</span>
-                  <span className="font-bold text-white">{price} {category === "topup" ? "USD" : "دج"}</span>
+                  <span className="font-bold text-white">{price} دج</span>
                 </div>
                 <div className="mt-1 flex items-center justify-between text-white/70">
                   <span>عمولة (5%)</span>
@@ -439,7 +439,7 @@ export default function DynamicProductWizard({ onComplete }: Props) {
 
               <div className="mt-3 flex items-center justify-between rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3">
                 <span className="text-xs text-white/70">السعر</span>
-                <span className="text-xl font-black text-indigo-300">{price} {category === "topup" ? "USD" : "دج"}</span>
+                <span className="text-xl font-black text-indigo-300">{price} دج</span>
               </div>
 
               <div className="mt-2 rounded-lg border border-emerald-400/20 bg-emerald-500/10 px-3 py-2 text-center text-[10px] font-bold text-emerald-300">

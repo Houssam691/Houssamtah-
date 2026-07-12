@@ -60,22 +60,28 @@ export default function SideNavPortal({ userId: propUserId, open, onClose }: Pro
   return createPortal(
     <>
       <div className="fixed inset-0 z-[299] bg-black/60 animate-fade-in" onClick={onClose} />
-      <div className="fixed top-0 bottom-0 right-0 z-[300] flex h-dvh w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl">
+      <div className="fixed top-0 bottom-0 right-0 z-[300] flex h-dvh w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-neutral-200 bg-white shadow-lg">
         <div className="flex items-center justify-between shrink-0 px-5 pt-4 pb-3">
-          <span className="text-sm font-black text-white">القائمة</span>
-          <button onClick={onClose} className="text-white/60 hover:text-white text-lg leading-none transition">✕</button>
+          <span className="text-sm font-black text-neutral-900">القائمة</span>
+          <button onClick={onClose} className="text-neutral-400 hover:text-neutral-900 text-lg leading-none transition">✕</button>
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
           <div className="grid gap-1 mt-3">
-            <Link href="/pubg" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
-              PUBG
+            <Link href="/clothing" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
+              ملابس
             </Link>
-            <Link href="/free-fire" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
-              Free Fire
+            <Link href="/makeup" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
+              مكياج
             </Link>
-            <Link href="/topup" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
-              Top-up
+            <Link href="/bags" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
+              حقائب
+            </Link>
+            <Link href="/shoes" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
+              أحذية
+            </Link>
+            <Link href="/skincare" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={onClose}>
+              العناية بالبشرة
             </Link>
 
             {userId && (

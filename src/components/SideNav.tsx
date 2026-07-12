@@ -49,23 +49,29 @@ export default function SideNav({ userId }: Props) {
       )}
 
       <div
-        className={`fixed inset-y-0 right-0 z-[300] flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-white/10 bg-zinc-950/95 backdrop-blur-xl transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
+        className={`fixed inset-y-0 right-0 z-[300] flex w-72 max-w-[calc(100vw-1.5rem)] flex-col border-l border-neutral-200 bg-white shadow-lg transition-transform duration-300 ${open ? "translate-x-0" : "translate-x-full"}`}
       >
         <div className="flex items-center justify-between shrink-0 px-5 pt-4 pb-3">
-          <span className="text-sm font-black text-white">القائمة</span>
-          <button onClick={() => setOpen(false)} className="text-white/60 hover:text-white text-lg leading-none transition">✕</button>
+          <span className="text-sm font-black text-neutral-900">القائمة</span>
+          <button onClick={() => setOpen(false)} className="text-neutral-400 hover:text-neutral-900 text-lg leading-none transition">✕</button>
         </div>
 
         <nav className="flex-1 overflow-y-auto overflow-x-hidden px-3 pb-[calc(1.25rem+env(safe-area-inset-bottom))] min-h-0">
           <div className="grid gap-1 min-h-full">
-            <Link href="/pubg" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
-              PUBG
+            <Link href="/clothing" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
+              ملابس
             </Link>
-            <Link href="/free-fire" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
-              Free Fire
+            <Link href="/makeup" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
+              مكياج
             </Link>
-            <Link href="/topup" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
-              Top-up
+            <Link href="/bags" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
+              حقائب
+            </Link>
+            <Link href="/shoes" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
+              أحذية
+            </Link>
+            <Link href="/skincare" className="rounded-2xl px-4 py-3 font-bold text-white/80 hover:bg-white/5 hover:text-white transition" onClick={() => setOpen(false)}>
+              العناية بالبشرة
             </Link>
 
             {userId && (

@@ -14,7 +14,7 @@ export type ChatMessage = {
 
 export type ChatProductSnapshot = {
   id: string;
-  category: "pubg" | "free-fire" | "topup";
+  category: string;
   title: string;
   price: number;
   description: string;

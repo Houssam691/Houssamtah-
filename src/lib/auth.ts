@@ -3,8 +3,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import { getDb } from "./db";
 
-export type UserRole = "buyer" | "seller" | "admin";
-export type SellerStatus = "pending" | "approved" | "rejected" | null;
+export type UserRole = "buyer" | "admin";
 
 export type User = {
   id: string;
@@ -15,8 +14,6 @@ export type User = {
   last_name: string;
   date_of_birth: string;
   banned: number;
-  seller_status: SellerStatus;
-  id_file_path: string;
   email_verified: number;
   payment_full_name: string;
   payment_surname: string;
@@ -171,16 +168,14 @@ export async function registerUser(params: {
   last_name: string;
   role: UserRole;
   date_of_birth?: string;
-  id_file_path?: string;
 }): Promise<User> {
   const { queryOne } = await getDb();
   const passwordHash = hashPassword(params.password);
   const id = generateId("usr");
-  const sellerStatus = params.role === "seller" ? "pending" : null;
 
   await queryOne(
-    `INSERT INTO users (id, role, email, password_hash, first_name, last_name, date_of_birth, seller_status, id_file_path)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9) RETURNING id`,
+    `INSERT INTO users (id, role, email, password_hash, first_name, last_name, date_of_birth)
+     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
     [
       id,
       params.role,
@@ -189,8 +184,6 @@ export async function registerUser(params: {
       params.first_name,
       params.last_name,
       params.date_of_birth || "",
-      sellerStatus,
-      params.id_file_path || "",
     ]
   );
 
@@ -324,7 +317,5 @@ export async function consumeResetToken(rawToken: string): Promise<string | null
 }
 
 export function isAccountFullyActivated(user: User): boolean {
-  if (!user.email_verified) return false;
-  if (user.role === "seller" && user.seller_status !== "approved") return false;
-  return true;
+  return user.email_verified === 1;
 }

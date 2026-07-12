@@ -19,53 +19,133 @@ export type GameSpec = {
   id: string;
   name: string;
   icon: string;
-  productType: "account" | "recharge";
+  productType: "account";
   fields: FieldDef[];
 };
 
 export const GAME_SPECS: Record<string, GameSpec> = {
-  pubg: {
-    id: "pubg",
-    name: "PUBG",
-    icon: "🎯",
+  clothing: {
+    id: "clothing",
+    name: "ملابس",
+    icon: "👗",
     productType: "account",
     fields: [
-      { key: "account_id", label: "ID الحساب", type: "text", required: true, placeholder: "أدخل معرف الحساب", displayPriority: 1, searchable: true },
-      { key: "level", label: "المستوى", type: "number", required: true, placeholder: "مستوى الحساب", displayPriority: 2, searchable: true, filterable: true, min: 1 },
-      { key: "gold_skins_count", label: "السكنات الذهبية", type: "number", required: false, placeholder: "عدد السكنات الذهبية", displayPriority: 3, filterable: true, min: 0 },
-      { key: "outfits_count", label: "البذلات", type: "number", required: false, placeholder: "عدد البذلات", displayPriority: 4, filterable: true, min: 0 },
-      { key: "weapons_count", label: "الأسلحة", type: "number", required: false, placeholder: "عدد الأسلحة", displayPriority: 5, filterable: true, min: 0 },
-      { key: "vehicles_count", label: "السيارات", type: "number", required: false, placeholder: "عدد السيارات", displayPriority: 6, filterable: true, min: 0 },
+      { key: "brand", label: "الماركة", type: "text", required: true, placeholder: "اسم الماركة", displayPriority: 1, searchable: true },
+      { key: "size", label: "المقاس", type: "select", required: true, options: [
+        { value: "xs", label: "XS" },
+        { value: "s", label: "S" },
+        { value: "m", label: "M" },
+        { value: "l", label: "L" },
+        { value: "xl", label: "XL" },
+        { value: "xxl", label: "XXL" },
+        { value: "3xl", label: "3XL" },
+      ], displayPriority: 2, searchable: true, filterable: true },
+      { key: "color", label: "اللون", type: "text", required: false, placeholder: "اللون", displayPriority: 3, searchable: true, filterable: true },
+      { key: "material", label: "الخامة", type: "text", required: false, placeholder: "نوع القماش", displayPriority: 4, filterable: true },
+      { key: "gender", label: "الجنس", type: "select", required: false, options: [
+        { value: "male", label: "رجالي" },
+        { value: "female", label: "نسائي" },
+        { value: "unisex", label: "للجنسين" },
+      ], displayPriority: 5, filterable: true },
     ],
   },
-  "free-fire": {
-    id: "free-fire",
-    name: "Free Fire",
-    icon: "🔥",
+  makeup: {
+    id: "makeup",
+    name: "مكياج",
+    icon: "💄",
     productType: "account",
     fields: [
-      { key: "account_id", label: "ID الحساب", type: "text", required: true, placeholder: "أدخل معرف الحساب", displayPriority: 1, searchable: true },
-      { key: "level", label: "المستوى", type: "number", required: true, placeholder: "مستوى الحساب", displayPriority: 2, searchable: true, filterable: true, min: 1 },
-      { key: "characters_count", label: "عدد الشخصيات", type: "number", required: false, placeholder: "عدد الشخصيات", displayPriority: 3, min: 0 },
-      { key: "skins_count", label: "عدد السكنات", type: "number", required: false, placeholder: "عدد السكنات", displayPriority: 4, filterable: true, min: 0 },
-      { key: "diamonds", label: "عدد الألماس", type: "number", required: false, placeholder: "عدد الألماس", displayPriority: 5, filterable: true, min: 0 },
-      { key: "pets_count", label: "عدد الحيوانات", type: "number", required: false, placeholder: "عدد الحيوانات الأليفة", displayPriority: 6, min: 0 },
+      { key: "brand", label: "الماركة", type: "text", required: true, placeholder: "اسم الماركة", displayPriority: 1, searchable: true },
+      { key: "makeup_type", label: "النوع", type: "select", required: true, options: [
+        { value: "foundation", label: "فاونديشن" },
+        { value: "lipstick", label: "أحمر شفاه" },
+        { value: "eyeshadow", label: "ظلال عيون" },
+        { value: "mascara", label: "ماسكرا" },
+        { value: "blush", label: "بلاش" },
+        { value: "highlighter", label: "هايلايتر" },
+        { value: "concealer", label: "كونسيلر" },
+        { value: "powder", label: "بودرة" },
+        { value: "eyeliner", label: "آيلاينر" },
+        { value: "lip_liner", label: "محدد شفاه" },
+      ], displayPriority: 2, searchable: true, filterable: true },
+      { key: "shade", label: "الدرجة", type: "text", required: false, placeholder: "الدرجة أو اللون", displayPriority: 3, searchable: true },
+      { key: "volume", label: "الحجم", type: "text", required: false, placeholder: "مثلاً: 30ml", displayPriority: 4, filterable: true },
     ],
   },
-  topup: {
-    id: "topup",
-    name: "Top-up",
-    icon: "⚡",
-    productType: "recharge",
+  bags: {
+    id: "bags",
+    name: "حقائب",
+    icon: "👜",
+    productType: "account",
     fields: [
-      { key: "service_type", label: "نوع الخدمة", type: "select", required: true, options: [
-        { value: "uc", label: "UC (PUBG)" },
-        { value: "diamonds", label: "Diamonds (Free Fire)" },
-        { value: "mlbb", label: "Diamonds (MLBB)" },
-      ], displayPriority: 1 },
-      { key: "server_id", label: "ID السيرفر", type: "text", required: true, placeholder: "أدخل معرف السيرفر", displayPriority: 2, searchable: true },
-      { key: "character_id", label: "ID الشخصية", type: "text", required: true, placeholder: "أدخل معرف الشخصية", displayPriority: 3, searchable: true },
-      { key: "quantity", label: "الكمية", type: "number", required: true, placeholder: "الكمية المطلوبة", displayPriority: 4, filterable: true, min: 1 },
+      { key: "brand", label: "الماركة", type: "text", required: true, placeholder: "اسم الماركة", displayPriority: 1, searchable: true },
+      { key: "material", label: "الخامة", type: "select", required: true, options: [
+        { value: "leather", label: "جلد" },
+        { value: "fabric", label: "قماش" },
+        { value: "synthetic", label: "صناعي" },
+        { value: "straw", label: "خوص" },
+        { value: "velvet", label: "مخمل" },
+      ], displayPriority: 2, searchable: true, filterable: true },
+      { key: "color", label: "اللون", type: "text", required: false, placeholder: "اللون", displayPriority: 3, searchable: true, filterable: true },
+      { key: "bag_size", label: "الحجم", type: "select", required: false, options: [
+        { value: "small", label: "صغير" },
+        { value: "medium", label: "متوسط" },
+        { value: "large", label: "كبير" },
+      ], displayPriority: 4, filterable: true },
+    ],
+  },
+  shoes: {
+    id: "shoes",
+    name: "أحذية",
+    icon: "👟",
+    productType: "account",
+    fields: [
+      { key: "brand", label: "الماركة", type: "text", required: true, placeholder: "اسم الماركة", displayPriority: 1, searchable: true },
+      { key: "shoe_size", label: "المقاس", type: "select", required: true, options: [
+        { value: "36", label: "36" }, { value: "37", label: "37" }, { value: "38", label: "38" },
+        { value: "39", label: "39" }, { value: "40", label: "40" }, { value: "41", label: "41" },
+        { value: "42", label: "42" }, { value: "43", label: "43" }, { value: "44", label: "44" },
+        { value: "45", label: "45" }, { value: "46", label: "46" },
+      ], displayPriority: 2, searchable: true, filterable: true },
+      { key: "color", label: "اللون", type: "text", required: false, placeholder: "اللون", displayPriority: 3, searchable: true, filterable: true },
+      { key: "shoe_material", label: "الخامة", type: "select", required: false, options: [
+        { value: "leather", label: "جلد" },
+        { value: "fabric", label: "قماش" },
+        { value: "synthetic", label: "صناعي" },
+        { value: "mesh", label: "شبكي" },
+      ], displayPriority: 4, filterable: true },
+      { key: "gender", label: "الجنس", type: "select", required: false, options: [
+        { value: "male", label: "رجالي" },
+        { value: "female", label: "نسائي" },
+        { value: "unisex", label: "للجنسين" },
+      ], displayPriority: 5, filterable: true },
+    ],
+  },
+  skincare: {
+    id: "skincare",
+    name: "العناية بالبشرة",
+    icon: "🧴",
+    productType: "account",
+    fields: [
+      { key: "brand", label: "الماركة", type: "text", required: true, placeholder: "اسم الماركة", displayPriority: 1, searchable: true },
+      { key: "skincare_type", label: "النوع", type: "select", required: true, options: [
+        { value: "moisturizer", label: "مرطب" },
+        { value: "serum", label: "سيروم" },
+        { value: "sunscreen", label: "واقي شمس" },
+        { value: "cleaner", label: "منظف" },
+        { value: "toner", label: "تونر" },
+        { value: "mask", label: "ماسك" },
+        { value: "eye_cream", label: "كريم عيون" },
+        { value: "exfoliator", label: "مقشر" },
+      ], displayPriority: 2, searchable: true, filterable: true },
+      { key: "skin_type", label: "نوع البشرة", type: "select", required: false, options: [
+        { value: "all", label: "جميع أنواع البشرة" },
+        { value: "oily", label: "دهنية" },
+        { value: "dry", label: "جافة" },
+        { value: "combination", label: "مختلطة" },
+        { value: "sensitive", label: "حساسة" },
+      ], displayPriority: 3, filterable: true },
+      { key: "volume", label: "الحجم", type: "text", required: false, placeholder: "مثلاً: 50ml", displayPriority: 4, filterable: true },
     ],
   },
 };
@@ -80,7 +160,7 @@ export function getGameSpecs(): GameSpec[] {
 
 export function validateAttributes(category: string, attributes: Record<string, unknown>): string[] {
   const spec = getGameSpec(category);
-  if (!spec) return ["نوع اللعبة غير معروف"];
+  if (!spec) return ["نوع القسم غير معروف"];
 
   const errors: string[] = [];
   for (const field of spec.fields) {
