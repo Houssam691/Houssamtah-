@@ -19,16 +19,10 @@ const statusMoneyMap: Record<string, { holder: string; holderLabel: string; desc
     description: "تم رفض الدفع. المبلغ لم يتحرك.",
     color: "text-rose-300",
   },
-  payment_confirmed_waiting_code: {
-    holder: "escrow",
-    holderLabel: "الوسيط (الإدارة)",
-    description: "المبلغ محجوز في حساب الوساطة. البائع ينتظر الكود للتسليم.",
-    color: "text-indigo-300",
-  },
   code_verified_deliver_now: {
     holder: "escrow",
     holderLabel: "الوسيط (الإدارة)",
-    description: "تم التحقق من الكود. البائع سيُسلم الحساب قريباً.",
+    description: "تم تأكيد الدفع. في انتظار إدخال بيانات الحساب.",
     color: "text-indigo-300",
   },
   delivered: {

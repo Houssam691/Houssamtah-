@@ -6,14 +6,12 @@ export type OrderStatus =
   | "awaiting_payment_proof"
   | "payment_under_review"
   | "payment_rejected"
-  | "payment_confirmed_waiting_code"
   | "code_verified_deliver_now"
   | "delivered"
   | "disputed"
   | "seller_paid"
   | "waiting_for_payment"
-  | "waiting_payment_verification"
-  | "paid";
+  | "waiting_payment_verification";
 
 export type Order = {
   id: string;
@@ -29,7 +27,6 @@ export type Order = {
   total_amount: number;
   payment_proof_file: string;
   payment_reviewed_by: string | null;
-  order_secret_code: string;
   delivery_data: string;
   delivery_date: string | null;
   warranty_end_date: string | null;
@@ -186,16 +183,14 @@ export async function updateOrderStatus(
 
   const allowedTransitions: Record<OrderStatus, OrderStatus[]> = {
     awaiting_payment_proof: ["payment_under_review", "waiting_for_payment"],
-    payment_under_review: ["payment_rejected", "payment_confirmed_waiting_code"],
+    payment_under_review: ["payment_rejected", "code_verified_deliver_now"],
     payment_rejected: [],
-    payment_confirmed_waiting_code: ["code_verified_deliver_now", "paid"],
     code_verified_deliver_now: ["delivered"],
     delivered: ["disputed", "seller_paid"],
     disputed: ["delivered", "seller_paid"],
     seller_paid: [],
     waiting_for_payment: ["waiting_payment_verification", "payment_rejected"],
-    waiting_payment_verification: ["payment_confirmed_waiting_code", "payment_rejected", "waiting_for_payment"],
-    paid: [],
+    waiting_payment_verification: ["code_verified_deliver_now", "payment_rejected", "waiting_for_payment"],
   };
 
   const allowed = allowedTransitions[existing.status] || [];
@@ -212,10 +207,6 @@ export async function updateOrderStatus(
   if (extra?.payment_reviewed_by !== undefined) {
     sets.push(`payment_reviewed_by = $${idx++}`);
     vals.push(extra.payment_reviewed_by);
-  }
-  if (extra?.order_secret_code !== undefined) {
-    sets.push(`order_secret_code = $${idx++}`);
-    vals.push(extra.order_secret_code);
   }
   if (extra?.delivery_data !== undefined) {
     sets.push(`delivery_data = $${idx++}`);

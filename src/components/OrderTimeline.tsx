@@ -11,8 +11,7 @@ type Step = {
 const ORDER_STEPS: { key: string; label: string; icon: string }[] = [
   { key: "awaiting_payment_proof", label: "بانتظار الدفع", icon: "💳" },
   { key: "payment_under_review", label: "الدفع قيد المراجعة", icon: "🔍" },
-  { key: "payment_confirmed_waiting_code", label: "تم تأكيد الدفع", icon: "✅" },
-  { key: "code_verified_deliver_now", label: "بانتظار التسليم", icon: "📦" },
+  { key: "code_verified_deliver_now", label: "بانتظار إدخال البيانات", icon: "📦" },
   { key: "delivered", label: "تم التسليم", icon: "🎉" },
   { key: "seller_paid", label: "اكتملت العملية", icon: "🏆" },
 ];

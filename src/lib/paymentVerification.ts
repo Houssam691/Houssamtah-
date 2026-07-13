@@ -367,7 +367,7 @@ export async function processWebhookEmail(payload: WebhookPayload): Promise<{
   await logProcessingStep(emailLog.id, "checking_duplicate", { transactionId: txId });
 
   const existingTx = await db.queryOne(
-    "SELECT id, status FROM orders WHERE transaction_id = $1 AND status IN ('paid', 'waiting_payment_verification')",
+    "SELECT id, status FROM orders WHERE transaction_id = $1 AND status IN ('code_verified_deliver_now', 'waiting_payment_verification')",
     [txId]
   );
   if (existingTx) {
@@ -508,10 +508,7 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
     emailLogId: emailLog.id,
   });
 
-  const secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
-
-  await updateOrderStatus(order.id, "paid", {
-    order_secret_code: secretCode,
+  await updateOrderStatus(order.id, "code_verified_deliver_now", {
     transaction_id: order.transaction_id || transactionId,
     matched_via_email: 1,
     auto_confirmed_at: new Date().toISOString(),
@@ -519,7 +516,7 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
     confirmed_webhook_id: emailLog.webhook_id,
   });
 
-  debugLog("ORDER_STATUS_UPDATED_TO_PAID", { orderId: order.id, secretCode });
+  debugLog("ORDER_STATUS_UPDATED_TO_DELIVER_NOW", { orderId: order.id });
 
   await markEmailProcessed(emailLog.id);
 
@@ -542,31 +539,19 @@ async function confirmPayment(order: Order, emailLog: EmailLog, transactionId: s
     orderId: order.id,
     type: "payment_confirmed",
     title: "تم تأكيد الدفع",
-    message: "تم تأكيد دفع طلبك تلقائياً. يمكنك الآن الاطلاع على الكود السري.",
+    message: "تم تأكيد دفع طلبك تلقائياً. في انتظار إدخال بيانات الحساب.",
     link: `/orders/${order.id}`,
   });
   debugLog("NOTIFICATION_SENT_TO_BUYER", { userId: order.buyer_id });
-
-  if (order.seller_id) {
-    await createNotification({
-      userId: order.seller_id,
-      orderId: order.id,
-      type: "payment_confirmed",
-      title: "تم تأكيد دفع طلب",
-      message: `تم تأكيد دفع الطلب ${order.order_tracking_id}. يرجى انتظار الكود السري من المشتري.`,
-      link: `/seller/orders`,
-    });
-    debugLog("NOTIFICATION_SENT_TO_SELLER", { userId: order.seller_id });
-  }
 
   const admins = await db.query<{ id: string }>("SELECT id FROM users WHERE role = 'admin'");
   for (const a of admins) {
     await createNotification({
       userId: a.id,
       orderId: order.id,
-      type: "payment_confirmed",
-      title: "تم تأكيد الدفع تلقائياً",
-      message: `تم تأكيد دفع الطلب ${order.order_tracking_id} تلقائياً عبر Webhook.`,
+      type: "delivery_pending",
+      title: "بانتظار إدخال بيانات الحساب",
+      message: `تم تأكيد دفع الطلب ${order.order_tracking_id} تلقائياً عبر Webhook. يرجى إدخال بيانات الحساب.`,
       link: `/admin/orders`,
     });
   }
