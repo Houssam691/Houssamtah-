@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useCallback } from "react";
 import { useToast } from "@/components/ToastProvider";
 import { downloadCSV } from "@/lib/export";
+import DynamicProductWizard from "@/components/DynamicProductWizard";
+import ModalPortal from "@/components/ModalPortal";
 
 type AdminProduct = {
   id: string;
@@ -59,6 +61,7 @@ export default function AdminProductsPage() {
   const [statusFilter, setStatusFilter] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [showWizard, setShowWizard] = useState(false);
   const actionBtn = useButtonState();
   const bulkBtn = useButtonState();
 
@@ -145,7 +148,10 @@ export default function AdminProductsPage() {
             <h1 className="text-xl font-black">إدارة المنتجات</h1>
             <p className="mt-1 text-sm text-white/60">{products.length} منتج</p>
           </div>
-          <button className={`btn-secondary text-sm ${bulkBtn.cls("refresh")}`} onClick={() => { setFetching(true); loadProducts(); }} disabled={bulkBtn.loading}>تحديث</button>
+          <div className="flex gap-2">
+            <button className="btn-primary text-sm" onClick={() => setShowWizard(true)}>+ إضافة منتج</button>
+            <button className={`btn-secondary text-sm ${bulkBtn.cls("refresh")}`} onClick={() => { setFetching(true); loadProducts(); }} disabled={bulkBtn.loading}>تحديث</button>
+          </div>
         </div>
       </section>
 
@@ -231,6 +237,18 @@ export default function AdminProductsPage() {
         </table>
         {filtered.length === 0 && <div className="py-10 text-center text-sm text-white/50">لا توجد منتجات</div>}
       </div>
+
+      {showWizard && (
+        <ModalPortal open onClose={() => setShowWizard(false)} maxWidth="max-w-2xl">
+          <div className="max-h-[90dvh] overflow-y-auto rounded-3xl border border-white/10 bg-zinc-950 p-6" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-black">إضافة منتج جديد</h2>
+              <button className="text-white/60 hover:text-white text-lg" onClick={() => setShowWizard(false)}>✕</button>
+            </div>
+            <DynamicProductWizard onComplete={() => { setShowWizard(false); loadProducts(); }} />
+          </div>
+        </ModalPortal>
+      )}
     </div>
   );
 }
