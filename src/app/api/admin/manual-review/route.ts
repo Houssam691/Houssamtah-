@@ -86,10 +86,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Order is not in verification status" }, { status: 400 });
   }
 
-  const secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
-
-  await updateOrderStatus(selected_order_id, "paid", {
-    order_secret_code: secretCode,
+  await updateOrderStatus(selected_order_id, "code_verified_deliver_now", {
     transaction_id: unmatched.transaction_id as string || "",
     matched_via_email: 1,
     auto_confirmed_at: new Date().toISOString(),

@@ -1,8 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, logAuditEvent, createNotification } from "@/lib/auth";
 import { getOrderById, updateOrderStatus } from "@/lib/orders";
-import { getProductWithSecret } from "@/lib/products";
-import crypto from "crypto";
+import { getDb } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -22,22 +21,8 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     return NextResponse.json({ error: "Invalid order status" }, { status: 400 });
   }
 
-  let secretCode = "";
-
-  if (order.product_type === "account" && order.product_id) {
-    const product = await getProductWithSecret(order.product_id);
-    if (product?.product_secret_code) {
-      secretCode = product.product_secret_code;
-    }
-  }
-
-  if (!secretCode) {
-    secretCode = crypto.randomBytes(9).toString("base64url").slice(0, 12);
-  }
-
-  const updated = await updateOrderStatus(id, "payment_confirmed_waiting_code", {
+  const updated = await updateOrderStatus(id, "code_verified_deliver_now", {
     payment_reviewed_by: user.id,
-    order_secret_code: secretCode,
   });
 
   await logAuditEvent({
@@ -48,7 +33,22 @@ export async function POST(_req: Request, ctx: { params: Promise<{ id: string }>
     details: `Payment confirmed for order ${order.order_tracking_id}`,
   });
 
-  await createNotification({ userId: order.buyer_id, orderId: id, type: "payment_confirmed", message: "تم تأكيد الدفع، يمكنك الآن إرسال الكود للبائع" });
+  await createNotification({ userId: order.buyer_id, orderId: id, type: "payment_confirmed", message: "تم تأكيد الدفع، في انتظار إدخال بيانات الحساب" });
+
+  const db = await getDb();
+  const admins = await db.query<{ id: string }>("SELECT id FROM users WHERE role = 'admin'");
+  for (const a of admins) {
+    if (a.id !== user.id) {
+      await createNotification({
+        userId: a.id,
+        orderId: id,
+        type: "delivery_pending",
+        title: "بانتظار إدخال بيانات الحساب",
+        message: `تم تأكيد دفع الطلب ${order.order_tracking_id}، يرجى إدخال بيانات الحساب للتسليم.`,
+        link: `/admin/orders`,
+      });
+    }
+  }
 
   return NextResponse.json(updated);
 }

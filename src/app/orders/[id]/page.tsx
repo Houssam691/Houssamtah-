@@ -8,7 +8,6 @@ import { useToast } from "@/components/ToastProvider";
 import { Skeleton } from "@/components/Skeleton";
 import OrderTrust from "@/components/OrderTrust";
 import DisputeClarity from "@/components/DisputeClarity";
-import SensitiveToggle from "@/components/SensitiveToggle";
 
 type Order = {
   id: string;
@@ -22,7 +21,6 @@ type Order = {
   tax_amount: number;
   total_amount: number;
   payment_proof_file: string;
-  order_secret_code: string;
   delivery_data: string;
   delivery_date: string | null;
   warranty_end_date: string | null;
@@ -55,14 +53,12 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   awaiting_payment_proof: { label: "بانتظار إثبات الدفع", color: "text-yellow-300" },
   payment_under_review: { label: "قيد المراجعة", color: "text-yellow-300" },
   payment_rejected: { label: "مرفوض", color: "text-rose-300" },
-  payment_confirmed_waiting_code: { label: "الكود: انسخه وأرسله للبائع", color: "text-blue-300" },
-  code_verified_deliver_now: { label: "تم التحقق من الكود", color: "text-indigo-300" },
+  code_verified_deliver_now: { label: "بانتظار إدخال بيانات الحساب", color: "text-indigo-300" },
   delivered: { label: "تم التسليم", color: "text-emerald-300" },
   disputed: { label: "نزاع مفتوح", color: "text-rose-300" },
   seller_paid: { label: "تم الدفع للبائع", color: "text-emerald-300" },
   waiting_for_payment: { label: "بانتظار الدفع", color: "text-yellow-300" },
   waiting_payment_verification: { label: "بانتظار التحقق من الدفع", color: "text-orange-300" },
-  paid: { label: "تم الدفع", color: "text-emerald-300" },
 };
 
 export default function OrderDetailPage() {
@@ -79,10 +75,6 @@ export default function OrderDetailPage() {
   const [copiedDelivery, setCopiedDelivery] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [showDisputeForm, setShowDisputeForm] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [codeToSend, setCodeToSend] = useState("");
-  const [sendingCode, setSendingCode] = useState(false);
-  const [codeSent, setCodeSent] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatText, setChatText] = useState("");
   const [reviewRating, setReviewRating] = useState(5);
@@ -93,9 +85,11 @@ export default function OrderDetailPage() {
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [paymentSubmitting, setPaymentSubmitting] = useState(false);
   const [paymentSubmitError, setPaymentSubmitError] = useState("");
+  const [deliveryDataInput, setDeliveryDataInput] = useState("");
+  const [deliveringOrder, setDeliveringOrder] = useState(false);
 
   useEffect(() => {
-    if (order?.status === "disputed" || order?.status === "payment_confirmed_waiting_code") {
+    if (order?.status === "disputed") {
       fetch(`/api/order-chat/${params.id}`, { cache: "no-store" })
         .then((r) => r.ok ? r.json() : [])
         .then((data) => setChatMessages(Array.isArray(data) ? data : []))
@@ -129,18 +123,28 @@ export default function OrderDetailPage() {
       .catch(() => router.push("/login"));
   }, [router, params.id]);
 
-  async function sendCodeToChat() {
-    if (!codeToSend.trim()) return;
-    setSendingCode(true);
-    const res = await fetch(`/api/order-chat/${params.id}`, {
-      method: "POST",
+  async function deliverOrder() {
+    if (!deliveryDataInput.trim()) {
+      toast("error", "يرجى إدخال بيانات الحساب");
+      return;
+    }
+    setDeliveringOrder(true);
+    const res = await fetch(`/api/orders/${params.id}`, {
+      method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: codeToSend }),
+      body: JSON.stringify({
+        status: "delivered",
+        delivery_data: deliveryDataInput,
+        delivery_date: new Date().toISOString(),
+      }),
     });
-    setSendingCode(false);
+    setDeliveringOrder(false);
     if (res.ok) {
-      setCodeSent(true);
-      setCodeToSend("");
+      toast("success", "تم تسليم المنتج!");
+      const orderRes = await fetch(`/api/orders/${params.id}`, { cache: "no-store" });
+      if (orderRes.ok) setOrder(await orderRes.json());
+    } else {
+      toast("error", "فشل تسليم المنتج");
     }
   }
 
@@ -200,14 +204,6 @@ export default function OrderDetailPage() {
       if (orderRes.ok) setOrder(await orderRes.json());
     } else {
       toast("error", "فشل فتح النزاع.");
-    }
-  }
-
-  function copyCode() {
-    if (order?.order_secret_code) {
-      copyToClipboard(order.order_secret_code);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
     }
   }
 
@@ -314,7 +310,6 @@ export default function OrderDetailPage() {
   }
 
   const isBuyer = user?.id === order.buyer_id;
-  const isSeller = user?.id === order.seller_id;
   const isAdmin = user?.role === "admin";
   const st = statusLabels[order.status] || { label: order.status, color: "text-white" };
 
@@ -368,33 +363,13 @@ export default function OrderDetailPage() {
             <OrderTrust status={order.status} />
           </div>
 
-          {(order.status === "payment_confirmed_waiting_code" || order.status === "paid") && isBuyer && order.order_secret_code && (
-            <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
-              <div className="text-xs font-bold text-white/50">الكود السري (أرسله للبائع)</div>
-              <div className="mt-1 text-2xl font-black tracking-widest text-emerald-300" dir="ltr">
-                <SensitiveToggle>{order.order_secret_code}</SensitiveToggle>
-              </div>
-              <button className="btn-primary mt-3" onClick={copyCode}>
-                {copied ? "تم النسخ!" : "نسخ الكود"}
-              </button>
-            </div>
-          )}
-
-          {order.payment_proof_file && !isSeller && (
+          {order.payment_proof_file && !isBuyer && (
             <div className="mt-4">
               <button className="btn-secondary" onClick={() => {
                 const reason = window.prompt("سبب فتح النزاع:");
                 if (reason) openDispute(reason);
               }}>
                 فتح نزاع
-              </button>
-            </div>
-          )}
-
-          {isSeller && (
-            <div className="mt-4">
-              <button className="btn-secondary" onClick={() => router.push("/seller/orders")}>
-                انتقل للطلبات
               </button>
             </div>
           )}
@@ -460,20 +435,40 @@ export default function OrderDetailPage() {
             </div>
           )}
 
-          {order.status === "paid" && isBuyer && (
+          {order.status === "payment_under_review" && isAdmin && (
+            <div className="mt-4 flex flex-wrap gap-2">
+              <button className="btn-primary" onClick={confirmPayment}>تأكيد الدفع</button>
+              <button className="btn-secondary" onClick={rejectPayment}>رفض</button>
+            </div>
+          )}
+
+          {order.status === "code_verified_deliver_now" && isAdmin && (
+            <div className="mt-4 rounded-2xl border border-indigo-400/30 bg-indigo-500/10 p-4">
+              <h3 className="text-sm font-black text-white">إدخال بيانات الحساب</h3>
+              <p className="mt-1 text-xs text-white/60">أدخل بيانات تسجيل الدخول للحساب (بريد إلكتروني، كلمة مرور، إلخ)</p>
+              <textarea
+                className="mt-3 min-h-[100px] w-full rounded-2xl border border-white/10 bg-white/5 p-4 text-white outline-none focus:border-indigo-400/50"
+                value={deliveryDataInput}
+                onChange={(e) => setDeliveryDataInput(e.target.value)}
+                placeholder="أدخل بيانات الحساب هنا..."
+              />
+              <button
+                className="btn-primary mt-3 h-12 w-full"
+                onClick={deliverOrder}
+                disabled={deliveringOrder || !deliveryDataInput.trim()}
+              >
+                {deliveringOrder ? "جاري التسليم..." : "تسليم المنتج"}
+              </button>
+            </div>
+          )}
+
+          {order.status === "code_verified_deliver_now" && isBuyer && (
             <div className="mt-4 rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-4">
               <div className="flex items-center gap-2">
                 <span className="text-lg">✅</span>
                 <div className="text-sm font-bold text-emerald-200">تم تأكيد الدفع بنجاح</div>
               </div>
-              <p className="mt-1 text-xs text-white/60">يمكنك الآن الاطلاع على الكود السري لإرساله للبائع.</p>
-            </div>
-          )}
-
-          {order.status === "payment_under_review" && isAdmin && (
-            <div className="mt-4 flex flex-wrap gap-2">
-              <button className="btn-primary" onClick={confirmPayment}>تأكيد الدفع</button>
-              <button className="btn-secondary" onClick={rejectPayment}>رفض</button>
+              <p className="mt-1 text-xs text-white/60">في انتظار إدخال بيانات الحساب من الإدارة. سيتم إعلامك فور التسليم.</p>
             </div>
           )}
 
@@ -629,50 +624,6 @@ export default function OrderDetailPage() {
             </div>
           )}
         </section>
-
-          {order.status === "payment_confirmed_waiting_code" && isBuyer && (
-            <section className="glass rounded-3xl p-5">
-              <h2 className="text-sm font-black text-white">إرسال الكود للبائع</h2>
-              <p className="text-xs font-bold text-white/50">انسخ الكود من الأعلى وألصقه هنا لإرساله للبائع</p>
-              <div className="mt-4 grid gap-3">
-                <input
-                  className="h-12 rounded-2xl border border-white/10 bg-white/5 px-4 text-white text-center text-2xl tracking-widest outline-none focus:border-indigo-400/50"
-                  value={codeToSend}
-                  onChange={(e) => setCodeToSend(e.target.value)}
-                  placeholder="****"
-                  dir="ltr"
-                  maxLength={20}
-                />
-                {codeSent && (
-                  <div className="text-sm font-bold text-emerald-300">تم إرسال الكود للبائع!</div>
-                )}
-                <button
-                  className="btn-primary h-12"
-                  onClick={sendCodeToChat}
-                  disabled={sendingCode || !codeToSend.trim()}
-                >
-                  {sendingCode ? "جاري الإرسال..." : "إرسال الكود"}
-                </button>
-              </div>
-
-              {chatMessages.length > 0 && (
-                <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-                  <div className="text-sm font-bold text-white/80">الرسائل من البائع:</div>
-                  <div className="mt-3 grid gap-3 max-h-60 overflow-y-auto">
-                    {chatMessages.map((msg) => (
-                      <div key={msg.id} className="rounded-2xl bg-indigo-500/20 p-3 text-white/90">
-                        <div className="mb-1 text-xs font-bold text-white/60">{msg.sender_name || "مستخدم"}</div>
-                        <div className="text-sm leading-7 whitespace-pre-wrap">{msg.text}</div>
-                        <div className="mt-1 text-xs font-bold text-white/50">
-                          {new Date(msg.created_at).toLocaleString()}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </section>
-          )}
       </div>
     </div>
   );
