@@ -11,7 +11,6 @@ type Stats = {
   total_profit: number;
   active_orders: number;
   open_disputes: number;
-  pending_verifications: number;
 };
 
 type Activity = {
@@ -47,14 +46,13 @@ export default function AdminDashboard() {
         ]).then(([statsData, activityData]) => {
           const c = statsData.cards || {};
           setStats({
-            total_users: c.total || 0,
+            total_users: c.buyers || 0,
             total_buyers: c.buyers || 0,
-            total_products: 0,
-            total_sales: 0,
-            total_profit: 0,
-            active_orders: 0,
-            open_disputes: 0,
-            pending_verifications: 0,
+            total_products: c.products || 0,
+            total_sales: c.total_sales || 0,
+            total_profit: c.total_profit || 0,
+            active_orders: (c.total_orders || 0) - (c.completed_orders || 0) - (c.cancelled_orders || 0),
+            open_disputes: c.disputes || 0,
           });
           setActivities(Array.isArray(activityData) ? activityData.slice(0, 10) : []);
           setLoading(false);
@@ -85,7 +83,6 @@ export default function AdminDashboard() {
     { label: "الأرباح", value: stats.total_profit, icon: "📈", color: "text-indigo-300", isCurrency: true },
     { label: "الطلبات النشطة", value: stats.active_orders, icon: "📬", color: "text-blue-300" },
     { label: "النزاعات المفتوحة", value: stats.open_disputes, icon: "⚠️", color: "text-rose-300" },
-    { label: "طلبات التحقق", value: stats.pending_verifications, icon: "⏳", color: "text-amber-300" },
   ] : [];
 
   return (

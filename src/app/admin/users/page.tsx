@@ -11,6 +11,7 @@ type AdminUser = {
   first_name: string;
   last_name: string;
   role: string;
+  seller_status: string | null;
   email_verified: number;
   banned: number;
   created_at: string;
@@ -163,6 +164,7 @@ function UsersList() {
         >
           <option value="">كل الأدوار</option>
           <option value="buyer">مشتري</option>
+          <option value="seller">بائع</option>
           <option value="admin">أدمن</option>
         </select>
         <select
@@ -251,9 +253,10 @@ function UsersList() {
                 <td className="py-3 pl-3">
                   <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                     u.role === "admin" ? "bg-rose-500/20 text-rose-300" :
+                    u.role === "seller" ? "bg-emerald-500/20 text-emerald-300" :
                     "bg-indigo-500/20 text-indigo-300"
                   }`}>
-                    {u.role === "admin" ? "أدمن" : "مشتري"}
+                    {u.role === "admin" ? "أدمن" : u.role === "seller" ? "بائع" : "مشتري"}
                   </span>
                 </td>
                 <td className="py-3 pl-3">

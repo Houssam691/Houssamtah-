@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { upload } from "@vercel/blob/client";
 
-type ProductCategory = "clothing" | "makeup" | "bags" | "shoes" | "skincare";
+type ProductCategory = "pubg" | "free-fire" | "topup";
 
 type Product = {
   id: string;
@@ -43,16 +43,14 @@ type Chat = {
 };
 
 const categories: { value: ProductCategory; label: string }[] = [
-  { value: "clothing", label: "ملابس" },
-  { value: "makeup", label: "مكياج" },
-  { value: "bags", label: "حقائب" },
-  { value: "shoes", label: "أحذية" },
-  { value: "skincare", label: "العناية بالبشرة" },
+  { value: "pubg", label: "PUBG" },
+  { value: "free-fire", label: "Free Fire" },
+  { value: "topup", label: "Top-up" },
 ];
 
 export default function AdminApp() {
   const [items, setItems] = useState<Product[]>([]);
-  const [active, setActive] = useState<ProductCategory>("clothing");
+  const [active, setActive] = useState<ProductCategory>("pubg");
   const [saving, setSaving] = useState<string | null>(null);
 
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -484,7 +482,7 @@ export default function AdminApp() {
                       <button className="btn-secondary" type="button" onClick={() => void remove(p.id)}>
                         حذف
                       </button>
-                      <a className="btn-secondary" href={`/${p.category}`}>
+                      <a className="btn-secondary" href={`/${p.category === "free-fire" ? "free-fire" : p.category}`}>
                         عرض الصفحة
                       </a>
                     </div>

@@ -49,7 +49,7 @@ export async function POST(req: Request) {
   const product = await createProduct({
     seller_id: body.seller_id || undefined,
     product_type: body.product_type || "account",
-    category: body.category || "clothing",
+    category: body.category || "pubg",
     title: sanitizeText(body.title || "منتج جديد", MAX_LENGTHS.TITLE),
     description: sanitizeText(body.description || "", MAX_LENGTHS.DESCRIPTION),
     price: body.price,

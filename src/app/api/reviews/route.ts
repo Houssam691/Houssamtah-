@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSessionUser, createNotification } from "@/lib/auth";
-import { createReview, getAllReviews } from "@/lib/reviews";
+import { createReview, getSellerStats, getSellerReviews, getAllReviews } from "@/lib/reviews";
 import { getOrderById } from "@/lib/orders";
 import { csrfGuard } from "@/lib/csrf";
 import { sanitizeText, MAX_LENGTHS } from "@/lib/validate";
@@ -26,6 +26,14 @@ export async function GET(req: Request) {
       order_id: orderId || undefined,
     });
     return NextResponse.json(reviews);
+  }
+
+  if (sellerId) {
+    const [stats, reviews] = await Promise.all([
+      getSellerStats(sellerId),
+      getSellerReviews(sellerId),
+    ]);
+    return NextResponse.json({ stats, reviews });
   }
 
   if (orderId) {

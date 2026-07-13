@@ -12,8 +12,10 @@ type UserDetail = {
   first_name: string;
   last_name: string;
   role: string;
+  seller_status: string | null;
   email_verified: number;
   banned: number;
+  id_file_path: string;
   date_of_birth: string;
   created_at: string;
 };
@@ -81,9 +83,10 @@ export default function AdminUserDetailPage() {
                 </span>
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-bold ${
                   user.role === "admin" ? "bg-rose-500/20 text-rose-300" :
+                  user.role === "seller" ? "bg-emerald-500/20 text-emerald-300" :
                   "bg-indigo-500/20 text-indigo-300"
                 }`}>
-                  {user.role === "admin" ? "أدمن" : "مشتري"}
+                  {user.role === "admin" ? "أدمن" : user.role === "seller" ? "بائع" : "مشتري"}
                 </span>
                 {user.banned ? (
                   <span className="rounded-full bg-rose-500/20 px-2.5 py-0.5 text-xs font-bold text-rose-300">محظور</span>
@@ -133,6 +136,10 @@ export default function AdminUserDetailPage() {
                 <span className="text-sm text-white/60">تاريخ الميلاد</span>
                 <span className="text-sm font-bold text-white">{user.date_of_birth || "—"}</span>
               </div>
+              <div className="flex justify-between rounded-xl bg-white/5 px-4 py-3">
+                <span className="text-sm text-white/60">حالة البائع</span>
+                <span className="text-sm font-bold text-white">{user.seller_status || "—"}</span>
+              </div>
             </div>
           </section>
 
@@ -170,6 +177,22 @@ export default function AdminUserDetailPage() {
                 }}>
                   ✓ توثيق البريد الإلكتروني
                 </button>
+              )}
+              {user.role === "seller" && (
+                <button className="btn-secondary w-full" onClick={() => {
+                  const action = user.seller_status === "approved" ? "reject" : "approve";
+                  const reason = prompt(action === "approve" ? "ملاحظات القبول:" : "سبب الرفض:");
+                  if (reason === null) return;
+                  fetch("/api/admin/sellers", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ seller_id: user.id, action }) })
+                    .then(r => r.ok ? toast("success", `تم ${action === "approve" ? "القبول" : "الرفض"}`) : toast("error", "فشل"));
+                }}>
+                  {user.seller_status === "approved" ? "❌ رفض التحقق" : "✅ قبول التحقق"}
+                </button>
+              )}
+              {user.id_file_path && (
+                <a href={user.id_file_path} target="_blank" className="btn-secondary w-full text-center">
+                  📎 عرض وثائق الهوية
+                </a>
               )}
               <button className="btn-secondary w-full text-rose-300 border-rose-500/30" onClick={() => {
                 if (!confirm("هل أنت متأكد من حذف هذا المستخدم نهائياً؟")) return;

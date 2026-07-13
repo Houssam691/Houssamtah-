@@ -14,8 +14,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const db = await getDb();
 
   const target = await db.queryOne(`
-    SELECT id, email, first_name, last_name, role, email_verified,
-      banned, date_of_birth, created_at
+    SELECT id, email, first_name, last_name, role, seller_status, email_verified,
+      banned, id_file_path, date_of_birth, created_at
     FROM users WHERE id = $1
   `, [id]);
 

@@ -8,7 +8,7 @@ import PasswordInput from "@/components/PasswordInput";
 export default function RegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
-  const [step, setStep] = useState<"form" | "uploading">("form");
+  const [step] = useState<"form">("form");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [registered, setRegistered] = useState(false);
@@ -17,10 +17,8 @@ export default function RegisterPage() {
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState<"buyer">("buyer");
+  const [role] = useState<"buyer">("buyer");
   const [dateOfBirth, setDateOfBirth] = useState("");
-  const [idFile, setIdFile] = useState<File | null>(null);
-  const [uploadProgress, setUploadProgress] = useState(0);
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -140,12 +138,7 @@ export default function RegisterPage() {
             />
           </label>
 
-          <div className="grid gap-2">
-            <span className="text-sm font-bold text-white/80">نوع الحساب</span>
-            <div className="rounded-2xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/70">
-              مشتري
-            </div>
-          </div>
+          <input type="hidden" value={role} />
 
           {error && (
             <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 px-4 py-3 text-sm font-bold text-rose-100">
@@ -153,16 +146,7 @@ export default function RegisterPage() {
             </div>
           )}
 
-          {step === "uploading" && (
-            <div className="grid gap-2">
-              <div className="text-center text-sm text-white/70">جاري رفع الملفات... {uploadProgress}%</div>
-              <div className="h-2 overflow-hidden rounded-full bg-white/10">
-                <div className="h-full rounded-full bg-indigo-500 transition-all duration-300" style={{ width: `${uploadProgress}%` }} />
-              </div>
-            </div>
-          )}
-
-          <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading || step === "uploading"}>
+          <button className={`btn-primary h-12 w-full ${loading ? "loading" : ""}`} type="submit" disabled={loading}>
             {loading ? "جاري إنشاء الحساب..." : "إنشاء حساب"}
           </button>
 

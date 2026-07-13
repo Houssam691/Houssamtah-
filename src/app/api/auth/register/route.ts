@@ -18,7 +18,7 @@ export async function POST(req: Request) {
 
   try {
     const body = await req.json();
-    const { email, password, first_name, last_name, role, date_of_birth } = body;
+    const { email, password, first_name, last_name, role, date_of_birth, id_file_path } = body;
 
     if (!email || !password || !first_name || !last_name || !role) {
       return NextResponse.json({ error: "All fields are required" }, { status: 400 });
@@ -26,6 +26,14 @@ export async function POST(req: Request) {
 
     if (role !== "buyer") {
       return NextResponse.json({ error: "Invalid role" }, { status: 400 });
+    }
+
+    if (password.length < 8) {
+      return NextResponse.json({ error: "Password must be at least 8 characters" }, { status: 400 });
+    }
+
+    if (password.length > MAX_LENGTHS.PASSWORD) {
+      return NextResponse.json({ error: "Password is too long" }, { status: 400 });
     }
 
     const db = await getDb();
@@ -41,6 +49,7 @@ export async function POST(req: Request) {
       last_name: sanitizeText(last_name, MAX_LENGTHS.LAST_NAME),
       role,
       date_of_birth: date_of_birth || "",
+      id_file_path,
     });
 
     const { raw, hash } = generateVerificationToken();
