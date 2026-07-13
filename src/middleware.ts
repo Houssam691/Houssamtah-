@@ -50,14 +50,6 @@ export async function middleware(req: NextRequest) {
     return response;
   }
 
-  if (pathname.startsWith("/seller") && !sessionToken) {
-    const url = req.nextUrl.clone();
-    url.pathname = "/login";
-    const response = NextResponse.redirect(url);
-    addSecurityHeaders(response, req);
-    return response;
-  }
-
   if (pathname.startsWith("/orders") && !sessionToken) {
     const url = req.nextUrl.clone();
     url.pathname = "/login";
@@ -87,5 +79,5 @@ function addSecurityHeaders(response: NextResponse, req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/admin/:path*", "/seller/:path*", "/orders/:path*"],
+  matcher: ["/admin/:path*", "/orders/:path*"],
 };

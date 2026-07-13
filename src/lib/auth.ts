@@ -14,6 +14,7 @@ export type User = {
   last_name: string;
   date_of_birth: string;
   banned: number;
+  id_file_path: string;
   email_verified: number;
   payment_full_name: string;
   payment_surname: string;
@@ -168,14 +169,14 @@ export async function registerUser(params: {
   last_name: string;
   role: UserRole;
   date_of_birth?: string;
+  id_file_path?: string;
 }): Promise<User> {
   const { queryOne } = await getDb();
   const passwordHash = hashPassword(params.password);
   const id = generateId("usr");
-
   await queryOne(
-    `INSERT INTO users (id, role, email, password_hash, first_name, last_name, date_of_birth)
-     VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+    `INSERT INTO users (id, role, email, password_hash, first_name, last_name, date_of_birth, id_file_path)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
     [
       id,
       params.role,
@@ -184,6 +185,7 @@ export async function registerUser(params: {
       params.first_name,
       params.last_name,
       params.date_of_birth || "",
+      params.id_file_path || "",
     ]
   );
 
@@ -317,5 +319,6 @@ export async function consumeResetToken(rawToken: string): Promise<string | null
 }
 
 export function isAccountFullyActivated(user: User): boolean {
-  return user.email_verified === 1;
+  if (!user.email_verified) return false;
+  return true;
 }

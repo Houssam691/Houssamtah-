@@ -1,7 +1,7 @@
 import { getDb } from "./db";
 import crypto from "crypto";
 
-export type ProductCategory = "clothing" | "makeup" | "bags" | "shoes" | "skincare";
+export type ProductCategory = "pubg" | "topup";
 
 export type Product = {
   id: string;

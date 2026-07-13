@@ -21,7 +21,6 @@ export default function NavDashboardLink({ className: linkClass }: { className?:
   let label = "";
 
   if (role === "admin") { href = "/admin"; label = "لوحة الإدارة"; }
-  else if (role === "seller") { href = "/seller"; label = "لوحة البائع"; }
   else if (role === "buyer") { href = "/orders"; label = "طلباتي"; }
 
   return (
