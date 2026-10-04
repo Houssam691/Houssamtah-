@@ -1,0 +1,39 @@
+---
+/**
+ * Base surface used by every card-like block (service, demo, pricing, post).
+ * One component instead of six near-identical wrappers.
+ */
+interface Props {
+  as?: 'article' | 'div' | 'li' | 'section';
+  interactive?: boolean;
+  padded?: boolean;
+  tone?: 'surface' | 'flat' | 'outline';
+  class?: string;
+}
+
+const {
+  as: Tag = 'div',
+  interactive = false,
+  padded = true,
+  tone = 'surface',
+  class: className = '',
+} = Astro.props;
+
+const tones: Record<string, string> = {
+  surface: 'bg-surface',
+  flat: 'bg-surface/40',
+  outline: 'bg-transparent border border-line',
+};
+---
+
+<Tag
+  class:list={[
+    'relative rounded-lg border border-line',
+    tones[tone],
+    padded && 'p-6 sm:p-7',
+    interactive && 'card-hover',
+    className,
+  ]}
+>
+  <slot />
+</Tag>

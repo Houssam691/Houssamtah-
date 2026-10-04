@@ -1,0 +1,54 @@
+# ===========================================================================
+# SECURITY HEADERS  —  Netlify / Cloudflare Pages
+# ===========================================================================
+# Netlify and Cloudflare Pages both read this file verbatim. Copy the same
+# values into your host configuration (nginx, Apache, Caddy) or your platform
+# dashboard if you deploy elsewhere. `vercel.json` carries the same set.
+#
+# `connect-src 'self'` only: the site loads no third-party script, no CDN and
+# no analytics. If you plug a real form endpoint later, add its origin to
+# `connect-src` and `form-action` here. `mailto:` is allowed in `form-action`
+# because the contact brief posts to the visitor's own mail client as its
+# no-JavaScript fallback.
+#
+# There is no 'unsafe-inline' anywhere: the theme is applied by
+# `/theme-boot.js` (a classic external script) and the reveal delays are CSS
+# classes, so the markup carries no inline script and no inline style.
+# ===========================================================================
+
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  Referrer-Policy: strict-origin-when-cross-origin
+  X-Permitted-Cross-Domain-Policies: none
+  Permissions-Policy: geolocation=(), microphone=(), camera=(), payment=(), usb=(), browsing-topics=()
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  X-DNS-Prefetch-Control: off
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; frame-ancestors 'none'; form-action 'self' mailto:; img-src 'self' data:; font-src 'self'; style-src 'self'; script-src 'self'; connect-src 'self'; manifest-src 'self'; upgrade-insecure-requests
+
+# Long-lived caching for fingerprinted build output. `assetsInlineLimit` is 0,
+# so no asset is ever inlined as a data URI.
+/_astro/*
+  Cache-Control: public, max-age=31536000, immutable
+
+/favicon.svg
+  Cache-Control: public, max-age=604800
+
+/og-default.png
+  Cache-Control: public, max-age=604800
+
+/site.webmanifest
+  Cache-Control: public, max-age=604800
+
+/theme-boot.js
+  Cache-Control: public, max-age=604800
+
+/*.html
+  Cache-Control: public, max-age=0, must-revalidate
+
+# While `siteUrlConfirmed` is false, every page also carries a
+# `noindex, nofollow` meta tag and robots.txt disallows everything.
+# Once the domain is confirmed, set the flag in `src/config/site.ts`: both
+# mechanisms disappear together (see README).

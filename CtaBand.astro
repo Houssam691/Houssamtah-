@@ -1,0 +1,55 @@
+---
+import type { Locale } from '~/i18n';
+import { localizedPath } from '~/i18n';
+import Button from '~/components/Button.astro';
+
+interface Props {
+  title: string;
+  body?: string;
+  primary: string;
+  secondary?: string;
+  primaryHref?: string;
+  secondaryHref?: string;
+  locale: Locale;
+  /** Adds the mesh backdrop; turn off for bands that already sit on a mesh. */
+  mesh?: boolean;
+  id?: string;
+}
+
+const {
+  title,
+  body,
+  primary,
+  secondary,
+  primaryHref = '/contact',
+  secondaryHref = '/work',
+  locale,
+  mesh = true,
+  id,
+} = Astro.props;
+---
+
+<section
+  id={id}
+  class="relative isolate overflow-hidden border-y border-line bg-bg-elev py-20 sm:py-28"
+>
+  {mesh && <div class="mesh grain" aria-hidden="true" />}
+
+  <div class="container-site relative">
+    <div class="mx-auto max-w-2xl text-center">
+      <h2 class="text-4xl">{title}</h2>
+      {body && <p class="mx-auto mt-5 max-w-xl text-md text-muted text-pretty">{body}</p>}
+
+      <div class="mt-9 flex flex-wrap items-center justify-center gap-3">
+        <Button href={localizedPath(primaryHref, locale)} variant="primary" size="lg" magnetic>
+          {primary}
+        </Button>
+        {secondary && (
+          <Button href={localizedPath(secondaryHref, locale)} variant="secondary" size="lg">
+            {secondary}
+          </Button>
+        )}
+      </div>
+    </div>
+  </div>
+</section>

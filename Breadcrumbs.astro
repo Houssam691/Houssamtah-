@@ -1,0 +1,46 @@
+---
+import { localizedPath, type Locale } from '~/i18n';
+
+export interface Crumb {
+  label: string;
+  /** Locale-free path. The last crumb is the current page (not a link). */
+  href?: string;
+}
+
+interface Props {
+  items: Crumb[];
+  locale: Locale;
+  label: string;
+  class?: string;
+}
+
+const { items, locale, label, class: className = '' } = Astro.props;
+---
+
+<nav aria-label={label} class={className}>
+  <ol class="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-subtle">
+    {
+      items.map((item, index) => {
+        const last = index === items.length - 1;
+        return (
+          <li class="flex items-center gap-2">
+            {item.href && !last ? (
+              <a href={localizedPath(item.href, locale)} class="link-underline transition-colors hover:text-fg">
+                {item.label}
+              </a>
+            ) : (
+              <span aria-current={last ? 'page' : undefined} class={last ? 'text-muted' : undefined}>
+                {item.label}
+              </span>
+            )}
+            {!last && (
+              <span aria-hidden="true" class="text-subtle/50">
+                /
+              </span>
+            )}
+          </li>
+        );
+      })
+    }
+  </ol>
+</nav>

@@ -1,0 +1,126 @@
+---
+/**
+ * Button / link.
+ *
+ * Renders an `<a>` when `href` is provided, a `<button>` otherwise.
+ * The `magnetic` prop adds a subtle pointer-following effect (progressive
+ * enhancement: without JavaScript the link behaves normally).
+ */
+export type ButtonVariant = 'primary' | 'secondary' | 'ghost';
+export type ButtonSize = 'sm' | 'md' | 'lg';
+
+interface Props {
+  href?: string;
+  variant?: ButtonVariant;
+  size?: ButtonSize;
+  type?: 'button' | 'submit' | 'reset';
+  class?: string;
+  ariaLabel?: string;
+  external?: boolean;
+  magnetic?: boolean;
+  id?: string;
+  name?: string;
+  value?: string;
+}
+
+const {
+  href,
+  variant = 'primary',
+  size = 'md',
+  type = 'button',
+  class: className = '',
+  ariaLabel,
+  external = false,
+  magnetic = false,
+  id,
+  name,
+  value,
+} = Astro.props;
+
+const base =
+  'group/btn relative inline-flex items-center justify-center gap-2 rounded-full font-medium tracking-tight transition-[background-color,border-color,color,transform,box-shadow] duration-300 ease-[var(--ease-out-expo)] no-tap-highlight';
+
+const sizes: Record<ButtonSize, string> = {
+  sm: 'px-4 py-2 text-xs',
+  md: 'px-5 py-2.5 text-sm sm:px-6 sm:py-3 sm:text-base',
+  lg: 'px-6 py-3.5 text-base sm:px-8 sm:py-4 sm:text-lg',
+};
+
+const variants: Record<ButtonVariant, string> = {
+  primary:
+    'bg-accent text-accent-fg hover:bg-accent-hover active:translate-y-px shadow-[0_10px_30px_-14px_var(--accent)] hover:shadow-[0_16px_40px_-14px_var(--accent)]',
+  secondary:
+    'border border-line-strong bg-surface/70 text-fg hover:border-accent hover:text-accent active:translate-y-px backdrop-blur-sm',
+  ghost:
+    'text-fg hover:text-accent px-0! py-0! rounded-none shadow-none hover:shadow-none',
+};
+
+const classes = `${base} ${sizes[size]} ${variants[variant]} ${className}`;
+const Tag = href ? 'a' : 'button';
+---
+
+{
+  magnetic ? (
+    <span class="magnetic inline-flex" data-magnetic="false">
+      <Tag
+        class={classes}
+        href={href}
+        type={href ? undefined : type}
+        aria-label={ariaLabel}
+        id={id}
+        name={name}
+        value={value}
+        rel={external ? 'noopener noreferrer' : undefined}
+        target={external ? '_blank' : undefined}
+      >
+        <slot />
+        {variant !== 'ghost' && (
+          <svg
+            class="size-4 shrink-0 transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover/btn:translate-x-0.5"
+            viewBox="0 0 16 16"
+            fill="none"
+            aria-hidden="true"
+          >
+            <path
+              d="M3 8h10m0 0L9 4m4 4-4 4"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        )}
+      </Tag>
+    </span>
+  ) : (
+    <Tag
+      class={classes}
+      href={href}
+      type={href ? undefined : type}
+      aria-label={ariaLabel}
+      id={id}
+      name={name}
+      value={value}
+      rel={external ? 'noopener noreferrer' : undefined}
+      target={external ? '_blank' : undefined}
+    >
+      <slot />
+      {variant !== 'ghost' && (
+        <svg
+          class="size-4 shrink-0 transition-transform duration-300 ease-[var(--ease-out-expo)] group-hover/btn:translate-x-0.5"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M3 8h10m0 0L9 4m4 4-4 4"
+            stroke="currentColor"
+            stroke-width="1.5"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      )}
+    </Tag>
+  )
+}

@@ -1,0 +1,91 @@
+---
+/**
+ * ===========================================================================
+ * BLOG POST  —  `/blog/<slug>/`
+ * ---------------------------------------------------------------------------
+ * Only one placeholder post exists. While `features.blog` is false the route
+ * still builds (so no link is ever broken) but the page states that the
+ * section is not published yet.
+ * ===========================================================================
+ */
+import { site } from '~/config/site';
+import { defaultLocale, localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Section from '~/components/Section.astro';
+import Notice from '~/components/Notice.astro';
+import Breadcrumbs from '~/components/Breadcrumbs.astro';
+import Button from '~/components/Button.astro';
+
+export const getStaticPaths = () => {
+  const posts = useDict(defaultLocale).blog.posts;
+
+  return localeStaticPaths().flatMap((base) =>
+    posts.map((post) => ({
+      ...base,
+      params: { ...base.params, slug: post.slug },
+      props: { ...base.props, slug: post.slug },
+    })),
+  );
+};
+
+const { locale, slug } = Astro.props as { locale: Locale; slug: string };
+const t: Dict = useDict(locale);
+
+const post = t.blog.posts.find((item) => item.slug === slug);
+if (!post) return Astro.redirect(localizedPath('/blog', locale));
+---
+
+<BaseLayout
+  path={`/blog/${post.slug}`}
+  locale={locale}
+  title={`${post.title} — ${t.seo.blog.title}`}
+  description={post.excerpt}
+>
+  <article class="relative isolate overflow-hidden border-b border-line">
+    <div class="mesh grain" aria-hidden="true"></div>
+
+    <div class="container-site relative py-14 sm:py-20">
+      <Breadcrumbs
+        locale={locale}
+        label={t.footer.navigation}
+        items={[
+          { label: t.brand.name, href: '/' },
+          { label: t.seo.blog.title, href: '/blog' },
+          { label: post.title },
+        ]}
+      />
+
+      <div class="mt-8 flex items-center gap-3">
+        <time class="font-mono text-2xs text-subtle nums" datetime={post.date}>{post.date}</time>
+        <span class="rounded-full border border-line px-2.5 py-0.5 text-2xs text-subtle">
+          {post.status}
+        </span>
+      </div>
+
+      <h1 class="mt-5 max-w-3xl text-4xl sm:text-5xl">{post.title}</h1>
+      <p class="mt-6 max-w-2xl text-lg text-muted text-pretty">{post.excerpt}</p>
+    </div>
+  </article>
+
+  <Section size="lg">
+    <div class="mx-auto max-w-2xl">
+      {!site.features.blog ? (
+        <Notice icon="info" title={t.blog.offNotice}>
+          {t.blog.offNotice}
+        </Notice>
+      ) : (
+        <div class="prose-site">
+          <p>{post.excerpt}</p>
+        </div>
+      )}
+
+      <div class="mt-10">
+        <Button href={localizedPath('/blog', locale)} variant="secondary">
+          {t.seo.blog.title}
+        </Button>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

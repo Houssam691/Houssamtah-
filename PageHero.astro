@@ -1,0 +1,50 @@
+---
+import type { Locale } from '~/i18n';
+import Breadcrumbs, { type Crumb } from '~/components/Breadcrumbs.astro';
+
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  crumbs?: Crumb[];
+  breadcrumbsLabel?: string;
+  locale: Locale;
+  /** Renders CTAs / meta under the lead. */
+  class?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  lead,
+  crumbs,
+  breadcrumbsLabel = 'Fil d’Ariane',
+  locale,
+  class: className = '',
+} = Astro.props;
+---
+
+<section class="relative isolate overflow-hidden border-b border-line">
+  <div class="mesh grain" aria-hidden="true" />
+
+  <div class:list={['container-site relative py-14 sm:py-20', className]}>
+    {crumbs && crumbs.length > 0 && (
+      <Breadcrumbs items={crumbs} locale={locale} label={breadcrumbsLabel} class="mb-8" />
+    )}
+
+    <div class="max-w-3xl">
+      {
+        eyebrow && (
+          <p class="eyebrow">
+            <span class="inline-block size-1.5 rounded-full bg-accent" aria-hidden="true" />
+            {eyebrow}
+          </p>
+        )
+      }
+      <h1 class="mt-5 text-4xl sm:text-5xl">{title}</h1>
+      {lead && <p class="mt-6 max-w-2xl text-lg text-muted text-pretty">{lead}</p>}
+
+      <slot />
+    </div>
+  </div>
+</section>

@@ -1,0 +1,39 @@
+---
+import { site } from '~/config/site';
+import { localizedPath, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+
+interface Props {
+  locale: Locale;
+  t: Dict;
+}
+
+const { locale, t } = Astro.props;
+---
+
+{/* Mobile-only sticky action. Hidden from assistive tech duplication:
+    the same link already exists in the header and in the footer. */}
+<div
+  class="fixed inset-inline-0 bottom-0 z-40 border-t border-line bg-bg/90 backdrop-blur-xl sm:hidden"
+  aria-hidden="false"
+>
+  <div class="flex items-center gap-3 px-4 py-3">
+    <a
+      href={localizedPath('/contact', locale)}
+      class="flex-1 rounded-full bg-accent px-5 py-3 text-center text-sm font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+    >
+      {t.stickyCta.label}
+    </a>
+    <a
+      href={`mailto:${site.email}`}
+      class="grid size-11 shrink-0 place-items-center rounded-full border border-line text-muted"
+      aria-label={t.contact.emailLabel}
+    >
+      <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="2.75" y="5" width="18.5" height="14" rx="2.5" />
+        <path d="M3.5 7.5l8.5 6 8.5-6" />
+      </svg>
+    </a>
+  </div>
+  <div class="h-[env(safe-area-inset-bottom)]" aria-hidden="true"></div>
+</div>

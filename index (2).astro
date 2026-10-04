@@ -1,0 +1,113 @@
+---
+/**
+ * ===========================================================================
+ * BLOG INDEX  —  `/blog/`
+ * ---------------------------------------------------------------------------
+ * The blog is switched OFF in `src/config/site.ts` (`features.blog = false`).
+ * The route and the content structure exist so it can be enabled later without
+ * touching any page file. While it is off, the page explains that it is not
+ * published yet instead of pretending to be a real editorial section.
+ * ===========================================================================
+ */
+import { site } from '~/config/site';
+import { localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import Notice from '~/components/Notice.astro';
+import Button from '~/components/Button.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+const enabled = site.features.blog;
+const posts = t.blog.posts;
+---
+
+<BaseLayout
+  path="/blog"
+  locale={locale}
+  title={t.seo.blog.title}
+  description={t.seo.blog.description}
+>
+  <PageHero
+    eyebrow={t.blog.eyebrow}
+    title={t.blog.title}
+    lead={t.blog.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.blog.title },
+    ]}
+  />
+
+  <Section size="lg">
+    {
+      !enabled && (
+        <Notice icon="info" title={t.blog.offNotice}>
+          {t.blog.offNotice}
+        </Notice>
+      )
+    }
+
+    <h2 class="mt-14 text-2xl">{t.blog.postsTitle}</h2>
+
+    {
+      posts.length === 0 ? (
+        <p class="mt-6 text-sm text-subtle">{t.blog.offNotice}</p>
+      ) : (
+        <ul class="mt-8 grid gap-5 sm:grid-cols-2">
+          {posts.map((post) => (
+            <li class="group relative rounded-lg border border-line bg-surface p-6 transition-colors hover:border-line-strong">
+              <div class="flex items-center gap-3">
+                <span class="font-mono text-2xs text-subtle nums">{post.date}</span>
+                <span class="rounded-full border border-line px-2.5 py-0.5 text-2xs text-subtle">
+                  {post.status}
+                </span>
+              </div>
+              <h3 class="mt-4 text-lg">
+                {enabled ? (
+                  <a href={localizedPath(`/blog/${post.slug}`, locale)} class="after:absolute after:inset-0">
+                    {post.title}
+                  </a>
+                ) : (
+                  /* A link without href is not focusable and is not announced as a
+                     link: while the blog is off the title is plain text. */
+                  <span>{post.title}</span>
+                )}
+              </h3>
+              <p class="mt-2.5 text-sm text-muted text-pretty">{post.excerpt}</p>
+              {enabled && (
+                <span class="mt-5 inline-flex items-center gap-1.5 text-sm font-medium text-accent">
+                  {t.blog.readMore}
+                  <Icon name="arrow" class="size-4" />
+                </span>
+              )}
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </Section>
+
+  <Section tone="elevated" size="md" class="text-center">
+    <div class="mx-auto max-w-2xl">
+      <h2 class="text-3xl">{t.contact.channelsTitle}</h2>
+      <p class="mt-4 text-md text-muted text-pretty">{t.faq.contactBody}</p>
+      <div class="mt-8 flex flex-wrap items-center justify-center gap-3">
+        <Button href={localizedPath('/contact', locale)} variant="primary" magnetic>
+          {t.faq.contactCta}
+        </Button>
+        <Button href={localizedPath('/work', locale)} variant="secondary">
+          {t.seo.work.title}
+        </Button>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

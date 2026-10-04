@@ -1,0 +1,114 @@
+---
+import { site } from '~/config/site';
+import type { ContactBriefField } from '~/content/types';
+
+interface Props {
+  fields: ContactBriefField[];
+  subject: string;
+  submitLabel: string;
+  fallback: string;
+  copyLabel: string;
+  copiedMessage: string;
+}
+
+const { fields, subject, submitLabel, fallback, copyLabel, copiedMessage } = Astro.props;
+
+const inputType = (key: string): 'text' | 'email' => (key === 'contact' ? 'email' : 'text');
+const isLong = (key: string) => ['besoin', 'contexte', 'fonctionnalites'].includes(key);
+
+/** Plain-text brief, used by the no-JavaScript <pre> fallback. */
+const briefTemplate = fields
+  .map((field) => `${field.label} :\n—`)
+  .join('\n\n');
+---
+
+<div class="grid gap-6">
+  {/*
+    `action` is a real no-JavaScript fallback: submitting posts the fields to
+    the mail client. `site.ts` intercepts the submit to build a tidier body,
+    but nothing here depends on that script running.
+  */}
+  <form
+    data-contact-form
+    data-email={site.email}
+    data-subject={subject}
+    data-ok={copiedMessage}
+    action={`mailto:${site.email}`}
+    method="post"
+    enctype="text/plain"
+    class="grid gap-5"
+    novalidate
+  >
+    {
+      fields.map((field) => (
+        <div class="grid gap-2">
+          <label for={`brief-${field.key}`} class="text-sm font-medium text-fg">
+            {field.label}
+          </label>
+          {isLong(field.key) ? (
+            <textarea
+              id={`brief-${field.key}`}
+              name={field.key}
+              rows={3}
+              placeholder={field.hint}
+              data-label-for={field.key}
+              class="w-full resize-y rounded-md border border-line bg-surface px-4 py-3 text-sm text-fg placeholder:text-subtle/70 transition-colors hover:border-line-strong focus:border-accent focus:outline-none"
+            />
+          ) : (
+            <input
+              id={`brief-${field.key}`}
+              name={field.key}
+              type={inputType(field.key)}
+              placeholder={field.hint}
+              data-label-for={field.key}
+              autocomplete="off"
+              class="w-full rounded-md border border-line bg-surface px-4 py-3 text-sm text-fg placeholder:text-subtle/70 transition-colors hover:border-line-strong focus:border-accent focus:outline-none"
+            />
+          )}
+          <p class="text-xs text-subtle">{field.hint}</p>
+        </div>
+      ))
+    }
+
+    <button
+      type="submit"
+      class="mt-2 inline-flex items-center justify-center gap-2 rounded-full bg-accent px-6 py-3 font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+    >
+      {submitLabel}
+      <svg
+        viewBox="0 0 16 16"
+        class="size-4"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        <path d="M2.5 3.5l11 4.5-11 4.5 2.5-4.5-2.5-4.5Zm2.5 4.5h6" />
+      </svg>
+    </button>
+  </form>
+
+  {/* No-JavaScript fallback: a plain link plus a copyable template. */}
+  <div class="hidden rounded-md border border-line bg-surface/50 p-5" data-mailto-fallback>
+    <p class="text-sm text-muted">{fallback}</p>
+    <pre
+      class="mt-4 overflow-x-auto rounded-md border border-line bg-bg p-4 font-mono text-2xs leading-relaxed text-muted"
+    >{briefTemplate}</pre>
+    <div class="mt-4 flex flex-wrap items-center gap-3">
+      <a href={`mailto:${site.email}`} class="link-underline text-sm text-accent">{site.email}</a>
+      <button
+        type="button"
+        data-copy
+        data-copy-target="#brief-template"
+        data-copy-ok={copiedMessage}
+        class="rounded-full border border-line px-3 py-1.5 text-xs text-muted transition-colors hover:border-line-strong hover:text-fg"
+      >
+        {copyLabel}
+      </button>
+    </div>
+  </div>
+
+  <template id="brief-template">{briefTemplate}</template>
+</div>

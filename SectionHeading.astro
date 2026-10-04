@@ -1,0 +1,56 @@
+---
+/**
+ * Eyebrow + title + optional lead. The reference implementation pattern for
+ * every section heading on the site.
+ */
+interface Props {
+  eyebrow?: string;
+  title: string;
+  lead?: string;
+  align?: 'start' | 'center';
+  size?: 'md' | 'lg' | 'xl';
+  as?: 'h1' | 'h2' | 'h3';
+  id?: string;
+  class?: string;
+}
+
+const {
+  eyebrow,
+  title,
+  lead,
+  align = 'start',
+  size = 'lg',
+  as: Tag = 'h2',
+  id,
+  class: className = '',
+} = Astro.props;
+
+const sizes: Record<string, string> = {
+  md: 'text-3xl',
+  lg: 'text-4xl',
+  xl: 'text-5xl',
+};
+---
+
+<div
+  class:list={[
+    'flex flex-col gap-5',
+    align === 'center' && 'items-center text-center',
+    className,
+  ]}
+>
+  {
+    eyebrow && (
+      <p class="eyebrow">
+        <span class="inline-block size-1.5 rounded-full bg-accent" aria-hidden="true" />
+        {eyebrow}
+      </p>
+    )
+  }
+  <Tag id={id} class:list={['max-w-3xl', sizes[size]]}>{title}</Tag>
+  {
+    lead && (
+      <p class="max-w-2xl text-md text-muted text-pretty">{lead}</p>
+    )
+  }
+</div>

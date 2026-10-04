@@ -1,0 +1,106 @@
+---
+/**
+ * ===========================================================================
+ * SERVICES INDEX  —  `/services/`
+ * ===========================================================================
+ */
+import { localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import ServiceCard from '~/components/ServiceCard.astro';
+import Accordion from '~/components/Accordion.astro';
+import CtaBand from '~/components/CtaBand.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+const services = t.services.items;
+const faqItems = services.flatMap((service) => service.faq).slice(0, 8);
+
+const schema = [
+  {
+    '@type': 'ItemList',
+    name: t.services.title,
+    itemListElement: services.map((service, index) => ({
+      '@type': 'ListItem',
+      position: index + 1,
+      name: service.title,
+      url: new URL(
+        localizedPath(`/services/${service.slug}`, locale),
+        Astro.site,
+      ).href,
+    })),
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: faqItems.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  path="/services"
+  locale={locale}
+  title={t.seo.services.title}
+  description={t.seo.services.description}
+  schema={schema}
+>
+  <PageHero
+    eyebrow={t.services.eyebrow}
+    title={t.services.title}
+    lead={t.services.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.services.title },
+    ]}
+  />
+
+  <Section size="lg">
+    <ul class="stagger grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        services.map((service, index) => (
+          <li
+              class:list={['reveal',
+                index % 3 > 0 && `reveal-delay-${index % 3}`,
+              ]}
+              data-revealed="false"
+            >
+            <ServiceCard service={service} locale={locale} headingLevel="h2" />
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.process.stagesTitle} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.process.intro}</p>
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={faqItems} />
+      </div>
+    </div>
+  </Section>
+
+  <CtaBand
+    title={t.services.ctaBand.title}
+    body={t.services.ctaBand.body}
+    primary={t.services.ctaBand.primary}
+    secondary={t.services.ctaBand.secondary}
+    locale={locale}
+  />
+</BaseLayout>

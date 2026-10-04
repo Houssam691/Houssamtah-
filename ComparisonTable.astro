@@ -1,0 +1,49 @@
+---
+/**
+ * Pricing comparison table.
+ * Scrolls horizontally on small screens instead of squashing columns.
+ */
+export interface ComparisonRow {
+  criterion: string;
+  fixed: string;
+  retainer: string;
+  hourly: string;
+}
+
+interface Props {
+  rows: ComparisonRow[];
+  columns: { fixed: string; retainer: string; hourly: string };
+  caption: string;
+  class?: string;
+}
+
+const { rows, columns, caption, class: className = '' } = Astro.props;
+---
+
+<div class:list={['overflow-x-auto', className]}>
+  <table class="w-full min-w-[42rem] border-collapse text-start text-sm">
+    <caption class="sr-only">{caption}</caption>
+    <thead>
+      <tr class="border-b border-line">
+        <th scope="col" class="py-4 pe-4 text-start font-mono text-2xs font-normal uppercase tracking-[0.14em] text-subtle">
+          {caption}
+        </th>
+        <th scope="col" class="px-4 py-4 text-start font-display text-sm font-semibold">{columns.fixed}</th>
+        <th scope="col" class="px-4 py-4 text-start font-display text-sm font-semibold text-accent">{columns.retainer}</th>
+        <th scope="col" class="px-4 py-4 text-start font-display text-sm font-semibold">{columns.hourly}</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-line">
+      {
+        rows.map((row) => (
+          <tr>
+            <th scope="row" class="py-4 pe-4 text-start font-medium text-fg">{row.criterion}</th>
+            <td class="px-4 py-4 text-muted">{row.fixed}</td>
+            <td class="px-4 py-4 text-muted">{row.retainer}</td>
+            <td class="px-4 py-4 text-muted">{row.hourly}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,69 @@
+---
+/**
+ * Filter tabs (FAQ categories). Fully server-rendered: the first panel is
+ * visible without JavaScript, the others are revealed by `site.ts`
+ * which also implements the WAI-ARIA keyboard pattern.
+ *
+ * Usage:
+ *   <Tabs tabs={tabs}>
+ *     <Fragment slot="panel-general"><Accordion ... /></Fragment>
+ *     <Fragment slot="panel-budget"><Accordion ... /></Fragment>
+ *   </Tabs>
+ */
+export interface Tab {
+  id: string;
+  label: string;
+  count?: number;
+}
+
+interface Props {
+  tabs: Tab[];
+  id?: string;
+  label?: string;
+  class?: string;
+}
+
+const { tabs, id = 'tabs', label = 'Filtres', class: className = '' } = Astro.props;
+---
+
+<div data-tabs class={className}>
+  <div
+    role="tablist"
+    aria-label={label}
+    class="no-scrollbar -mx-5 flex gap-2 overflow-x-auto px-5 pb-1 sm:mx-0 sm:flex-wrap sm:px-0"
+  >
+    {
+      tabs.map((tab, index) => (
+        <button
+          type="button"
+          role="tab"
+          id={`${id}-tab-${tab.id}`}
+          aria-controls={`${id}-panel-${tab.id}`}
+          aria-selected={index === 0 ? 'true' : 'false'}
+          tabindex={index === 0 ? 0 : -1}
+          class="shrink-0 rounded-full border border-line px-4 py-2 text-sm text-muted transition-colors hover:border-line-strong hover:text-fg aria-selected:border-accent aria-selected:bg-accent-soft aria-selected:text-accent"
+        >
+          {tab.label}
+          {typeof tab.count === 'number' && (
+            <span class="nums ms-2 text-2xs text-subtle">{tab.count}</span>
+          )}
+        </button>
+      ))
+    }
+  </div>
+
+  {
+    tabs.map((tab, index) => (
+      <div
+        role="tabpanel"
+        id={`${id}-panel-${tab.id}`}
+        aria-labelledby={`${id}-tab-${tab.id}`}
+        hidden={index !== 0}
+        tabindex="0"
+        class="mt-8 focus-visible:outline-none"
+      >
+        <slot name={`panel-${tab.id}`} />
+      </div>
+    ))
+  }
+</div>

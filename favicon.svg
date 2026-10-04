@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Vitrine Studio">
+  <rect width="32" height="32" rx="7" fill="#0a0b0d"/>
+  <rect x="1.5" y="1.5" width="29" height="29" rx="6" fill="none" stroke="#ff6a3c" stroke-opacity=".55" stroke-width="1.5"/>
+  <g fill="none" stroke="#ff6a3c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M11.5 11.5 7 16l4.5 4.5"/>
+    <path d="M20.5 11.5 25 16l-4.5 4.5"/>
+    <path d="M17.6 9.5 14.4 22.5"/>
+  </g>
+</svg>

@@ -1,0 +1,44 @@
+---
+/**
+ * Legal / editorial body: a title, an intro and a list of sections.
+ * Sections support a paragraph and an optional bullet list, which covers
+ * mentions légales, politique de confidentialité and CGV.
+ */
+export interface LegalSection {
+  h: string;
+  p?: string;
+  list?: string[];
+}
+
+interface Props {
+  title: string;
+  intro: string;
+  sections: LegalSection[];
+  updated?: string;
+  class?: string;
+}
+
+const { title, intro, sections, updated, class: className = '' } = Astro.props;
+---
+
+<article class:list={['prose-site mx-auto', className]}>
+  <h1 class="text-4xl sm:text-5xl">{title}</h1>
+  {updated && <p class="mt-4 font-mono text-2xs uppercase tracking-[0.14em] text-subtle">{updated}</p>}
+  <p class="mt-6 text-md">{intro}</p>
+
+  {
+    sections.map((section) => (
+      <section>
+        <h2>{section.h}</h2>
+        {section.p && <p>{section.p}</p>}
+        {section.list && (
+          <ul>
+            {section.list.map((item) => (
+              <li>{item}</li>
+            ))}
+          </ul>
+        )}
+      </section>
+    ))
+  }
+</article>

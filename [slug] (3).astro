@@ -1,0 +1,76 @@
+---
+/**
+ * ===========================================================================
+ * LEGAL PAGES  —  `/legal/<slug>/`
+ * ---------------------------------------------------------------------------
+ *   mentions  → mentions légales   (editor, host, registration)
+ *   privacy   → politique de confidentialité
+ *   cgv       → conditions générales de vente
+ *
+ * Every value that is still unknown comes from `src/config/site.ts` and keeps
+ * a visible `TO COMPLETE` marker: the template is usable, the legal review is
+ * not optional.
+ * ===========================================================================
+ */
+import { useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Section from '~/components/Section.astro';
+import LegalBody from '~/components/LegalBody.astro';
+import Notice from '~/components/Notice.astro';
+
+export const getStaticPaths = () =>
+  localeStaticPaths().flatMap((base) =>
+    ['mentions', 'privacy', 'cgv'].map((slug) => ({
+      ...base,
+      params: { ...base.params, slug },
+      props: { ...base.props, slug },
+    })),
+  );
+
+type LegalSlug = 'mentions' | 'privacy' | 'cgv';
+
+const { locale, slug } = Astro.props as { locale: Locale; slug: LegalSlug };
+const t: Dict = useDict(locale);
+
+const page: Dict['legal']['cgv'] | Dict['legal']['mentions'] | Dict['legal']['privacy'] = {
+  mentions: t.legal.mentions,
+  privacy: t.legal.privacy,
+  cgv: t.legal.cgv,
+}[slug];
+
+const notice = 'notice' in page ? page.notice : undefined;
+
+const seo = {
+  mentions: t.seo.mentions,
+  privacy: t.seo.privacy,
+  cgv: t.seo.cgv,
+}[slug];
+
+const path = `/legal/${slug}`;
+---
+
+<BaseLayout
+  path={path}
+  locale={locale}
+  title={seo.title}
+  description={seo.description}
+>
+  <Section size="lg" class="pt-14 sm:pt-20">
+    <LegalBody
+      title={page.title}
+      intro={page.intro}
+      sections={page.sections}
+      updated={t.legal.updated}
+    />
+
+    <div class="mx-auto mt-14 max-w-[44rem] space-y-4">
+      {slug === 'cgv' && (
+        <Notice icon="alert" title={notice?.split('.')[0]}>
+          {notice}
+        </Notice>
+      )}
+    </div>
+  </Section>
+</BaseLayout>

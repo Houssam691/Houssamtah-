@@ -1,0 +1,220 @@
+---
+/**
+ * ===========================================================================
+ * PRICING  —  `/pricing/`
+ * ---------------------------------------------------------------------------
+ * No invented prices: every amount stays a visible placeholder until the studio
+ * owner validates it (see `src/content/en/pricing.ts`).
+ * ===========================================================================
+ */
+import { hasPlaceholder } from '~/config/site';
+import { localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import ComparisonTable from '~/components/ComparisonTable.astro';
+import Accordion from '~/components/Accordion.astro';
+import Notice from '~/components/Notice.astro';
+import Button from '~/components/Button.astro';
+import CtaBand from '~/components/CtaBand.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+const models = t.pricing.models;
+const featured = models.find((model) => model.featured) ?? models[0];
+const comparisonColumns = {
+  fixed: models[0]?.name ?? '',
+  retainer: models[1]?.name ?? '',
+  hourly: models[2]?.name ?? '',
+};
+
+const schema = [
+  {
+    '@type': 'OfferCatalog',
+    name: t.pricing.title,
+    itemListElement: models.map((model) => ({
+      '@type': 'Offer',
+      name: model.name,
+      description: `${model.tagline} — ${model.priceLabel}`,
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+    })),
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: t.pricing.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  path="/pricing"
+  locale={locale}
+  title={t.seo.pricing.title}
+  description={t.seo.pricing.description}
+  schema={schema}
+>
+  <PageHero
+    eyebrow={t.pricing.eyebrow}
+    title={t.pricing.title}
+    lead={t.pricing.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.pricing.title },
+    ]}
+  >
+    <p class="mt-8 max-w-2xl rounded-md border border-line bg-surface/60 px-5 py-4 text-sm text-muted">
+      {t.pricing.disclaimer}
+    </p>
+  </PageHero>
+
+  {/* ========================================================= MODELS */}
+  <Section size="lg">
+    <ul class="grid gap-6 lg:grid-cols-3">
+      {
+        models.map((model, index) => (
+          <li
+            class:list={[
+              'reveal relative flex flex-col rounded-lg border bg-surface p-6 sm:p-8',
+              model.featured
+                ? 'border-accent/50 shadow-[0_30px_80px_-50px_var(--accent)]'
+                : 'border-line',
+              index > 0 && `reveal-delay-${Math.min(11, index)}`,
+            ]}
+            data-revealed="false"
+          >
+            {model.featured && (
+              <span class="absolute -top-3 start-6 rounded-full bg-accent px-3 py-1 text-2xs font-medium text-accent-fg">
+                {t.pricing.compareBody.split('—')[0]}
+              </span>
+            )}
+
+            <h2 class="text-xl">{model.name}</h2>
+            <p class="mt-2.5 text-sm text-muted text-pretty">{model.tagline}</p>
+
+            <p class="mt-7 font-display text-3xl leading-none text-balance">
+              {model.priceLabel}
+            </p>
+            <p
+              class:list={[
+                'mt-3 text-xs leading-relaxed',
+                hasPlaceholder(model.priceLabel) ? 'text-accent-ink' : 'text-subtle',
+              ]}
+            >
+              {model.priceNote}
+            </p>
+
+            <p class="mt-7 border-t border-line pt-5 text-sm">
+              <span class="eyebrow">{t.pricing.termsTitle}</span>
+              <span class="mt-2 block text-muted text-pretty">{model.bestFor}</span>
+            </p>
+
+            <ul class="mt-6 grid gap-2.5">
+              {model.includes.map((item) => (
+                <li class="flex items-start gap-2.5 text-sm text-muted">
+                  <Icon name="check" class="mt-1 size-3.5 shrink-0 text-accent" />
+                  <span class="text-pretty">{item}</span>
+                </li>
+              ))}
+            </ul>
+
+            <p class="mt-6 text-xs text-subtle">{model.cadence}</p>
+
+            <div class="mt-8 pt-2">
+              <Button
+                href={localizedPath('/contact', locale)}
+                variant={model.featured ? 'primary' : 'secondary'}
+                class="w-full"
+              >
+                {t.nav.cta}
+              </Button>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </Section>
+
+  {/* ====================================================== COMPARISON */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-10 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.pricing.compareTitle} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.pricing.compareBody}</p>
+      </div>
+      <div class="lg:col-span-8">
+        <ComparisonTable
+          rows={t.pricing.compare}
+          columns={comparisonColumns}
+          caption={t.pricing.compareTitle}
+        />
+      </div>
+    </div>
+  </Section>
+
+  {/* =========================================================== TERMS */}
+  <Section size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.pricing.termsTitle} size="md" />
+        <div class="mt-6">
+          <Notice icon="info" title={t.pricing.disclaimer}>
+            {t.pricing.termsNotice}
+          </Notice>
+        </div>
+      </div>
+
+      <div class="grid gap-6 lg:col-span-8 sm:grid-cols-2">
+        {
+          t.pricing.terms.map((term) => (
+            <div class="rounded-lg border border-line bg-surface p-6">
+              <h3 class="text-lg">{term.title}</h3>
+              <p class="mt-2.5 text-sm text-muted text-pretty">{term.body}</p>
+            </div>
+          ))
+        }
+      </div>
+    </div>
+  </Section>
+
+  {/* ============================================================= FAQ */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.pricing.faqTitle} size="md" />
+        {featured && (
+          <div class="mt-8">
+            <Button href={localizedPath('/contact', locale)} variant="secondary">
+              {featured.name}
+            </Button>
+          </div>
+        )}
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={t.pricing.faq} />
+      </div>
+    </div>
+  </Section>
+
+  <CtaBand
+    title={t.pricing.cta.title}
+    body={t.pricing.cta.body}
+    primary={t.pricing.cta.primary}
+    secondary={t.seo.process.title}
+    secondaryHref="/process"
+    locale={locale}
+  />
+</BaseLayout>

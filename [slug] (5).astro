@@ -1,0 +1,235 @@
+---
+/**
+ * ===========================================================================
+ * SERVICE DETAIL  —  `/services/<slug>/`
+ * ---------------------------------------------------------------------------
+ * One template renders all six services: getStaticPaths() returns one path
+ * per slug and the matching service is read from the props. Adding a seventh
+ * service to `src/content/en/services.ts` is enough — this file does not
+ * change.
+ * ===========================================================================
+ */
+import { site } from '~/config/site';
+import { defaultLocale, localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict, Service } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import Accordion from '~/components/Accordion.astro';
+import CheckList from '~/components/CheckList.astro';
+import Notice from '~/components/Notice.astro';
+import Button from '~/components/Button.astro';
+import CtaBand from '~/components/CtaBand.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => {
+  const services = useDict(defaultLocale).services.items;
+
+  return localeStaticPaths().flatMap((base) =>
+    services.map((service) => ({
+      ...base,
+      params: { ...base.params, slug: service.slug },
+      props: { ...base.props, slug: service.slug },
+    })),
+  );
+};
+
+const { locale, slug } = Astro.props as { locale: Locale; slug: string };
+const t: Dict = useDict(locale);
+
+const service: Service | undefined = t.services.items.find((item) => item.slug === slug);
+
+/** A missing slug must not produce a page with holes: fall back to the index. */
+if (!service) return Astro.redirect(localizedPath('/services', locale));
+
+const others = t.services.items.filter((item) => item.slug !== service.slug).slice(0, 3);
+const path = `/services/${service.slug}`;
+
+const schema = [
+  {
+    '@type': 'Service',
+    name: service.title,
+    description: service.short,
+    serviceType: service.title,
+    url: new URL(localizedPath(path, locale), Astro.site ?? site.siteUrl).href,
+    provider: { '@id': new URL('/', Astro.site ?? site.siteUrl).href + '#organization' },
+    areaServed: 'Worldwide',
+    hasOfferCatalog: {
+      '@type': 'OfferCatalog',
+      name: service.included.title,
+      itemListElement: service.included.items.map((item) => ({
+        '@type': 'Offer',
+        itemOffered: { '@type': 'Service', name: item },
+      })),
+    },
+  },
+  {
+    '@type': 'FAQPage',
+    mainEntity: service.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  path={path}
+  locale={locale}
+  title={`${service.title} — ${t.seo.services.title}`}
+  description={service.short}
+  schema={schema}
+>
+  <PageHero
+    eyebrow={`${t.seo.services.title} · ${service.index}`}
+    title={service.title}
+    lead={service.short}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.services.title, href: '/services' },
+      { label: service.title },
+    ]}
+  >
+    <div class="mt-9 flex flex-wrap items-center gap-3">
+      <Button href={localizedPath('/contact', locale)} variant="primary" size="lg" magnetic>
+        {t.nav.cta}
+      </Button>
+      <Button href={localizedPath('/pricing', locale)} variant="secondary" size="lg">
+        {t.seo.pricing.title}
+      </Button>
+    </div>
+    <p class="mt-5 font-mono text-2xs text-subtle">
+      {service.timeline.label} : {service.timeline.value}
+    </p>
+  </PageHero>
+
+  {/* ============================================== AUDIENCE + INCLUDED */}
+  <Section size="lg">
+    <div class="grid gap-14 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <SectionHeading title={service.audience.title} size="md" />
+        <p class="mt-5 text-md text-muted text-pretty">{service.audience.body}</p>
+        <div class="mt-8 flex flex-wrap gap-2">
+          {service.keywords.map((keyword) => (
+            <span class="rounded-full border border-line px-3 py-1 font-mono text-2xs text-subtle">
+              {keyword}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      <div class="lg:col-span-7">
+        <div class="rounded-lg border border-line bg-surface p-6 sm:p-8">
+          <h2 class="text-xl">{service.included.title}</h2>
+          <div class="mt-6">
+            <CheckList items={service.included.items} columns={2} />
+          </div>
+        </div>
+      </div>
+    </div>
+  </Section>
+
+  {/* ============================================================= HOW */}
+  <Section tone="elevated" size="lg">
+    <SectionHeading eyebrow={t.process.eyebrow} title={service.how.title} size="md" />
+
+    <ol class="stagger mt-12 grid gap-6 md:grid-cols-3">
+      {
+        service.how.steps.map((step, index) => (
+          <li
+            class:list={[
+              'reveal relative rounded-lg border border-line bg-surface p-6',
+              index > 0 && `reveal-delay-${Math.min(11, index)}`,
+            ]}
+            data-revealed="false"
+          >
+            <span class="font-mono text-2xs text-accent nums">
+              {String(index + 1).padStart(2, '0')}
+            </span>
+            <h3 class="mt-4 text-lg">{step.title}</h3>
+            <p class="mt-2.5 text-sm text-muted text-pretty">{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </Section>
+
+  {/* =================================================== DELIVERABLES */}
+  <Section size="lg">
+    <div class="grid gap-14 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <SectionHeading title={service.deliverables.title} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{service.cta.body}</p>
+      </div>
+      <div class="lg:col-span-7">
+        <ul class="grid gap-3">
+          {
+            service.deliverables.items.map((item) => (
+              <li class="flex items-start gap-3 rounded-md border border-line bg-surface/60 px-5 py-4 text-sm text-muted">
+                <Icon name="check" class="mt-0.5 size-4 shrink-0 text-accent" />
+                <span class="text-pretty">{item}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+  </Section>
+
+  {/* =========================================================== FAQ */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.services.faqTitle} size="md" />
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={service.faq} />
+      </div>
+    </div>
+  </Section>
+
+  {/* ================================================ OTHER SERVICES */}
+  <Section size="lg">
+    <SectionHeading title={t.services.otherServices} size="md" />
+
+    <ul class="mt-10 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        others.map((item) => (
+          <li>
+            <a
+              href={localizedPath(`/services/${item.slug}`, locale)}
+              class="card-hover group flex h-full flex-col rounded-lg border border-line bg-surface p-6"
+            >
+              <span class="grid size-10 place-items-center rounded-md bg-accent-soft text-accent" aria-hidden="true">
+                <Icon name={item.icon} class="size-5" />
+              </span>
+              <span class="mt-5 font-display text-lg font-medium">{item.title}</span>
+              <span class="mt-2 text-sm text-muted text-pretty">{item.short}</span>
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="mt-10">
+      <Notice icon="info" title={t.contact.availabilityNote}>
+        {t.process.cta.body}
+      </Notice>
+    </div>
+  </Section>
+
+  <CtaBand
+    title={service.cta.title}
+    body={service.cta.body}
+    primary={t.nav.cta}
+    secondary={t.seo.work.title}
+    secondaryHref="/work"
+    locale={locale}
+    mesh={false}
+  />
+</BaseLayout>

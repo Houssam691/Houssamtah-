@@ -1,0 +1,148 @@
+---
+import { site } from '~/config/site';
+import { localizedPath, type Locale } from '~/i18n';
+import ThemeToggle from '~/components/ThemeToggle.astro';
+
+interface Props {
+  locale: Locale;
+  path: string;
+  t: import('../content/types').Dict;
+}
+
+const { locale, path, t } = Astro.props;
+
+const navItems = t.nav.items;
+const isActive = (href: string) => path === href || path.startsWith(`${href}/`);
+---
+
+<header
+  id="site-header"
+  class="sticky top-0 z-50 transition-[background-color,border-color,backdrop-filter] duration-500 data-[scrolled=true]:border-b data-[scrolled=true]:border-line data-[scrolled=true]:bg-bg/80 data-[scrolled=true]:backdrop-blur-xl"
+  data-scrolled="false"
+>
+  <div class="container-site">
+    <div
+      class="flex h-[var(--header-height)] items-center justify-between gap-4 border-b border-transparent"
+    >
+      {/* ---------------------------------------------------------- Brand */}
+      <a
+        href={localizedPath('/', locale)}
+        class="group flex shrink-0 items-center gap-2.5"
+        aria-label={t.brand.a11yHome}
+      >
+        <span
+          class="relative grid size-8 place-items-center rounded-sm bg-accent text-accent-fg transition-transform duration-500 ease-[var(--ease-spring)] group-hover:rotate-[-6deg]"
+          aria-hidden="true"
+        >
+          <svg viewBox="0 0 24 24" class="size-4.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8.5 8.5 4 12l4.5 3.5M15.5 8.5 20 12l-4.5 3.5M13.4 5.6l-2.8 12.8" />
+          </svg>
+        </span>
+        <span class="font-display text-base font-semibold tracking-tight">
+          {site.brand}<span class="text-accent">.</span>
+        </span>
+      </a>
+
+      {/* ------------------------------------------------- Desktop nav */}
+      <nav aria-label={t.nav.ariaLabel} class="hidden lg:block">
+        <ul class="flex items-center gap-1">
+          {
+            navItems.map((item) => (
+              <li>
+                <a
+                  href={localizedPath(item.href, locale)}
+                  aria-current={isActive(item.href) ? 'page' : undefined}
+                  class:list={[
+                    'relative block rounded-sm px-3 py-2 text-sm transition-colors',
+                    isActive(item.href) ? 'text-fg' : 'text-muted hover:text-fg',
+                  ]}
+                >
+                  {item.label}
+                  <span
+                    aria-hidden="true"
+                    class:list={[
+                      'absolute inset-x-3 -bottom-px h-px origin-center bg-accent transition-transform duration-400 ease-[var(--ease-out-expo)]',
+                      isActive(item.href) ? 'scale-x-100' : 'scale-x-0',
+                    ]}
+                  />
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </nav>
+
+      {/* ----------------------------------------------------- Actions */}
+      <div class="flex shrink-0 items-center gap-2 sm:gap-3">
+        <ThemeToggle
+          label={t.common.toggleTheme}
+          class="hidden sm:inline-flex"
+        />
+
+        <a
+          href={localizedPath('/contact', locale)}
+          class="hidden rounded-full bg-accent px-4 py-2 text-sm font-medium text-accent-fg shadow-[0_8px_24px_-12px_var(--accent)] transition-colors hover:bg-accent-hover md:inline-flex"
+        >
+          {t.nav.cta}
+        </a>
+
+        {/* --------------------------------------------- Mobile toggle */}
+        <button
+          type="button"
+          class="grid size-9 place-items-center rounded-sm border border-line text-fg lg:hidden"
+          data-menu-toggle
+          aria-expanded="false"
+          aria-controls="mobile-menu"
+          aria-label={t.common.openMenu}
+        >
+          <span class="sr-only">{t.common.menu}</span>
+          <svg viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" data-icon="open">
+            <path d="M4 7h16M4 12h16M4 17h16" />
+          </svg>
+          <svg viewBox="0 0 24 24" class="hidden size-5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" aria-hidden="true" data-icon="close">
+            <path d="M6 6l12 12M18 6 6 18" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  {/* ------------------------------------------------------ Mobile menu */}
+  <div
+    id="mobile-menu"
+    class="invisible absolute inset-x-0 top-full origin-top border-b border-line bg-bg/95 opacity-0 backdrop-blur-xl transition-[opacity,transform,visibility] duration-300 ease-[var(--ease-out-expo)] lg:hidden data-[open=true]:visible data-[open=true]:translate-y-0 data-[open=true]:opacity-100"
+    data-open="false"
+  >
+    <nav aria-label={t.nav.ariaLabel} class="container-site py-6">
+      <ul class="flex flex-col divide-y divide-line">
+        {
+          navItems.map((item, index) => (
+            <li>
+              <a
+                href={localizedPath(item.href, locale)}
+                aria-current={isActive(item.href) ? 'page' : undefined}
+                class="flex items-center justify-between py-4 font-display text-xl"
+              >
+                <span class:list={[isActive(item.href) && 'text-accent']}>
+                  {item.label}
+                </span>
+                <span class="font-mono text-2xs text-subtle">
+                  {String(index + 1).padStart(2, '0')}
+                </span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="mt-6 flex items-center justify-between gap-4">
+        <ThemeToggle label={t.common.toggleTheme} />
+        <a
+          href={localizedPath('/contact', locale)}
+          class="inline-flex flex-1 items-center justify-center rounded-full bg-accent px-5 py-3 font-medium text-accent-fg transition-colors hover:bg-accent-hover"
+        >
+          {t.nav.cta}
+        </a>
+      </div>
+    </nav>
+  </div>
+</header>

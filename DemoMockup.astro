@@ -1,0 +1,197 @@
+---
+/**
+ * Demonstration mockups.
+ * ---------------------------------------------------------------------------
+ * Pure HTML/CSS skeletons — no screenshot, no stock image, no third party.
+ * Each one is an abstract layout that illustrates a project type; every one of
+ * them is labelled as a demonstration on the page that uses it.
+ */
+export type MockupVariant = 'business' | 'booking' | 'automation';
+
+interface Props {
+  variant: MockupVariant;
+  /** Short caption rendered under the frame. */
+  caption?: string;
+  class?: string;
+}
+
+const { variant, caption, class: className = '' } = Astro.props;
+
+const chrome = {
+  business: { url: 'demo-vitrine.local', label: 'Site vitrine' },
+  booking: { url: 'demo-reservation.local', label: 'Application de réservation' },
+  automation: { url: 'demo-automatisation.local', label: 'Flux automatisé' },
+}[variant];
+
+const bars = 'rounded-full bg-line-strong';
+---
+
+<figure class:list={['not-prose', className]}>
+  <div
+    class="relative overflow-hidden rounded-lg border border-line bg-surface/70 shadow-[0_28px_70px_-40px_rgb(0_0_0/0.8)]"
+  >
+    {/* Window chrome */}
+    <div class="flex items-center gap-3 border-b border-line bg-bg-elev/80 px-4 py-2.5">
+      <span class="flex gap-1.5" aria-hidden="true">
+        <span class="size-2.5 rounded-full bg-line-strong" />
+        <span class="size-2.5 rounded-full bg-line-strong" />
+        <span class="size-2.5 rounded-full bg-line-strong" />
+      </span>
+      <span class="truncate rounded-full border border-line bg-bg px-3 py-0.5 font-mono text-2xs text-subtle">
+        {chrome.url}
+      </span>
+      <span class="ms-auto shrink-0 rounded-full bg-accent-soft px-2 py-0.5 text-2xs text-accent">
+        {chrome.label}
+      </span>
+    </div>
+
+    {/* ---------------------------------------------------------- Canvas */}
+    <div class="relative aspect-16/11 w-full bg-bg p-4 sm:p-5">
+      {
+        variant === 'business' && (
+          <div class="grid h-full grid-rows-[auto_1fr_auto] gap-3">
+            <div class="flex items-center justify-between">
+              <span class="h-2 w-14 rounded-full bg-accent/70" />
+              <span class="flex gap-2">
+                <span class="h-1.5 w-8 rounded-full bg-line-strong" />
+                <span class="h-1.5 w-8 rounded-full bg-line-strong" />
+                <span class="h-1.5 w-8 rounded-full bg-line-strong" />
+              </span>
+            </div>
+
+            <div class="grid gap-3 sm:grid-cols-[1.15fr_1fr]">
+              <div class="flex flex-col justify-center gap-2.5">
+                <span class="h-3 w-[85%] rounded-full bg-line-strong" />
+                <span class="h-3 w-[62%] rounded-full bg-line-strong" />
+                <span class="h-1.5 w-[90%] rounded-full bg-line" />
+                <span class="h-1.5 w-[70%] rounded-full bg-line" />
+                <span class="mt-1.5 h-4 w-16 rounded-full bg-accent/80" />
+              </div>
+              <div class="relative overflow-hidden rounded-md border border-line bg-surface-2">
+                <div class="glow-accent absolute -end-6 -top-6 size-20 rounded-full blur-2xl" />
+                <div class="glow-accent-2 absolute -bottom-8 -start-6 size-24 rounded-full blur-2xl" />
+                <div class="relative h-full w-full bg-[linear-gradient(to_bottom_right,transparent_35%,rgb(255_255_255/0.05))]" />
+              </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2">
+              {[0, 1, 2].map(() => (
+                <span class="h-7 rounded-md border border-line bg-surface-2/60" />
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {
+        variant === 'booking' && (
+          <div class="grid h-full grid-cols-[1fr_1.25fr] gap-3">
+            <div class="flex flex-col gap-2">
+              <span class="h-2 w-16 rounded-full bg-accent/70" />
+              {[0, 1, 2, 3].map((row) => (
+                <span
+                  class:list={[
+                    'h-6 rounded-md border',
+                    row === 1 ? 'border-accent/50 bg-accent-soft' : 'border-line bg-surface-2/50',
+                  ]}
+                />
+              ))}
+              <span class="mt-auto h-6 rounded-full bg-line-strong" />
+            </div>
+
+            <div class="flex flex-col gap-2.5 rounded-md border border-line bg-surface-2/40 p-3">
+              <div class="flex items-center justify-between">
+                <span class="h-2 w-20 rounded-full bg-line-strong" />
+                <span class="size-4 rounded-full border border-line" />
+              </div>
+              <div class="grid grid-cols-7 gap-1">
+                {Array.from({ length: 28 }).map((_, index) => (
+                  <span
+                    class:list={[
+                      'aspect-square rounded-[3px] border',
+                      index % 9 === 0
+                        ? 'border-accent/50 bg-accent-soft'
+                        : 'border-line/70 bg-line/30',
+                    ]}
+                  />
+                ))}
+              </div>
+              <div class="mt-auto grid grid-cols-2 gap-2">
+                <span class="h-6 rounded-md border border-line" />
+                <span class="h-6 rounded-full bg-accent/80" />
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        variant === 'automation' && (
+          <div class="grid h-full grid-rows-[auto_1fr] gap-3">
+            <div class="flex items-center justify-between">
+              <span class="h-2 w-20 rounded-full bg-accent/70" />
+              <span class="flex gap-1.5">
+                <span class="h-4 w-10 rounded-full border border-line" />
+                <span class="h-4 w-10 rounded-full bg-accent/80" />
+              </span>
+            </div>
+
+            <div class="grid gap-2.5 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center">
+              {[
+                { label: 'Formulaire', tone: 'line' },
+                { label: 'Traitement', tone: 'accent' },
+                { label: 'Notification', tone: 'line' },
+              ].map((node, index) => (
+                <>
+                  <div
+                    class:list={[
+                      'flex flex-col gap-2 rounded-md border p-2.5',
+                      node.tone === 'accent'
+                        ? 'border-accent/40 bg-accent-soft'
+                        : 'border-line bg-surface-2/50',
+                    ]}
+                  >
+                    <span class="text-2xs text-muted">{node.label}</span>
+                    <span class:list={[bars, 'h-1.5 w-full']} />
+                    <span class:list={[bars, 'h-1.5 w-4/5']} />
+                  </div>
+                  {index < 2 && (
+                    <svg
+                      viewBox="0 0 24 8"
+                      class="hidden h-2 w-6 text-subtle sm:block"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.2"
+                      aria-hidden="true"
+                    >
+                      <path d="M0 4h20m0 0-3-2.5M20 4l-3 2.5" />
+                    </svg>
+                  )}
+                </>
+              ))}
+            </div>
+
+            <div class="grid grid-cols-4 gap-2 border-t border-line pt-2.5">
+              {[0, 1, 2, 3].map(() => (
+                <div class="flex flex-col gap-1.5">
+                  <span class:list={[bars, 'h-1.5 w-2/3']} />
+                  <span class="h-2.5 w-full rounded-sm bg-line/40" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )
+      }
+
+      {/* Demo watermark, part of the frame so it can never be cropped out */}
+      <span
+        class="pointer-events-none absolute bottom-3 end-3 rounded-full border border-line bg-bg/80 px-2.5 py-1 font-mono text-2xs uppercase tracking-[0.14em] text-subtle backdrop-blur"
+        aria-hidden="true"
+      >
+        demo
+      </span>
+    </div>
+  </div>
+
+  {caption && <figcaption class="mt-3 text-xs text-subtle">{caption}</figcaption>}
+</figure>

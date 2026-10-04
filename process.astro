@@ -1,0 +1,140 @@
+---
+/**
+ * ===========================================================================
+ * PROCESS  —  `/process/`
+ * ===========================================================================
+ */
+import { useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import Timeline from '~/components/Timeline.astro';
+import CheckList from '~/components/CheckList.astro';
+import Accordion from '~/components/Accordion.astro';
+import CtaBand from '~/components/CtaBand.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+const schema = [
+  {
+    '@type': 'FAQPage',
+    mainEntity: t.process.faq.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  path="/process"
+  locale={locale}
+  title={t.seo.process.title}
+  description={t.seo.process.description}
+  schema={schema}
+>
+  <PageHero
+    eyebrow={t.process.eyebrow}
+    title={t.process.title}
+    lead={t.process.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.process.title },
+    ]}
+  />
+
+  {/* ========================================================= STAGES */}
+  <Section size="lg">
+    <SectionHeading title={t.process.stagesTitle} size="md" />
+
+    <div class="mt-14">
+      <Timeline
+        stages={t.process.stages}
+        labels={{
+          duration: t.services.timelineTitle,
+          client: t.process.clientNeeds.title,
+          outputs: t.process.clientReceives.title,
+        }}
+      />
+    </div>
+  </Section>
+
+  {/* ================================================ CLIENT INVOLVEMENT */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <SectionHeading title={t.process.clientNeeds.title} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.process.clientNeeds.body}</p>
+      </div>
+      <div class="lg:col-span-7">
+        <CheckList items={t.process.clientNeeds.items} columns={2} />
+      </div>
+    </div>
+
+    <div class="mt-16 grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <SectionHeading title={t.process.clientReceives.title} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.process.clientReceives.body}</p>
+      </div>
+      <div class="lg:col-span-7">
+        <CheckList items={t.process.clientReceives.items} columns={2} />
+      </div>
+    </div>
+  </Section>
+
+  {/* ============================================ OWNERSHIP + CADENCE */}
+  <Section size="lg">
+    <div class="grid gap-14 lg:grid-cols-2">
+      <div>
+        <SectionHeading title={t.process.ownership.title} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.process.ownership.body}</p>
+        <div class="mt-7">
+          <CheckList items={t.process.ownership.items} />
+        </div>
+      </div>
+
+      <div>
+        <SectionHeading title={t.process.cadence.title} size="md" />
+        <p class="mt-5 text-sm text-muted text-pretty">{t.process.cadence.body}</p>
+        <div class="mt-7">
+          <CheckList items={t.process.cadence.items} />
+        </div>
+      </div>
+    </div>
+
+    <div class="mt-14 rounded-lg border border-line bg-surface p-6 sm:p-8">
+      <h2 class="text-xl">{t.process.revisions.title}</h2>
+      <p class="mt-3 max-w-3xl text-sm text-muted text-pretty">{t.process.revisions.body}</p>
+    </div>
+  </Section>
+
+  {/* ============================================================= FAQ */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.process.faqTitle} size="md" />
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={t.process.faq} />
+      </div>
+    </div>
+  </Section>
+
+  <CtaBand
+    title={t.process.cta.title}
+    body={t.process.cta.body}
+    primary={t.process.cta.primary}
+    secondary={t.seo.pricing.title}
+    secondaryHref="/pricing"
+    locale={locale}
+  />
+</BaseLayout>

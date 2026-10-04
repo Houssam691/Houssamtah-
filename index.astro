@@ -1,0 +1,328 @@
+---
+/**
+ * ===========================================================================
+ * HOME PAGE  —  src/pages/index.astro  (French)
+ * ---------------------------------------------------------------------------
+ * One Astro component renders the site: `localeStaticPaths()` produces `/`.
+ * The `locale` prop selects the dictionary, so the markup below is written
+ * once.
+ * ===========================================================================
+ */
+import { site } from '~/config/site';
+import { localizedPath, locales, useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Button from '~/components/Button.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import ServiceCard from '~/components/ServiceCard.astro';
+import DemoCard from '~/components/DemoCard.astro';
+import Accordion from '~/components/Accordion.astro';
+import Notice from '~/components/Notice.astro';
+import CtaBand from '~/components/CtaBand.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+const seo = t.seo.home;
+const hero = t.home.hero;
+const featuredServices = t.services.items.slice(0, 3);
+const featuredDemos = t.work.demos.slice(0, 2);
+const teaserFaq = t.faq.items.slice(0, 5);
+
+/* Home page schema: FAQPage from the same data that is displayed. */
+const faqSchema = {
+  '@type': 'FAQPage',
+  mainEntity: teaserFaq.map((item) => ({
+    '@type': 'Question',
+    name: item.q,
+    acceptedAnswer: { '@type': 'Answer', text: item.a },
+  })),
+};
+
+const schema = [
+  faqSchema,
+  {
+    '@type': 'WebSite',
+    '@id': `${new URL('/', site.siteUrl).href}#website`,
+    url: new URL('/', site.siteUrl).href,
+    name: site.brand,
+    inLanguage: locales.map((item) => item.hreflang),
+  },
+];
+---
+
+<BaseLayout
+  path="/"
+  locale={locale}
+  title={seo.title}
+  description={seo.description}
+  schema={schema}
+>
+  {/* ========================================================== HERO */}
+  <section class="relative isolate overflow-hidden">
+    <div class="mesh grain" aria-hidden="true"></div>
+
+    <div class="container-site relative pb-20 pt-16 sm:pb-28 sm:pt-24">
+      <div class="max-w-4xl">
+        <p class="eyebrow reveal" data-revealed="false">
+          <span class="inline-block size-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+          {hero.eyebrow}
+        </p>
+
+        <h1 class="reveal mt-7 text-5xl sm:text-6xl" data-revealed="false">
+          {hero.title}
+          <span class="mt-2 block text-accent">{hero.titleAccent}</span>
+        </h1>
+
+        <p class="reveal mt-8 max-w-2xl text-lg text-muted text-pretty" data-revealed="false">
+          {hero.subtitle}
+        </p>
+
+        <div class="reveal mt-10 flex flex-wrap items-center gap-3" data-revealed="false">
+          <Button href={localizedPath('/contact', locale)} variant="primary" size="lg" magnetic>
+            {hero.primaryCta}
+          </Button>
+          <Button href={localizedPath('/services', locale)} variant="secondary" size="lg">
+            {hero.secondaryCta}
+          </Button>
+        </div>
+
+        <p class="reveal mt-6 flex items-start gap-2 text-xs text-subtle" data-revealed="false">
+          <Icon name="check" class="mt-px size-3.5 shrink-0 text-accent" />
+          {hero.note}
+        </p>
+      </div>
+
+      {/* Code-inspired decorative panel */}
+      <div
+        class="reveal mt-16 hidden lg:mt-24 lg:block"
+        data-revealed="false"
+        aria-hidden="true"
+      >
+        <div
+          class="relative overflow-hidden rounded-xl border border-line bg-surface/60 shadow-[0_40px_120px_-60px_rgb(0_0_0/0.9)] backdrop-blur"
+        >
+          <div class="flex items-center gap-2 border-b border-line px-4 py-2.5">
+            <span class="size-2.5 rounded-full bg-line-strong"></span>
+            <span class="size-2.5 rounded-full bg-line-strong"></span>
+            <span class="size-2.5 rounded-full bg-line-strong"></span>
+            <span class="ms-3 font-mono text-2xs text-subtle">studio.config.ts</span>
+          </div>
+          <pre class="overflow-x-auto p-5 font-mono text-xs leading-relaxed text-muted"><code>{
+  [
+    'const projet = {',
+    `  surMesure: ${t.home.valueProp.length > 40},`,
+    "  gabaritImpose: false,",
+    "  jargon: 'aucun',",
+    '  proprietaireDuCode: vous,',
+    '  proprietaireDuDomaine: vous,',
+    "  livres: ['code source', 'documentation'],",
+    '};',
+  ].join('\n')
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <p
+      class="container-site relative hidden items-center gap-2 pb-10 text-2xs uppercase tracking-[0.16em] text-subtle sm:flex"
+      aria-hidden="true"
+    >
+      <span class="h-px w-10 bg-line-strong"></span>
+      {hero.scrollHint}
+    </p>
+  </section>
+
+  {/* ================================================ VALUE PROPOSITION */}
+  <Section tone="bordered" size="sm">
+    <div class="grid gap-8 lg:grid-cols-12">
+      <p class="lg:col-span-4 font-mono text-2xs uppercase tracking-[0.16em] text-subtle">
+        {t.home.valueProp.length > 0 ? '///' : ''}
+      </p>
+      <p class="reveal font-display text-2xl leading-snug text-balance lg:col-span-8" data-revealed="false">
+        {t.home.valueProp}
+      </p>
+    </div>
+  </Section>
+
+  {/* ======================================================== SERVICES */}
+  <Section id="services" size="lg">
+    <SectionHeading
+      eyebrow={t.home.services.eyebrow}
+      title={t.home.services.title}
+      lead={t.home.services.body}
+    />
+
+    <div class="stagger mt-14 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        featuredServices.map((service, index) => (
+          <div class:list={['reveal', index > 0 && `reveal-delay-${Math.min(11, index)}`]} data-revealed="false">
+            <ServiceCard service={service} locale={locale} headingLevel="h3" />
+          </div>
+        ))
+      }
+    </div>
+
+    <div class="mt-10">
+      <Button href={localizedPath('/services', locale)} variant="secondary">
+        {t.home.services.cta}
+      </Button>
+    </div>
+  </Section>
+
+  {/* ====================================================== HOW WE WORK */}
+  <Section tone="elevated" size="lg" class="overflow-hidden">
+    <div class="grid gap-14 lg:grid-cols-12">
+      <div class="lg:col-span-5">
+        <SectionHeading
+          eyebrow={t.home.howWeWork.eyebrow}
+          title={t.home.howWeWork.title}
+          lead={t.home.howWeWork.body}
+        />
+        <div class="mt-8">
+          <Button href={localizedPath('/process', locale)} variant="secondary">
+            {t.home.howWeWork.cta}
+          </Button>
+        </div>
+      </div>
+
+      <ol class="stagger grid gap-6 lg:col-span-7">
+        {
+          t.home.howWeWork.steps.map((step, index) => (
+            <li
+              class:list={['reveal flex gap-5', index > 0 && `reveal-delay-${Math.min(11, index)}`]}
+              data-revealed="false"
+            >
+              <span
+                class="grid size-9 shrink-0 place-items-center rounded-full border border-line font-mono text-2xs text-accent nums"
+                aria-hidden="true"
+              >
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <div>
+                <h3 class="text-lg">{step.title}</h3>
+                <p class="mt-2 text-sm text-muted text-pretty">{step.body}</p>
+              </div>
+            </li>
+          ))
+        }
+      </ol>
+    </div>
+  </Section>
+
+  {/* ==================================================== SELECTED WORK */}
+  <Section size="lg">
+    <SectionHeading
+      eyebrow={t.home.selectedWork.eyebrow}
+      title={t.home.selectedWork.title}
+      lead={t.home.selectedWork.body}
+    />
+
+    <div class="mt-10">
+      <Notice tone="accent" icon="spark" title={t.home.selectedWork.notice.split('.')[0]}>
+        {t.home.selectedWork.notice}
+      </Notice>
+    </div>
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      {
+        featuredDemos.map((project, index) => (
+          <DemoCard
+            project={project}
+            locale={locale}
+            demoNotice={t.home.selectedWork.notice}
+            delay={index * 90}
+          />
+        ))
+      }
+    </div>
+
+    <div class="mt-10">
+      <Button href={localizedPath('/work', locale)} variant="secondary">
+        {t.home.selectedWork.cta}
+      </Button>
+    </div>
+  </Section>
+
+  {/* =========================================================== STACK */}
+  <Section tone="elevated" size="md" class="overflow-hidden">
+    <div class="grid gap-10 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading
+          eyebrow={t.home.stack.eyebrow}
+          title={t.home.stack.title}
+          lead={t.home.stack.body}
+          size="md"
+        />
+      </div>
+      <ul class="flex flex-wrap gap-2 lg:col-span-8">
+        {
+          site.stack.map((item) => (
+            <li class="rounded-full border border-line bg-surface/60 px-4 py-2 font-mono text-xs text-muted">
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Section>
+
+  {/* ========================================================== WHY US */}
+  <Section size="lg">
+    <SectionHeading
+      eyebrow={t.home.whyUs.eyebrow}
+      title={t.home.whyUs.title}
+      lead={t.home.whyUs.body}
+    />
+
+    <div class="stagger mt-14 grid gap-x-10 gap-y-9 sm:grid-cols-2 lg:grid-cols-3">
+      {
+        t.home.whyUs.points.map((point, index) => (
+          <div class:list={['reveal', index > 0 && `reveal-delay-${Math.min(11, index)}`]} data-revealed="false">
+            <span class="grid size-8 place-items-center rounded-full bg-accent-soft text-accent" aria-hidden="true">
+              <Icon name="check" class="size-4" />
+            </span>
+            <h3 class="mt-5 text-lg">{point.title}</h3>
+            <p class="mt-2.5 text-sm text-muted text-pretty">{point.body}</p>
+          </div>
+        ))
+      }
+    </div>
+  </Section>
+
+  {/* ====================================================== FAQ TEASER */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading
+          eyebrow={t.home.faqTeaser.eyebrow}
+          title={t.home.faqTeaser.title}
+          lead={t.home.faqTeaser.body}
+          size="md"
+        />
+        <div class="mt-8">
+          <Button href={localizedPath('/faq', locale)} variant="secondary">
+            {t.home.faqTeaser.cta}
+          </Button>
+        </div>
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={teaserFaq} />
+      </div>
+    </div>
+  </Section>
+
+  <CtaBand
+    title={t.home.ctaBand.title}
+    body={t.home.ctaBand.body}
+    primary={t.home.ctaBand.primary}
+    secondary={t.home.ctaBand.secondary}
+    secondaryHref="/contact"
+    locale={locale}
+  />
+</BaseLayout>

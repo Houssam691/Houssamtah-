@@ -1,0 +1,205 @@
+---
+/**
+ * ===========================================================================
+ * CASE STUDY  —  `/work/<slug>/`
+ * ---------------------------------------------------------------------------
+ * Template for the demonstration projects. It is written so that a real case
+ * study can reuse it unchanged: set `isDemo: false`, drop the notice block and
+ * fill the placeholders (see README.md, "Ajouter une mission réelle").
+ * ===========================================================================
+ */
+import { defaultLocale, localizedPath, useDict, type Locale } from '~/i18n';
+import type { DemoWork, Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import DemoMockup from '~/components/DemoMockup.astro';
+import DemoCard from '~/components/DemoCard.astro';
+import Notice from '~/components/Notice.astro';
+import Breadcrumbs from '~/components/Breadcrumbs.astro';
+import Button from '~/components/Button.astro';
+import CtaBand from '~/components/CtaBand.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => {
+  const demos = useDict(defaultLocale).work.demos;
+
+  return localeStaticPaths().flatMap((base) =>
+    demos.map((project) => ({
+      ...base,
+      params: { ...base.params, slug: project.slug },
+      props: { ...base.props, slug: project.slug },
+    })),
+  );
+};
+
+const { locale, slug } = Astro.props as { locale: Locale; slug: string };
+const t: Dict = useDict(locale);
+
+const project: DemoWork | undefined = t.work.demos.find((item) => item.slug === slug);
+if (!project) return Astro.redirect(localizedPath('/work', locale));
+
+const related = t.work.demos.filter((item) => item.slug !== project.slug).slice(0, 2);
+const path = `/work/${project.slug}`;
+
+const schema = [
+  {
+    '@type': 'CreativeWork',
+    name: project.title,
+    description: project.summary,
+    url: new URL(localizedPath(path, locale), Astro.site).href,
+    creativeWorkStatus: project.isDemo ? 'Concept' : 'Published',
+    keywords: project.stack.join(', '),
+  },
+];
+---
+
+<BaseLayout
+  path={path}
+  locale={locale}
+  title={`${project.title} — ${t.seo.caseStudy.title}`}
+  description={project.summary}
+  schema={schema}
+>
+  {/* ========================================================== HERO */}
+  <section class="relative isolate overflow-hidden border-b border-line">
+    <div class="mesh grain" aria-hidden="true"></div>
+
+    <div class="container-site relative py-14 sm:py-20">
+      <Breadcrumbs
+        locale={locale}
+        label={t.footer.navigation}
+        items={[
+          { label: t.brand.name, href: '/' },
+          { label: t.seo.work.title, href: '/work' },
+          { label: project.title },
+        ]}
+      />
+
+      <div class="mt-8 grid gap-12 lg:grid-cols-12 lg:items-center">
+        <div class="lg:col-span-6">
+          <p class="eyebrow">
+            <span class="inline-block size-1.5 rounded-full bg-accent" aria-hidden="true"></span>
+            {project.subtitle}
+          </p>
+          <h1 class="mt-6 text-4xl sm:text-5xl">{project.title}</h1>
+          <p class="mt-6 max-w-xl text-lg text-muted text-pretty">{project.summary}</p>
+
+          <div class="mt-8 flex flex-wrap items-center gap-3">
+            <Button href={localizedPath('/contact', locale)} variant="primary" magnetic>
+              {t.nav.cta}
+            </Button>
+            <Button href={localizedPath('/work', locale)} variant="secondary">
+              {t.work.backLabel}
+            </Button>
+          </div>
+        </div>
+
+        <div class="lg:col-span-6">
+          <DemoMockup variant={project.mockup} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {/* =============================================== DEMO DISCLAIMER */}
+  {project.isDemo && (
+    <Section size="sm" class="pt-0 sm:pt-0">
+      <Notice tone="accent" icon="alert" title={project.notice.title}>
+        {project.notice.body}
+      </Notice>
+    </Section>
+  )}
+
+  {/* ========================================================= BRIEF */}
+  <Section size="lg">
+    <div class="grid gap-14 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.work.brief} size="md" />
+      </div>
+      <div class="lg:col-span-8">
+        <h2 class="font-display text-xl font-semibold">{project.brief.title}</h2>
+        <p class="prose-site mt-4 max-w-2xl text-pretty">{project.brief.body}</p>
+
+        <p class="mt-8 font-mono text-2xs uppercase tracking-[0.14em] text-subtle">
+          {project.timeline.label}
+        </p>
+        <p class="mt-1.5 text-sm text-muted">{project.timeline.value}</p>
+      </div>
+    </div>
+  </Section>
+
+  {/* ================================================== BUILD + CHOICES */}
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-14 lg:grid-cols-2">
+      <div>
+        <h2 class="text-2xl">{project.build.title}</h2>
+        <ul class="mt-6 grid gap-3">
+          {
+            project.build.items.map((item) => (
+              <li class="flex items-start gap-3 rounded-md border border-line bg-surface/60 px-5 py-4 text-sm text-muted">
+                <Icon name="check" class="mt-0.5 size-4 shrink-0 text-accent" />
+                <span class="text-pretty">{item}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <div>
+        <h2 class="text-2xl">{project.decisions.title}</h2>
+        <ul class="mt-6 grid gap-3">
+          {
+            project.decisions.items.map((item) => (
+              <li class="flex items-start gap-3 rounded-md border border-line bg-surface/60 px-5 py-4 text-sm text-muted">
+                <Icon name="arrow" class="mt-0.5 size-4 shrink-0 rotate-45 text-accent" />
+                <span class="text-pretty">{item}</span>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </div>
+
+    <div class="mt-14">
+      <p class="eyebrow">{t.work.stack}</p>
+      <ul class="mt-4 flex flex-wrap gap-2">
+        {
+          project.stack.map((item) => (
+            <li class="rounded-full border border-line bg-surface px-3.5 py-1.5 font-mono text-xs text-muted">
+              {item}
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </Section>
+
+  {/* ================================================ RELATED PROJECTS */}
+  <Section size="lg">
+    <SectionHeading title={t.work.relatedTitle} size="md" />
+
+    <div class="mt-10 grid gap-6 lg:grid-cols-2">
+      {
+        related.map((item, index) => (
+          <DemoCard
+            project={item}
+            locale={locale}
+            demoNotice={t.work.demoNoticeBody}
+            delay={index * 90}
+          />
+        ))
+      }
+    </div>
+  </Section>
+
+  <CtaBand
+    title={t.work.ctaTitle}
+    body={t.work.ctaBody}
+    primary={t.work.ctaPrimary}
+    secondary={t.seo.process.title}
+    secondaryHref="/process"
+    locale={locale}
+  />
+</BaseLayout>

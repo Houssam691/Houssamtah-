@@ -1,0 +1,45 @@
+---
+/**
+ * Theme switch — a real two-state control rather than a bare icon button:
+ * a sliding thumb and two glyphs, the whole track being the hit area.
+ *
+ * The visual state is pure CSS driven by `<html data-theme>` (see
+ * `global.css`), so it is right before the script runs and after a restore.
+ * `site.ts` only keeps `aria-pressed` and the browser UI tint in sync.
+ */
+interface Props {
+  label: string;
+  class?: string;
+}
+
+const { label, class: className } = Astro.props;
+---
+
+<button type="button" class={className} data-theme-switch aria-label={label} aria-pressed="false">
+  <svg
+    class="ts-glyph ts-sun"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <circle cx="12" cy="12" r="4"></circle>
+    <path d="M12 3v1.6M12 19.4V21M3 12h1.6M19.4 12H21M5.6 5.6l1.2 1.2M17.2 17.2l1.2 1.2M18.4 5.6l-1.2 1.2M6.8 17.2l-1.2 1.2"></path>
+  </svg>
+
+  <svg
+    class="ts-glyph ts-moon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="1.7"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    <path d="M20 14.2A8.2 8.2 0 0 1 9.8 4a8.2 8.2 0 1 0 10.2 10.2Z"></path>
+  </svg>
+</button>

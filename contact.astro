@@ -1,0 +1,146 @@
+---
+/**
+ * ===========================================================================
+ * CONTACT  —  `/contact/`
+ * ---------------------------------------------------------------------------
+ * No backend, no third-party form service: the form composes a `mailto:` link
+ * and the e-mail address is always reachable as a plain link (no-JavaScript).
+ * See `site.contactFormEndpoint` in `src/config/site.ts` to plug a real
+ * endpoint later.
+ * ===========================================================================
+ */
+import { site } from '~/config/site';
+import { useDict, type Locale } from '~/i18n';
+import type { Dict } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import ContactBrief from '~/components/ContactBrief.astro';
+import Accordion from '~/components/Accordion.astro';
+import Notice from '~/components/Notice.astro';
+import Icon from '~/components/Icon.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+/* The config is `as const`, so an empty placeholder narrows to `never`.
+   Widening to `string` keeps the truthiness checks below type-safe. */
+const phone = site.phone as string;
+const bookingUrl = site.bookingUrl as string;
+
+const channels: { key: string; label: string; value: string; href: string; icon: string }[] = [
+  { key: 'email', label: t.contact.emailLabel, value: site.email, href: `mailto:${site.email}`, icon: 'mail' },
+];
+
+if (phone) {
+  channels.push({
+    key: 'phone',
+    label: t.contact.phoneLabel,
+    value: phone,
+    href: `tel:${phone.replace(/\s/g, '')}`,
+    icon: 'phone',
+  });
+}
+
+if (bookingUrl) {
+  channels.push({
+    key: 'booking',
+    label: t.contact.bookingLabel,
+    value: bookingUrl,
+    href: bookingUrl,
+    icon: 'calendar',
+  });
+}
+---
+
+<BaseLayout
+  path="/contact"
+  locale={locale}
+  title={t.seo.contact.title}
+  description={t.seo.contact.description}
+>
+  <PageHero
+    eyebrow={t.contact.eyebrow}
+    title={t.contact.title}
+    lead={t.contact.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.contact.title },
+    ]}
+  />
+
+  <Section size="lg">
+    <div class="grid gap-14 lg:grid-cols-12">
+      {/* ================================================ CHANNELS */}
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.contact.channelsTitle} size="md" />
+
+        <ul class="mt-8 grid gap-3">
+          {
+            channels.map((channel) => (
+              <li>
+                <a
+                  href={channel.href}
+                  class="card-hover flex items-center gap-4 rounded-md border border-line bg-surface px-5 py-4"
+                >
+                  <span class="grid size-9 shrink-0 place-items-center rounded-full bg-accent-soft text-accent" aria-hidden="true">
+                    <Icon name={channel.icon} class="size-4.5" />
+                  </span>
+                  <span class="min-w-0">
+                    <span class="block font-mono text-2xs uppercase tracking-[0.14em] text-subtle">
+                      {channel.label}
+                    </span>
+                    <span class="mt-1 block truncate text-sm text-fg">{channel.value}</span>
+                  </span>
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+
+        <div class="mt-6 space-y-4">
+          <Notice icon="info" title={t.contact.responseTitle}>
+            {t.contact.responseBody}
+          </Notice>
+          <Notice icon="check" title={t.contact.availabilityNote}>
+            {t.contact.formNote}
+          </Notice>
+        </div>
+      </div>
+
+      {/* =================================================== BRIEF */}
+      <div class="lg:col-span-8">
+        <SectionHeading title={t.contact.briefTitle} size="md" />
+        <p class="mt-5 max-w-2xl text-sm text-muted text-pretty">{t.contact.briefBody}</p>
+
+        <div class="mt-9">
+          <ContactBrief
+            fields={t.contact.briefFields}
+            subject={t.contact.briefSubject}
+            submitLabel={t.contact.briefSubmit}
+            fallback={t.contact.briefFallback}
+            copyLabel={t.contact.briefCopy}
+            copiedMessage={t.contact.briefCopied}
+          />
+        </div>
+      </div>
+    </div>
+  </Section>
+
+  <Section tone="elevated" size="lg">
+    <div class="grid gap-12 lg:grid-cols-12">
+      <div class="lg:col-span-4">
+        <SectionHeading title={t.contact.faqTitle} size="md" />
+      </div>
+      <div class="lg:col-span-8">
+        <Accordion items={t.contact.faq} />
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

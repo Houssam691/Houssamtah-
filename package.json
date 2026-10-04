@@ -1,0 +1,38 @@
+{
+  "name": "vitrine-studio",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Vitrine Studio - custom web development & automation studio. Astro + Tailwind CSS, static, English only.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "astro dev",
+    "start": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "astro check",
+    "typecheck": "tsc --noEmit",
+    "content:check": "node scripts/check-content.mjs",
+    "assets:build": "node scripts/build-assets.mjs",
+    "placeholders": "node scripts/list-placeholders.mjs",
+    "audit": "node scripts/audit-html.mjs",
+    "deploy:check": "node scripts/check-deploy.mjs",
+    "budget": "node scripts/check-budget.mjs",
+    "verify": "npm run content:check && npm run typecheck && npm run check && npm run build && npm run audit && npm run deploy:check && npm run budget"
+  },
+  "dependencies": {
+    "@astrojs/sitemap": "^3.7.4",
+    "astro": "^7.3.5"
+  },
+  "devDependencies": {
+    "@astrojs/check": "^0.9.4",
+    "@fontsource-variable/bricolage-grotesque": "^5.3.0",
+    "@fontsource-variable/inter": "^5.3.0",
+    "@tailwindcss/vite": "^4.3.3",
+    "sharp": "^0.35.5",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^5.9.3"
+  }
+}

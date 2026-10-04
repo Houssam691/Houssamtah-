@@ -1,0 +1,43 @@
+---
+/**
+ * Disclosure list built on native <details>/<summary>:
+ * keyboard and screen-reader behaviour without a line of JavaScript.
+ */
+export interface AccordionItem {
+  q: string;
+  a: string;
+}
+
+interface Props {
+  items: AccordionItem[];
+  /** Keep several panels open at once (default) or allow only one. */
+  multiple?: boolean;
+  name?: string;
+  class?: string;
+}
+
+const { items, multiple = true, name = 'faq', class: className = '' } = Astro.props;
+---
+
+<div class:list={['divide-y divide-line border-y border-line', className]}>
+  {
+    items.map((item, index) => (
+      <details class="group" name={multiple ? undefined : name} open={index === 0 && !multiple}>
+        <summary class="flex cursor-pointer list-none items-start justify-between gap-6 py-5 text-left transition-colors marker:content-none hover:text-accent">
+          <span class="font-display text-md font-medium text-balance">{item.q}</span>
+          <span
+            class="mt-1 grid size-6 shrink-0 place-items-center rounded-full border border-line text-muted transition-transform duration-300 ease-[var(--ease-out-expo)] group-open:rotate-45 group-hover:border-accent group-hover:text-accent"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 16 16" class="size-3.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+              <path d="M8 3.5v9M3.5 8h9" />
+            </svg>
+          </span>
+        </summary>
+        <div class="prose-site max-w-2xl pb-6 text-sm">
+          {item.a}
+        </div>
+      </details>
+    ))
+  }
+</div>

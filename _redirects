@@ -1,0 +1,23 @@
+# ===========================================================================
+# REDIRECTS  —  Netlify / Cloudflare Pages
+# ===========================================================================
+# Astro builds every page as `<route>/index.html` with `trailingSlash: 'always'`.
+# Netlify and Cloudflare Pages serve those forms directly, so no catch-all rule
+# is needed — and a catch-all would be actively harmful here: it would append a
+# slash to asset URLs such as `/_astro/index.css` and break the page.
+#
+# Vercel gets the same behaviour from `cleanUrls` + `trailingSlash` in
+# `vercel.json`, which is why that file has no `redirects` block at all.
+
+# The site used to be published under a locale prefix. English now lives at the
+# root, so old prefixed URLs are sent to the canonical English path.
+/en    /        301
+/en/*  /:splat  301
+/ar    /        301
+/ar/*  /:splat  301
+
+# Locales are case sensitive; normalise the obvious mistakes.
+/EN    /        301
+/EN/*  /:splat  301
+/AR    /        301
+/AR/*  /:splat  301

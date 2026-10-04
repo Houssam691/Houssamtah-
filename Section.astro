@@ -1,0 +1,56 @@
+---
+/**
+ * Vertical rhythm + horizontal container for a page section.
+ * `id` is used for in-page anchors and by the "skip to content" link.
+ */
+interface Props {
+  id?: string;
+  label?: string;
+  as?: 'section' | 'div' | 'article' | 'footer' | 'header' | 'aside';
+  tone?: 'default' | 'elevated' | 'bordered' | 'plain';
+  size?: 'sm' | 'md' | 'lg';
+  class?: string;
+  containerClass?: string;
+  labelledBy?: string;
+}
+
+const {
+  id,
+  label,
+  as: Tag = 'section',
+  tone = 'default',
+  size = 'md',
+  class: className = '',
+  containerClass = '',
+  labelledBy,
+} = Astro.props;
+
+const tones: Record<string, string> = {
+  default: '',
+  elevated: 'bg-bg-elev',
+  bordered: 'rule-top',
+  plain: '',
+};
+const sizes: Record<string, string> = {
+  sm: 'py-12 sm:py-16',
+  md: 'py-16 sm:py-24',
+  lg: 'py-20 sm:py-32',
+};
+---
+
+<Tag
+  id={id}
+  aria-label={label}
+  aria-labelledby={labelledBy}
+  class:list={[
+    'relative',
+    tones[tone],
+    size === 'lg' && !tone.match(/bordered/) ? 'rule-top' : '',
+    sizes[size],
+    className,
+  ]}
+>
+  <div class:list={['container-site', containerClass]}>
+    <slot />
+  </div>
+</Tag>

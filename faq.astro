@@ -1,0 +1,111 @@
+---
+/**
+ * ===========================================================================
+ * FAQ  —  `/faq/`
+ * ---------------------------------------------------------------------------
+ * The twelve questions are distributed across the eight categories declared in
+ * the content files, in order. Each question therefore appears exactly once,
+ * and adding a question to the content file is enough to see it here.
+ * ===========================================================================
+ */
+import { localizedPath, useDict, type Locale } from '~/i18n';
+import type { Dict, FaqItem } from '~/content/types';
+import { localeStaticPaths } from '~/lib/paths';
+import BaseLayout from '~/layouts/BaseLayout.astro';
+import PageHero from '~/components/PageHero.astro';
+import Section from '~/components/Section.astro';
+import SectionHeading from '~/components/SectionHeading.astro';
+import Tabs from '~/components/Tabs.astro';
+import Accordion from '~/components/Accordion.astro';
+import Button from '~/components/Button.astro';
+
+export const getStaticPaths = () => localeStaticPaths();
+
+const { locale } = Astro.props as { locale: Locale };
+const t: Dict = useDict(locale);
+
+/**
+ * Distributes the questions over the categories. With 8 categories and 12
+ * questions the questions are spread evenly (2 for the first four categories,
+ * 1 for the last four) instead of piling up into the first tab.
+ */
+const items = t.faq.items;
+const categories = t.faq.categories;
+
+const perCategory = Math.ceil(items.length / Math.max(categories.length, 1));
+const grouped = categories.map((category, index) => ({
+  ...category,
+  items: items.slice(index * perCategory, (index + 1) * perCategory) as FaqItem[],
+}));
+
+const tabs = grouped.map((group) => ({
+  id: group.id,
+  label: group.label,
+  count: group.items.length,
+}));
+
+const schema = [
+  {
+    '@type': 'FAQPage',
+    mainEntity: items.map((item) => ({
+      '@type': 'Question',
+      name: item.q,
+      acceptedAnswer: { '@type': 'Answer', text: item.a },
+    })),
+  },
+];
+---
+
+<BaseLayout
+  path="/faq"
+  locale={locale}
+  title={t.seo.faq.title}
+  description={t.seo.faq.description}
+  schema={schema}
+>
+  <PageHero
+    eyebrow={t.faq.eyebrow}
+    title={t.faq.title}
+    lead={t.faq.intro}
+    locale={locale}
+    breadcrumbsLabel={t.footer.navigation}
+    crumbs={[
+      { label: t.brand.name, href: '/' },
+      { label: t.seo.faq.title },
+    ]}
+  />
+
+  <Section size="lg">
+    <Tabs tabs={tabs} id="faq" label={t.faq.title}>
+      {
+        grouped.map((group) => (
+          <Fragment slot={`panel-${group.id}`}>
+            <Accordion items={group.items} />
+          </Fragment>
+        ))
+      }
+    </Tabs>
+
+    {/* Everything at once, for search engines and for people who prefer a
+        single scrollable list (and for the no-JavaScript fallback). */}
+    <noscript>
+      <div class="mt-12">
+        <SectionHeading title={t.faq.title} size="md" />
+        <div class="mt-8">
+          <Accordion items={items} />
+        </div>
+      </div>
+    </noscript>
+  </Section>
+
+  <Section tone="elevated" size="md">
+    <div class="mx-auto max-w-2xl text-center">
+      <SectionHeading title={t.faq.contactTitle} lead={t.faq.contactBody} align="center" size="md" />
+      <div class="mt-8">
+        <Button href={localizedPath('/contact', locale)} variant="primary" size="lg" magnetic>
+          {t.faq.contactCta}
+        </Button>
+      </div>
+    </div>
+  </Section>
+</BaseLayout>

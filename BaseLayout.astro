@@ -1,0 +1,148 @@
+---
+import { site } from '~/config/site';
+import {
+  dir as dirFor,
+  localeFromUrl,
+  localeMeta,
+  stripLocale,
+  useDict,
+  type Locale,
+} from '~/i18n';
+import type { Dict } from '~/content/types';
+import Footer from '~/components/Footer.astro';
+import Header from '~/components/Header.astro';
+import StickyCta from '~/components/StickyCta.astro';
+import '~/styles/global.css';
+
+/**
+ * Preloading the faces used above the fold removes the swap shift.
+ * The other subsets stay lazy thanks to the `unicode-range` of each
+ * @font-face.
+ */
+import interLatinWoff2 from '@fontsource-variable/inter/files/inter-latin-wght-normal.woff2?url';
+import displayLatinWoff2 from '@fontsource-variable/bricolage-grotesque/files/bricolage-grotesque-latin-wght-normal.woff2?url';
+
+interface Props {
+  /** Page path without locale prefix: '/', '/services', '/services/web'. */
+  path?: string;
+  /** Overrides the locale detected from the URL (used by the 404 page). */
+  locale?: Locale;
+  title?: string;
+  description?: string;
+  /** Extra JSON-LD objects merged into the head graph. */
+  schema?: Record<string, unknown>[];
+}
+
+const { path: pathProp, locale: localeProp, title, description, schema = [] } = Astro.props;
+
+const locale = localeProp ?? localeFromUrl(Astro.url);
+const t: Dict = useDict(locale);
+const meta = localeMeta(locale);
+const { path } = stripLocale(
+  pathProp ?? Astro.url.pathname,
+);
+
+/* ------------------------------------------------------------------ SEO */
+const siteUrl = Astro.site ?? new URL(site.siteUrl);
+const pageTitle =
+  path === '/' || !title
+    ? `${t.seo.home.title} — ${site.brand}`
+    : `${title} — ${site.brand}`;
+const pageDescription = description ?? t.seo.home.description;
+const canonical = new URL(Astro.url.pathname, siteUrl);
+const noindex = !site.siteUrlConfirmed;
+const ogImage = new URL('/og-default.png', siteUrl).href;
+
+const organization = {
+  '@type': 'ProfessionalService',
+  '@id': `${new URL('/', siteUrl).href}#organization`,
+  name: site.brand,
+  description: site.tagline,
+  url: new URL('/', siteUrl).href,
+  email: site.email,
+  logo: new URL('/favicon.svg', siteUrl).href,
+  image: new URL('/og-default.png', siteUrl).href,
+  areaServed: 'Worldwide',
+  knowsLanguage: ['en'],
+  ...(site.social.length ? { sameAs: site.social.map((item) => item.href) } : {}),
+};
+
+/**
+ * One `@graph` for the whole page. The organization node is shared by every
+ * page, so it is always present, and every page adds its own nodes to it.
+ */
+const graph = [organization, ...schema];
+const ldJson = JSON.stringify(
+  graph.length === 1
+    ? { '@context': 'https://schema.org', ...graph[0] }
+    : { '@context': 'https://schema.org', '@graph': graph },
+);
+---
+
+<!doctype html>
+<html
+  lang={meta.htmlLang}
+  dir={dirFor(locale)}
+  data-theme="dark"
+  class="scheme-dark"
+>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0a0b0d" />
+
+    <!-- Applies the saved theme before first paint. A classic external
+         script is render-blocking, so there is no flash — and no inline
+         script, so the CSP needs no 'unsafe-inline' for scripts. -->
+    <script is:inline src="/theme-boot.js"></script>
+
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    <link rel="canonical" href={canonical.href} />
+    {noindex && <meta name="robots" content="noindex, nofollow" />}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.brand} />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical.href} />
+    <meta property="og:locale" content={meta.ogLocale} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${site.brand} — ${site.tagline}`} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <meta name="color-scheme" content="dark light" />
+    <meta name="author" content={site.brand} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+
+    <!-- Critical fonts: preload the two Latin faces used above the fold. -->
+    <link rel="preload" href={displayLatinWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
+    <link rel="preload" href={interLatinWoff2} as="font" type="font/woff2" crossorigin="anonymous" />
+
+    <script type="application/ld+json" is:inline set:html={ldJson} />
+  </head>
+
+  <body class="flex min-h-screen flex-col bg-bg text-fg pb-18 sm:pb-0">
+    <a href="#main" class="skip-link">{t.common.skipToContent}</a>
+
+    <Header locale={locale} path={path} t={t} />
+
+    <main id="main" class="flex-1" tabindex="-1">
+      <slot />
+    </main>
+
+    <Footer locale={locale} t={t} />
+    {site.features.stickyMobileCta && <StickyCta locale={locale} t={t} />}
+
+    <script>
+      import '~/scripts/site';
+    </script>
+  </body>
+</html>

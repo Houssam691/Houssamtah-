@@ -1,0 +1,74 @@
+---
+/**
+ * Vertical process timeline.
+ * The rail is drawn with logical properties so the spacing stays correct
+ * whatever the text length.
+ */
+export interface Stage {
+  index: string;
+  title: string;
+  body: string;
+  duration: string;
+  client: string;
+  outputs: string[];
+}
+
+interface Props {
+  stages: Stage[];
+  /** Labels for the three meta blocks of each stage. */
+  labels: { duration: string; client: string; outputs: string };
+  class?: string;
+}
+
+const { stages, labels, class: className = '' } = Astro.props;
+---
+
+<ol class:list={['relative', className]}>
+  {
+    stages.map((stage) => (
+      <li class="relative grid gap-6 pb-12 ps-12 last:pb-0 md:grid-cols-12 md:gap-8 md:ps-0">
+        {/* Rail + node (logical: flips in RTL) */}
+        <div class="absolute inset-y-0 start-[0.6875rem] w-px bg-line" aria-hidden="true" />
+
+        <div class="md:col-span-3">
+          <span
+            class="absolute start-0 grid size-6 place-items-center rounded-full border border-accent/40 bg-accent-soft font-mono text-2xs text-accent nums md:relative md:start-auto"
+            aria-hidden="true"
+          >
+            {stage.index}
+          </span>
+          <p class="mt-8 hidden text-2xs text-subtle md:block">{stage.duration}</p>
+        </div>
+
+        <div class="md:col-span-9">
+          <h3 class="text-xl">
+            <span class="me-2 text-accent" aria-hidden="true">{stage.index}</span>
+            {stage.title}
+          </h3>
+          <p class="mt-3 max-w-2xl text-md text-muted text-pretty">{stage.body}</p>
+
+          <dl class="mt-6 grid gap-5 border-t border-line pt-5 sm:grid-cols-3">
+            <div>
+              <dt class="eyebrow">{labels.duration}</dt>
+              <dd class="mt-1.5 text-sm text-fg md:hidden">{stage.duration}</dd>
+            </div>
+            <div>
+              <dt class="eyebrow">{labels.client}</dt>
+              <dd class="mt-1.5 text-sm text-fg">{stage.client}</dd>
+            </div>
+            <div>
+              <dt class="eyebrow">{labels.outputs}</dt>
+              <dd class="mt-1.5">
+                <ul class="flex flex-wrap gap-1.5">
+                  {stage.outputs.map((output) => (
+                    <li class="rounded-full border border-line px-2.5 py-0.5 text-xs text-muted">{output}</li>
+                  ))}
+                </ul>
+              </dd>
+            </div>
+          </dl>
+        </div>
+      </li>
+    ))
+  }
+</ol>
